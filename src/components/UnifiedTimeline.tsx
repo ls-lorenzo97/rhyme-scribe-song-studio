@@ -1,13 +1,14 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
+import { Slider } from '@/components/ui/slider';
 import { cn } from '@/lib/utils';
 import { SongSection } from './SongwriterTool';
-import { Play, Plus, Edit3, Trash2 } from 'lucide-react';
+import { Play, Pause, Plus, Edit3, Trash2, SkipBack, SkipForward } from 'lucide-react';
 
 interface UnifiedTimelineProps {
   sections: SongSection[];
@@ -17,6 +18,13 @@ interface UnifiedTimelineProps {
   onSectionClick: (sectionId: string) => void;
   onSectionsUpdate: (sections: SongSection[]) => void;
   setCurrentSection: (sectionId: string) => void;
+  audioRef: React.RefObject<HTMLAudioElement>;
+  audioUrl: string;
+  isPlaying: boolean;
+  setIsPlaying: (playing: boolean) => void;
+  setCurrentTime: (time: number) => void;
+  setDuration: (duration: number) => void;
+  audioFile?: File;
 }
 
 export const UnifiedTimeline = ({
@@ -26,7 +34,14 @@ export const UnifiedTimeline = ({
   currentSection,
   onSectionClick,
   onSectionsUpdate,
-  setCurrentSection
+  setCurrentSection,
+  audioRef,
+  audioUrl,
+  isPlaying,
+  setIsPlaying,
+  setCurrentTime,
+  setDuration,
+  audioFile
 }: UnifiedTimelineProps) => {
   const [editingSection, setEditingSection] = useState<SongSection | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -135,14 +150,137 @@ export const UnifiedTimeline = ({
     return colors[index % colors.length];
   };
 
+  // Audio control functions
+  const handlePlay = useCallback(() => {
+    if (audioRef.current) {
+      if (isPlaying) {
+        audioRef.current.pause();
+      } else {
+        audioRef.current.play();
+      }
+      setIsPlaying(!isPlaying);
+    }
+  }, [audioRef, isPlaying, setIsPlaying]);
+
+  const handleSeek = useCallback((value: number[]) => {
+    if (audioRef.current) {
+      audioRef.current.currentTime = value[0];
+      setCurrentTime(value[0]);
+    }
+  }, [audioRef, setCurrentTime]);
+
   const sortedSections = [...sections].sort((a, b) => a.startTime - b.startTime);
+  const currentSectionData = sections.find(s => s.id === currentSection);
+
+  const navigateToSection = useCallback((direction: 'prev' | 'next') => {
+    const currentIndex = sortedSections.findIndex(s => s.id === currentSection);
+    if (currentIndex === -1) return;
+    
+    const targetIndex = direction === 'prev' ? currentIndex - 1 : currentIndex + 1;
+    if (targetIndex >= 0 && targetIndex < sortedSections.length) {
+      const targetSection = sortedSections[targetIndex];
+      onSectionClick(targetSection.id);
+    }
+  }, [sortedSections, currentSection, onSectionClick]);
+
+  useEffect(() => {
+    const audio = audioRef.current;
+    if (!audio) return;
+
+    const updateTime = () => setCurrentTime(audio.currentTime);
+    const updateDuration = () => setDuration(audio.duration);
+    const handleEnded = () => setIsPlaying(false);
+
+    audio.addEventListener('timeupdate', updateTime);
+    audio.addEventListener('loadedmetadata', updateDuration);
+    audio.addEventListener('ended', handleEnded);
+
+    return () => {
+      audio.removeEventListener('timeupdate', updateTime);
+      audio.removeEventListener('loadedmetadata', updateDuration);
+      audio.removeEventListener('ended', handleEnded);
+    };
+  }, [audioRef, setCurrentTime, setDuration, setIsPlaying]);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
+      <audio ref={audioRef} src={audioUrl} />
+      
+      {/* Album Art and Player Controls */}
+      <div className="space-y-6">
+        {/* Album Art */}
+        <div className="flex justify-center">
+          <div className="w-64 h-64 bg-gradient-music rounded-3xl shadow-large flex items-center justify-center">
+            <div className="text-6xl text-white/80 font-light">♪</div>
+          </div>
+        </div>
+
+        {/* Song Info */}
+        {currentSectionData && (
+          <div className="text-center">
+            <h2 className="text-2xl font-semibold text-foreground mb-1">
+              {currentSectionData.name}
+            </h2>
+            <p className="text-muted-foreground">
+              {audioFile?.name || 'Unknown Track'}
+            </p>
+          </div>
+        )}
+
+        {/* Control Buttons */}
+        <div className="flex items-center justify-center space-x-6">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => navigateToSection('prev')}
+            className="w-12 h-12 text-muted-foreground hover:text-foreground rounded-full"
+          >
+            <SkipBack className="w-5 h-5" />
+          </Button>
+          
+          <Button
+            variant="default"
+            size="icon"
+            onClick={handlePlay}
+            className="w-16 h-16 bg-music-primary hover:bg-music-primary/90 text-white rounded-full shadow-large transition-transform hover:scale-105"
+          >
+            {isPlaying ? (
+              <Pause className="w-6 h-6" />
+            ) : (
+              <Play className="w-6 h-6 ml-1" />
+            )}
+          </Button>
+
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => navigateToSection('next')}
+            className="w-12 h-12 text-muted-foreground hover:text-foreground rounded-full"
+          >
+            <SkipForward className="w-5 h-5" />
+          </Button>
+        </div>
+
+        {/* Progress Bar */}
+        <div className="space-y-2">
+          <Slider
+            value={[currentTime]}
+            max={duration || 100}
+            step={0.1}
+            onValueChange={handleSeek}
+            className="w-full"
+          />
+          <div className="flex justify-between text-sm text-muted-foreground">
+            <span>{formatTime(currentTime)}</span>
+            <span>{formatTime(duration)}</span>
+          </div>
+        </div>
+      </div>
+
       <div className="flex items-center justify-between">
         <div>
-          <h3 className="text-2xl font-bold text-foreground">Song Timeline</h3>
-          <p className="text-muted-foreground">
+          <h3 className="text-xl font-semibold text-foreground">Song Sections</h3>
+          <p className="text-muted-foreground text-sm">
             Manage your song structure - sections automatically adjust to prevent gaps
           </p>
         </div>

@@ -1,7 +1,6 @@
 import { useState, useRef, useCallback } from 'react';
 import { Card } from '@/components/ui/card';
 import { AudioUpload } from './AudioUpload';
-import { AudioControls } from './AudioControls';
 import { UnifiedTimeline } from './UnifiedTimeline';
 import { LyricsEditor } from './LyricsEditor';
 import { ExportDialog } from './ExportDialog';
@@ -96,56 +95,41 @@ export const SongwriterTool = () => {
 
         {/* Main Interface */}
         {audioFile && (
-          <div className="space-y-6">
-            {/* Now Playing Section */}
-            <Card className="bg-card/80 backdrop-blur-xl border-0 shadow-card">
-              <div className="p-8">
-                <AudioControls
-                  audioRef={audioRef}
-                  audioUrl={audioUrl}
-                  isPlaying={isPlaying}
-                  setIsPlaying={setIsPlaying}
-                  currentTime={currentTime}
-                  setCurrentTime={setCurrentTime}
-                  duration={duration}
-                  setDuration={setDuration}
-                  currentSection={currentSection}
-                  sections={sections}
-                  audioFile={audioFile}
-                />
-              </div>
-            </Card>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Left Column - Unified Timeline with Player */}
+            <div>
+              <Card className="bg-card/80 backdrop-blur-xl border-0 shadow-card">
+                <div className="p-6">
+                  <UnifiedTimeline
+                    sections={sections}
+                    currentTime={currentTime}
+                    duration={duration}
+                    currentSection={currentSection}
+                    onSectionClick={jumpToSection}
+                    onSectionsUpdate={handleSectionUpdate}
+                    setCurrentSection={setCurrentSection}
+                    audioRef={audioRef}
+                    audioUrl={audioUrl}
+                    isPlaying={isPlaying}
+                    setIsPlaying={setIsPlaying}
+                    setCurrentTime={setCurrentTime}
+                    setDuration={setDuration}
+                    audioFile={audioFile}
+                  />
+                </div>
+              </Card>
+            </div>
 
-            {/* Content Grid */}
-            <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
-              {/* Left Column - Unified Timeline */}
-              <div className="xl:col-span-2">
-                <Card className="bg-card/80 backdrop-blur-xl border-0 shadow-card">
-                  <div className="p-6">
-                    <UnifiedTimeline
-                      sections={sections}
-                      currentTime={currentTime}
-                      duration={duration}
-                      currentSection={currentSection}
-                      onSectionClick={jumpToSection}
-                      onSectionsUpdate={handleSectionUpdate}
-                      setCurrentSection={setCurrentSection}
-                    />
-                  </div>
-                </Card>
-              </div>
-
-              {/* Right Column - Lyrics Editor */}
-              <div className="xl:col-span-1">
-                <Card className="bg-card/80 backdrop-blur-xl border-0 shadow-card sticky top-24">
-                  <div className="p-6">
-                    <LyricsEditor
-                      section={currentSectionData}
-                      onLyricsUpdate={handleLyricsUpdate}
-                    />
-                  </div>
-                </Card>
-              </div>
+            {/* Right Column - Lyrics Editor */}
+            <div>
+              <Card className="bg-card/80 backdrop-blur-xl border-0 shadow-card sticky top-24">
+                <div className="p-6">
+                  <LyricsEditor
+                    section={currentSectionData}
+                    onLyricsUpdate={handleLyricsUpdate}
+                  />
+                </div>
+              </Card>
             </div>
           </div>
         )}
