@@ -330,44 +330,63 @@ export class RhymeDetector {
       globalCharIndex += line.length + 1; // +1 for newline
     });
 
-    // Group words by phonetic similarity
+    console.log('🎵 Rhyme Detection Debug:', {
+      totalWords: words.length,
+      wordsWithPhonetics: words.map(w => ({ word: w.word, phonetic: w.phonetic }))
+    });
+
+    // Group words by exact phonetic match
     const phoneticGroups: { [key: string]: typeof words } = {};
     
     words.forEach(wordData => {
-      // Extract rhyme part from phonetic transcription
-      const rhymeKey = this.extractRhymeSound(wordData.phonetic, language);
+      const rhymeKey = wordData.phonetic; // Use exact phonetic for stricter matching
       if (!phoneticGroups[rhymeKey]) {
         phoneticGroups[rhymeKey] = [];
       }
       phoneticGroups[rhymeKey].push(wordData);
     });
 
-    // Create rhyme groups
+    console.log('🎵 Phonetic Groups:', Object.entries(phoneticGroups).map(([key, words]) => ({
+      phonetic: key,
+      words: words.map(w => w.word),
+      count: words.length
+    })));
+
+    // Create rhyme groups - only for groups with 2+ words and valid rhyme patterns
     const rhymeGroups: RhymeGroup[] = [];
     let colorIndex = 0;
 
     Object.entries(phoneticGroups).forEach(([phonetic, groupWords]) => {
-      if (groupWords.length > 1) {
-        // Determine rhyme type and strength
+      // More strict validation: must have 2+ words and valid rhyme ending
+      if (groupWords.length >= 2 && this.isValidRhymeGroup(groupWords, language)) {
         const { type, strength } = this.analyzeRhymeType(groupWords);
         
-        rhymeGroups.push({
-          id: `rhyme-${colorIndex}`,
-          words: groupWords.map(w => w.word),
-          color: this.rhymeColors[colorIndex % this.rhymeColors.length],
-          type,
-          strength,
-          positions: groupWords.map(w => ({
-            line: w.line,
-            wordIndex: w.wordIndex,
-            word: w.word,
-            startChar: w.startChar,
-            endChar: w.endChar
-          }))
-        });
-        colorIndex++;
+        // Only include groups with high confidence
+        if (strength >= 0.8) {
+          rhymeGroups.push({
+            id: `rhyme-${colorIndex}`,
+            words: groupWords.map(w => w.word),
+            color: this.rhymeColors[colorIndex % this.rhymeColors.length],
+            type,
+            strength,
+            positions: groupWords.map(w => ({
+              line: w.line,
+              wordIndex: w.wordIndex,
+              word: w.word,
+              startChar: w.startChar,
+              endChar: w.endChar
+            }))
+          });
+          colorIndex++;
+        }
       }
     });
+
+    console.log('🎵 Final Rhyme Groups:', rhymeGroups.map(g => ({
+      words: g.words,
+      type: g.type,
+      strength: g.strength
+    })));
 
     return rhymeGroups;
   }
@@ -472,5 +491,26 @@ export class RhymeDetector {
     return similarGroups.some(group => 
       group.includes(a) && group.includes(b)
     );
+  }
+
+  private isValidRhymeGroup(words: Array<{ word: string; phonetic: string }>, language: string): boolean {
+    if (words.length < 2) return false;
+    
+    // For Italian, validate that all words in the group have the same known rhyme ending
+    if (language === 'it') {
+      const validItalianEndings = ['ale', 'are', 'ere', 'ire', 'ore', 'jone', 'tsjone', 'sjone', 'ente', 'antsa', 'entsa', 'ita', 'ettsa'];
+      const phonetic = words[0].phonetic;
+      
+      // Must be a valid Italian rhyme ending
+      if (!validItalianEndings.includes(phonetic)) {
+        return false;
+      }
+      
+      // All words must have the exact same phonetic ending
+      return words.every(w => w.phonetic === phonetic);
+    }
+    
+    // For other languages, use existing logic
+    return true;
   }
 }
