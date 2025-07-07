@@ -413,12 +413,17 @@ export const AILyricsAssistant = ({ section, onLyricsUpdate, selectedLanguage }:
                       
                       if (hasRhyme && line.rhymeLetter) {
                         const colorIndex = (line.rhymeLetter.charCodeAt(0) - 'A'.charCodeAt(0)) % 5;
-                        const rhymeColor = `rhyme-${colorIndex + 1}` as const;
+                        const rhymeColor = rhymeColors[colorIndex];
                         
                         return (
                           <span 
                             key={partIndex}
-                            className={`bg-${rhymeColor}/20 text-${rhymeColor} px-1 rounded font-medium`}
+                            className="px-1 rounded font-medium"
+                            style={{
+                              backgroundColor: `${rhymeColor}20`,
+                              color: rhymeColor,
+                              borderBottom: `2px solid ${rhymeColor}`
+                            }}
                           >
                             {part}
                           </span>
@@ -504,18 +509,92 @@ function calculateRhymeScheme(lines: LineData[], language: string): string[] {
 }
 
 function getSimpleRhymeKey(word: string, language: string): string {
-  // Simplified rhyme detection - in production, use phonetic algorithms
+  // Require minimum 3 characters for rhyme detection
+  if (word.length < 3) return '';
+  
   switch (language) {
-    case 'en':
-      return word.slice(-2); // Last 2 characters
-    case 'es':
     case 'it':
-      return word.slice(-2); // Last 2 characters
+      return getItalianRhymeKey(word);
+    case 'en':
+      return getEnglishRhymeKey(word);
+    case 'es':
+      return getSpanishRhymeKey(word);
     case 'fr':
-      return word.slice(-2); // Last 2 characters  
+      return getFrenchRhymeKey(word);
     case 'de':
-      return word.slice(-2); // Last 2 characters
+      return getGermanRhymeKey(word);
     default:
       return word.slice(-2);
   }
+}
+
+function getItalianRhymeKey(word: string): string {
+  // Italian rhyme patterns - focus on common endings
+  const commonEndings = {
+    // Perfect rhymes - same sound
+    'ale': 'ale',
+    'are': 'are', 
+    'ere': 'ere',
+    'ire': 'ire',
+    'ore': 'ore',
+    'ato': 'ato',
+    'eto': 'eto',
+    'ito': 'ito',
+    'oto': 'oto',
+    'uto': 'uto',
+    'ane': 'ane',
+    'ene': 'ene',
+    'ine': 'ine',
+    'one': 'one',
+    'une': 'une',
+    'ante': 'ante',
+    'ente': 'ente',
+    'mente': 'mente',
+    'zione': 'zione',
+    'sione': 'sione'
+  };
+  
+  // Check for longer endings first
+  for (const [ending, key] of Object.entries(commonEndings)) {
+    if (word.endsWith(ending)) {
+      return key;
+    }
+  }
+  
+  // Fall back to last 3 characters for other cases
+  return word.slice(-3);
+}
+
+function getEnglishRhymeKey(word: string): string {
+  // Common English endings
+  if (word.endsWith('ight')) return 'ight';
+  if (word.endsWith('ough')) return 'ough';
+  if (word.endsWith('tion')) return 'tion';
+  if (word.endsWith('sion')) return 'sion';
+  return word.slice(-2);
+}
+
+function getSpanishRhymeKey(word: string): string {
+  // Common Spanish endings
+  if (word.endsWith('ción')) return 'ción';
+  if (word.endsWith('sión')) return 'sión';
+  if (word.endsWith('ando')) return 'ando';
+  if (word.endsWith('iendo')) return 'iendo';
+  return word.slice(-2);
+}
+
+function getFrenchRhymeKey(word: string): string {
+  // Common French endings
+  if (word.endsWith('tion')) return 'tion';
+  if (word.endsWith('sion')) return 'sion';
+  if (word.endsWith('ment')) return 'ment';
+  return word.slice(-2);
+}
+
+function getGermanRhymeKey(word: string): string {
+  // Common German endings
+  if (word.endsWith('ung')) return 'ung';
+  if (word.endsWith('heit')) return 'heit';
+  if (word.endsWith('keit')) return 'keit';
+  return word.slice(-2);
 }
