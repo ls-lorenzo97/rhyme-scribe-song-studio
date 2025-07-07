@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Card } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
@@ -188,6 +188,7 @@ export const AILyricsAssistant = ({ section, onLyricsUpdate }: AILyricsAssistant
   const [selectedLanguage, setSelectedLanguage] = useState<string>('en');
   const [lines, setLines] = useState<LineData[]>([]);
   const [selectedWord, setSelectedWord] = useState<string>('');
+  const debounceTimeoutRef = useRef<NodeJS.Timeout>();
   
   const currentLanguage = languages.find(lang => lang.code === selectedLanguage) || languages[0];
 
@@ -244,14 +245,21 @@ export const AILyricsAssistant = ({ section, onLyricsUpdate }: AILyricsAssistant
   }, [currentLanguage, selectedLanguage, section, onLyricsUpdate]);
 
   const handleLineChange = useCallback((lineId: string, value: string) => {
+    // Clear existing timeout to prevent multiple analysis runs
+    if (debounceTimeoutRef.current) {
+      clearTimeout(debounceTimeoutRef.current);
+    }
+    
+    // Immediately update the lines state for responsive typing
     const updatedLines = lines.map(line => 
       line.id === lineId ? { ...line, text: value } : line
     );
     setLines(updatedLines);
     
-    // Longer debounce to reduce analysis frequency - only analyze when user stops typing
-    const timeoutId = setTimeout(() => updateAnalysis(updatedLines), 1000);
-    return () => clearTimeout(timeoutId);
+    // Debounce the analysis to only run when user stops typing
+    debounceTimeoutRef.current = setTimeout(() => {
+      updateAnalysis(updatedLines);
+    }, 1500);
   }, [lines, updateAnalysis]);
 
   const addNewLine = useCallback(() => {
@@ -279,6 +287,15 @@ export const AILyricsAssistant = ({ section, onLyricsUpdate }: AILyricsAssistant
       }
     }
   }, [lines, handleLineChange]);
+
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (debounceTimeoutRef.current) {
+        clearTimeout(debounceTimeoutRef.current);
+      }
+    };
+  }, []);
 
 
   if (!section) {
