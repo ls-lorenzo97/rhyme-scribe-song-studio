@@ -67,13 +67,16 @@ export const SectionManager = ({
     if (!formData.name.trim()) return;
 
     if (editingSection) {
-      // Update existing section
+      // Update existing section with auto-adjustment
       const updatedSections = sections.map(section =>
         section.id === editingSection.id
           ? { ...section, ...formData }
           : section
       );
-      onSectionsUpdate(updatedSections);
+      
+      // Auto-adjust neighboring sections to prevent gaps
+      const adjustedSections = autoAdjustSectionTimes(updatedSections, editingSection.id);
+      onSectionsUpdate(adjustedSections);
     } else {
       // Add new section
       const newSection: SongSection = {
@@ -83,11 +86,36 @@ export const SectionManager = ({
         endTime: formData.endTime,
         lyrics: ''
       };
-      onSectionsUpdate([...sections, newSection]);
+      
+      const newSections = [...sections, newSection];
+      const adjustedSections = autoAdjustSectionTimes(newSections, newSection.id);
+      onSectionsUpdate(adjustedSections);
     }
 
     setIsDialogOpen(false);
     setEditingSection(null);
+  };
+
+  const autoAdjustSectionTimes = (sectionList: SongSection[], changedSectionId: string) => {
+    // Sort sections by start time
+    const sortedSections = [...sectionList].sort((a, b) => a.startTime - b.startTime);
+    const changedIndex = sortedSections.findIndex(s => s.id === changedSectionId);
+    
+    if (changedIndex === -1) return sectionList;
+    
+    const changedSection = sortedSections[changedIndex];
+    
+    // Adjust previous section's end time to match this section's start time
+    if (changedIndex > 0) {
+      sortedSections[changedIndex - 1].endTime = changedSection.startTime;
+    }
+    
+    // Adjust next section's start time to match this section's end time
+    if (changedIndex < sortedSections.length - 1) {
+      sortedSections[changedIndex + 1].startTime = changedSection.endTime;
+    }
+    
+    return sortedSections;
   };
 
   const getSectionColor = (index: number) => {

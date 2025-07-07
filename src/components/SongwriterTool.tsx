@@ -2,9 +2,8 @@ import { useState, useRef, useCallback } from 'react';
 import { Card } from '@/components/ui/card';
 import { AudioUpload } from './AudioUpload';
 import { AudioControls } from './AudioControls';
-import { Timeline } from './Timeline';
+import { UnifiedTimeline } from './UnifiedTimeline';
 import { LyricsEditor } from './LyricsEditor';
-import { SectionManager } from './SectionManager';
 import { ExportDialog } from './ExportDialog';
 
 export interface SongSection {
@@ -119,26 +118,17 @@ export const SongwriterTool = () => {
 
             {/* Content Grid */}
             <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
-              {/* Left Column - Timeline & Sections */}
-              <div className="xl:col-span-2 space-y-6">
+              {/* Left Column - Unified Timeline */}
+              <div className="xl:col-span-2">
                 <Card className="bg-card/80 backdrop-blur-xl border-0 shadow-card">
                   <div className="p-6">
-                    <Timeline
+                    <UnifiedTimeline
                       sections={sections}
                       currentTime={currentTime}
                       duration={duration}
                       currentSection={currentSection}
                       onSectionClick={jumpToSection}
-                    />
-                  </div>
-                </Card>
-
-                <Card className="bg-card/80 backdrop-blur-xl border-0 shadow-card">
-                  <div className="p-6">
-                    <SectionManager
-                      sections={sections}
                       onSectionsUpdate={handleSectionUpdate}
-                      currentSection={currentSection}
                       setCurrentSection={setCurrentSection}
                     />
                   </div>
