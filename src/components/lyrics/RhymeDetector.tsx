@@ -13,12 +13,12 @@ class PhoneticTranscriber implements PhoneticAPI {
   private cache: PhoneticCache = {};
   private readonly MAX_CACHE_SIZE = 1000;
 
-  // Common Italian word endings to IPA mappings
+  // Common Italian word endings to IPA mappings - more precise for rhyme detection
   private italianIpaDict: { [key: string]: string } = {
     'male': 'ale',
-    'irreale': 'eale',
+    'irreale': 'ale',
     'finale': 'ale', 
-    'reale': 'eale',
+    'reale': 'ale',
     'normale': 'ale',
     'generale': 'ale',
     'speciale': 'ale',
@@ -69,17 +69,17 @@ class PhoneticTranscriber implements PhoneticAPI {
   }
 
   private getItalianIPA(word: string): string {
-    // Check if word is in our dictionary
+    // Check if word is in our dictionary first
     if (this.italianIpaDict[word]) {
       return this.italianIpaDict[word];
     }
 
-    // Apply Italian phonetic rules
+    // Apply Italian phonetic rules only for words with known rhyming endings
     let ipa = word.toLowerCase();
     
     // Italian-specific IPA conversion rules focusing on rhyme endings
     const rules = [
-      // Main rhyme endings
+      // Main rhyme endings - only process words that actually end with these patterns
       [/ale$/, 'ale'],  // male, reale, finale
       [/are$/, 'are'],  // amare, cantare
       [/ere$/, 'ere'],  // vedere, credere
@@ -97,13 +97,12 @@ class PhoneticTranscriber implements PhoneticAPI {
 
     for (const [pattern, replacement] of rules) {
       if ((pattern as RegExp).test(ipa)) {
-        ipa = ipa.replace(pattern as RegExp, replacement as string);
-        break; // Use first match only
+        return replacement as string; // Return the exact rhyme pattern
       }
     }
 
-    // Return last 3 characters for rhyme matching
-    return ipa.slice(-3);
+    // If no rhyming pattern found, return empty to exclude from rhyme detection
+    return '';
   }
 
   private getEnglishIPA(word: string): string {
@@ -310,17 +309,21 @@ export class RhymeDetector {
         const cleanWord = word.toLowerCase().replace(/[^a-z]/g, '');
         if (cleanWord.length > 2) {
           const phonetic = this.phoneticAPI.getTranscription(cleanWord, language);
-          const startChar = globalCharIndex + wordIndex * (word.length + 1);
-          const endChar = startChar + word.length;
           
-          words.push({ 
-            word: cleanWord, 
-            line: lineIndex, 
-            wordIndex, 
-            startChar,
-            endChar,
-            phonetic
-          });
+          // Only add words that have a valid phonetic transcription (not empty)
+          if (phonetic && phonetic.length > 0) {
+            const startChar = globalCharIndex + wordIndex * (word.length + 1);
+            const endChar = startChar + word.length;
+            
+            words.push({ 
+              word: cleanWord, 
+              line: lineIndex, 
+              wordIndex, 
+              startChar,
+              endChar,
+              phonetic
+            });
+          }
         }
       });
 
