@@ -141,9 +141,9 @@ export const UnifiedTimeline = ({
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h3 className="text-lg font-semibold text-foreground">Song Structure</h3>
-          <p className="text-sm text-muted-foreground">
-            Click sections to jump or edit
+          <h3 className="text-2xl font-bold text-foreground">Song Timeline</h3>
+          <p className="text-muted-foreground">
+            Manage your song structure - sections automatically adjust to prevent gaps
           </p>
         </div>
         
@@ -268,65 +268,79 @@ export const UnifiedTimeline = ({
         </div>
       </div>
 
-      {/* Compact Section List */}
-      <div className="space-y-2">
+      {/* Section Cards */}
+      <div className="grid gap-3">
         {sortedSections.map((section, index) => (
-          <div
+          <Card
             key={section.id}
             className={cn(
-              "flex items-center justify-between p-3 rounded-lg border cursor-pointer transition-all duration-200 hover:shadow-md group",
+              "p-4 border transition-all duration-200 hover:shadow-lg cursor-pointer group",
               currentSection === section.id
-                ? "border-music-primary bg-music-primary/10"
-                : "border-border/30 bg-card/30 hover:bg-card/50"
+                ? "border-music-primary bg-music-primary/10 shadow-glow"
+                : "border-border/30 bg-card/50 hover:bg-card/80"
             )}
             onClick={() => {
               setCurrentSection(section.id);
               onSectionClick(section.id);
             }}
           >
-            <div className="flex items-center space-x-3 flex-1">
-              <Button
-                variant="ghost"
-                size="sm"
-                className="shrink-0 w-6 h-6 p-0 hover:bg-music-primary/20"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onSectionClick(section.id);
-                }}
-              >
-                <Play className="w-3 h-3" />
-              </Button>
-              
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center space-x-2">
-                  <span className="font-medium text-foreground truncate">{section.name}</span>
-                  <Badge variant="secondary" className="text-xs shrink-0">
-                    {formatTime(section.startTime)}
-                  </Badge>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-4 flex-1">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="shrink-0 w-8 h-8 p-0 hover:bg-music-primary/20"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onSectionClick(section.id);
+                  }}
+                >
+                  <Play className="w-3 h-3" />
+                </Button>
+                
+                <div className="flex-1">
+                  <div className="flex items-center space-x-3">
+                    <h4 className="font-semibold text-foreground text-lg">{section.name}</h4>
+                    <Badge 
+                      variant="secondary" 
+                      className={cn(
+                        "text-xs font-medium",
+                        currentSection === section.id ? "bg-music-primary/20 text-music-primary" : ""
+                      )}
+                    >
+                      {formatTime(section.startTime)} - {formatTime(section.endTime)}
+                    </Badge>
+                  </div>
+                  
+                  {section.lyrics && (
+                    <p className="text-sm text-muted-foreground mt-1 line-clamp-1">
+                      {section.lyrics.split('\n')[0] || 'Empty lyrics'}
+                    </p>
+                  )}
                 </div>
               </div>
-            </div>
-            
-            <div className="flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition-opacity" onClick={(e) => e.stopPropagation()}>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => handleEditSection(section)}
-                className="w-6 h-6 p-0 hover:bg-music-primary/20"
-              >
-                <Edit3 className="w-3 h-3" />
-              </Button>
               
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => handleDeleteSection(section.id)}
-                className="w-6 h-6 p-0 text-destructive hover:text-destructive hover:bg-destructive/10"
-              >
-                <Trash2 className="w-3 h-3" />
-              </Button>
+              <div className="flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition-opacity" onClick={(e) => e.stopPropagation()}>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => handleEditSection(section)}
+                  className="w-8 h-8 p-0 hover:bg-music-primary/20"
+                >
+                  <Edit3 className="w-3 h-3" />
+                </Button>
+                
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => handleDeleteSection(section.id)}
+                  className="w-8 h-8 p-0 text-destructive hover:text-destructive hover:bg-destructive/10"
+                >
+                  <Trash2 className="w-3 h-3" />
+                </Button>
+              </div>
             </div>
-          </div>
+          </Card>
         ))}
       </div>
 
