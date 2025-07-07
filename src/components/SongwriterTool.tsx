@@ -1,9 +1,12 @@
-import { useState, useRef, useCallback } from 'react';
+import { useState, useRef, useCallback, useEffect } from 'react';
 import { Card } from '@/components/ui/card';
 import { AudioUpload } from './AudioUpload';
 import { UnifiedTimeline } from './UnifiedTimeline';
 import { AILyricsAssistant } from './lyrics/AILyricsAssistant';
 import { ExportDialog } from './ExportDialog';
+import { SongMetadata } from './SongMetadata';
+import { LanguageSelector } from './LanguageSelector';
+import { useLocalStorage } from '../hooks/useLocalStorage';
 
 export interface SongSection {
   id: string;
@@ -13,15 +16,41 @@ export interface SongSection {
   lyrics: string;
 }
 
+interface SongData {
+  metadata: {
+    title: string;
+    artist: string;
+    composer: string;
+    key: string;
+  };
+  sections: SongSection[];
+  selectedLanguage: string;
+  currentSection: string | null;
+}
+
 export const SongwriterTool = () => {
   const [audioFile, setAudioFile] = useState<File | null>(null);
   const [audioUrl, setAudioUrl] = useState<string>('');
-  const [sections, setSections] = useState<SongSection[]>([]);
-  const [currentSection, setCurrentSection] = useState<string | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
   const audioRef = useRef<HTMLAudioElement>(null);
+
+  // Persistent data using localStorage
+  const [songData, setSongData] = useLocalStorage<SongData>('songwriter-data', {
+    metadata: {
+      title: '',
+      artist: '',
+      composer: '',
+      key: ''
+    },
+    sections: [],
+    selectedLanguage: 'en',
+    currentSection: null
+  });
+
+  // Extract state from songData for easier access
+  const { metadata, sections, selectedLanguage, currentSection } = songData;
 
   const handleFileUpload = useCallback((file: File) => {
     console.log('Starting file upload:', file.name, file.size);
@@ -30,38 +59,58 @@ export const SongwriterTool = () => {
     setAudioUrl(url);
     console.log('Audio URL created:', url);
     
-    // Create default sections
-    const defaultSections: SongSection[] = [
-      { id: '1', name: 'Intro', startTime: 0, endTime: 15, lyrics: '' },
-      { id: '2', name: 'Verse 1', startTime: 15, endTime: 45, lyrics: '' },
-      { id: '3', name: 'Chorus', startTime: 45, endTime: 75, lyrics: '' },
-      { id: '4', name: 'Verse 2', startTime: 75, endTime: 105, lyrics: '' },
-      { id: '5', name: 'Chorus', startTime: 105, endTime: 135, lyrics: '' },
-      { id: '6', name: 'Bridge', startTime: 135, endTime: 165, lyrics: '' },
-      { id: '7', name: 'Outro', startTime: 165, endTime: 195, lyrics: '' },
-    ];
-    setSections(defaultSections);
-    setCurrentSection(defaultSections[0].id);
+    // Create default sections only if none exist
+    if (sections.length === 0) {
+      const defaultSections: SongSection[] = [
+        { id: '1', name: 'Intro', startTime: 0, endTime: 15, lyrics: '' },
+        { id: '2', name: 'Verse 1', startTime: 15, endTime: 45, lyrics: '' },
+        { id: '3', name: 'Chorus', startTime: 45, endTime: 75, lyrics: '' },
+        { id: '4', name: 'Verse 2', startTime: 75, endTime: 105, lyrics: '' },
+        { id: '5', name: 'Chorus', startTime: 105, endTime: 135, lyrics: '' },
+        { id: '6', name: 'Bridge', startTime: 135, endTime: 165, lyrics: '' },
+        { id: '7', name: 'Outro', startTime: 165, endTime: 195, lyrics: '' },
+      ];
+      setSongData(prev => ({
+        ...prev,
+        sections: defaultSections,
+        currentSection: defaultSections[0].id
+      }));
+    }
     console.log('File upload completed, sections created');
-  }, []);
+  }, [sections.length, setSongData]);
 
   const handleSectionUpdate = useCallback((updatedSections: SongSection[]) => {
-    setSections(updatedSections);
-  }, []);
+    setSongData(prev => ({ ...prev, sections: updatedSections }));
+  }, [setSongData]);
 
   const handleLyricsUpdate = useCallback((sectionId: string, lyrics: string) => {
-    setSections(prev => prev.map(section => 
-      section.id === sectionId ? { ...section, lyrics } : section
-    ));
-  }, []);
+    setSongData(prev => ({
+      ...prev,
+      sections: prev.sections.map(section => 
+        section.id === sectionId ? { ...section, lyrics } : section
+      )
+    }));
+  }, [setSongData]);
+
+  const handleMetadataUpdate = useCallback((newMetadata: typeof metadata) => {
+    setSongData(prev => ({ ...prev, metadata: newMetadata }));
+  }, [setSongData]);
+
+  const handleLanguageChange = useCallback((language: string) => {
+    setSongData(prev => ({ ...prev, selectedLanguage: language }));
+  }, [setSongData]);
+
+  const handleCurrentSectionChange = useCallback((sectionId: string | null) => {
+    setSongData(prev => ({ ...prev, currentSection: sectionId }));
+  }, [setSongData]);
 
   const jumpToSection = useCallback((sectionId: string) => {
     const section = sections.find(s => s.id === sectionId);
     if (section && audioRef.current) {
       audioRef.current.currentTime = section.startTime;
-      setCurrentSection(sectionId);
+      handleCurrentSectionChange(sectionId);
     }
-  }, [sections]);
+  }, [sections, handleCurrentSectionChange]);
 
   const currentSectionData = sections.find(s => s.id === currentSection);
 
@@ -79,7 +128,13 @@ export const SongwriterTool = () => {
                 Songwriter Studio
               </p>
             </div>
-            <ExportDialog sections={sections} audioFile={audioFile} />
+            <div className="flex items-center gap-4">
+              <LanguageSelector 
+                selectedLanguage={selectedLanguage}
+                onLanguageChange={handleLanguageChange}
+              />
+              <ExportDialog sections={sections} audioFile={audioFile} />
+            </div>
           </div>
         </div>
       </div>
@@ -96,6 +151,14 @@ export const SongwriterTool = () => {
           </div>
         )}
 
+        {/* Song Metadata */}
+        {audioFile && (
+          <SongMetadata
+            metadata={metadata}
+            onMetadataUpdate={handleMetadataUpdate}
+          />
+        )}
+
         {/* Main Interface */}
         {audioFile && (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -110,7 +173,7 @@ export const SongwriterTool = () => {
                     currentSection={currentSection}
                     onSectionClick={jumpToSection}
                     onSectionsUpdate={handleSectionUpdate}
-                    setCurrentSection={setCurrentSection}
+                    setCurrentSection={handleCurrentSectionChange}
                     audioRef={audioRef}
                     audioUrl={audioUrl}
                     isPlaying={isPlaying}
@@ -130,6 +193,7 @@ export const SongwriterTool = () => {
                   <AILyricsAssistant
                     section={currentSectionData}
                     onLyricsUpdate={handleLyricsUpdate}
+                    selectedLanguage={selectedLanguage}
                   />
                 </div>
               </Card>

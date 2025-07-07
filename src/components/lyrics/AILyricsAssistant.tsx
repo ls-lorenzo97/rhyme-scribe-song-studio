@@ -182,10 +182,10 @@ const rhymeColors = [
 interface AILyricsAssistantProps {
   section: SongSection | undefined;
   onLyricsUpdate: (sectionId: string, lyrics: string) => void;
+  selectedLanguage: string;
 }
 
-export const AILyricsAssistant = ({ section, onLyricsUpdate }: AILyricsAssistantProps) => {
-  const [selectedLanguage, setSelectedLanguage] = useState<string>('en');
+export const AILyricsAssistant = ({ section, onLyricsUpdate, selectedLanguage }: AILyricsAssistantProps) => {
   const [lines, setLines] = useState<LineData[]>([]);
   const [selectedWord, setSelectedWord] = useState<string>('');
   const debounceTimeoutRef = useRef<NodeJS.Timeout>();
@@ -309,26 +309,35 @@ export const AILyricsAssistant = ({ section, onLyricsUpdate }: AILyricsAssistant
 
   return (
     <div className="space-y-6">
-      {/* Header with Language Selection */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h3 className="text-xl font-semibold text-foreground">
-            {section.name} Lyrics
-          </h3>
-        </div>
+      {/* Header */}
+      <div className="mb-4">
+        <h3 className="text-xl font-semibold text-foreground">
+          {section.name} Lyrics
+        </h3>
+      </div>
+
+      {/* Quick Stats - Moved to top and made smaller */}
+      <div className="grid grid-cols-3 gap-3">
+        <Card className="p-3 text-center">
+          <div className="text-lg font-semibold text-foreground">
+            {lines.filter(line => line.text.trim()).length}
+          </div>
+          <div className="text-xs text-muted-foreground">Lines</div>
+        </Card>
         
-        <Select value={selectedLanguage} onValueChange={setSelectedLanguage}>
-          <SelectTrigger className="w-32">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {languages.map(lang => (
-              <SelectItem key={lang.code} value={lang.code}>
-                {lang.name}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        <Card className="p-3 text-center">
+          <div className="text-lg font-semibold text-foreground">
+            {Math.round(lines.reduce((sum, line) => sum + line.syllableCount, 0) / Math.max(lines.filter(line => line.text.trim()).length, 1))}
+          </div>
+          <div className="text-xs text-muted-foreground">Avg Syllables</div>
+        </Card>
+        
+        <Card className="p-3 text-center">
+          <div className="text-lg font-semibold text-foreground">
+            {new Set(lines.map(line => line.rhymeLetter).filter(Boolean)).size}
+          </div>
+          <div className="text-xs text-muted-foreground">Rhyme Groups</div>
+        </Card>
       </div>
 
       {/* Lyrics Editor */}
@@ -350,37 +359,76 @@ export const AILyricsAssistant = ({ section, onLyricsUpdate }: AILyricsAssistant
               
               {/* Simple Text Input */}
               <div className="flex-1 min-w-0">
-                <textarea
-                  value={line.text}
-                  onChange={(e) => handleLineChange(line.id, e.target.value)}
-                  onClick={(e) => {
-                    const target = e.target as HTMLTextAreaElement;
-                    const words = target.value.split(/\s+/);
-                    const cursorPos = target.selectionStart;
-                    let charCount = 0;
-                    for (let i = 0; i < words.length; i++) {
-                      if (charCount <= cursorPos && cursorPos <= charCount + words[i].length) {
-                        const cleanWord = words[i].toLowerCase().replace(/[^a-z]/g, '');
-                        if (cleanWord.length > 2) {
-                          handleWordSelect(cleanWord);
+                <div className="relative">
+                  <textarea
+                    value={line.text}
+                    onChange={(e) => handleLineChange(line.id, e.target.value)}
+                    onClick={(e) => {
+                      const target = e.target as HTMLTextAreaElement;
+                      const words = target.value.split(/\s+/);
+                      const cursorPos = target.selectionStart;
+                      let charCount = 0;
+                      for (let i = 0; i < words.length; i++) {
+                        if (charCount <= cursorPos && cursorPos <= charCount + words[i].length) {
+                          const cleanWord = words[i].toLowerCase().replace(/[^a-z]/g, '');
+                          if (cleanWord.length > 2) {
+                            handleWordSelect(cleanWord);
+                          }
+                          break;
                         }
-                        break;
+                        charCount += words[i].length + 1;
                       }
-                      charCount += words[i].length + 1;
-                    }
-                  }}
-                  placeholder={`Line ${index + 1}...`}
-                  className="w-full text-base bg-background border border-input rounded-md px-3 py-2 min-h-[3rem] resize-none overflow-hidden focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:outline-none"
-                  style={{ 
-                    height: 'auto',
-                    minHeight: '3rem'
-                  }}
-                  onInput={(e) => {
-                    const target = e.target as HTMLTextAreaElement;
-                    target.style.height = 'auto';
-                    target.style.height = Math.max(target.scrollHeight, 48) + 'px';
-                  }}
-                />
+                    }}
+                    placeholder={`Line ${index + 1}...`}
+                    className="w-full text-base bg-background border border-input rounded-md px-3 py-2 min-h-[3rem] resize-none overflow-hidden focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:outline-none relative z-10"
+                    style={{ 
+                      height: 'auto',
+                      minHeight: '3rem',
+                      background: 'transparent'
+                    }}
+                    onInput={(e) => {
+                      const target = e.target as HTMLTextAreaElement;
+                      target.style.height = 'auto';
+                      target.style.height = Math.max(target.scrollHeight, 48) + 'px';
+                    }}
+                  />
+                  
+                  {/* Rhyme highlighting overlay */}
+                  <div 
+                    className="absolute inset-0 px-3 py-2 text-base pointer-events-none whitespace-pre-wrap break-words z-0"
+                    style={{ 
+                      minHeight: '3rem',
+                      lineHeight: '1.5'
+                    }}
+                  >
+                    {line.text.split(/(\s+)/).map((part, partIndex) => {
+                      if (/\s/.test(part)) return <span key={partIndex}>{part}</span>;
+                      
+                      const cleanWord = part.toLowerCase().replace(/[^a-z]/g, '');
+                      const rhymeKey = getSimpleRhymeKey(cleanWord, selectedLanguage);
+                      
+                      // Find if this word rhymes with others
+                      const rhymingLines = lines.filter(l => l.rhymeLetter === line.rhymeLetter);
+                      const hasRhyme = rhymingLines.length > 1 && cleanWord.length > 2;
+                      
+                      if (hasRhyme && line.rhymeLetter) {
+                        const colorIndex = (line.rhymeLetter.charCodeAt(0) - 'A'.charCodeAt(0)) % 5;
+                        const rhymeColor = `rhyme-${colorIndex + 1}` as const;
+                        
+                        return (
+                          <span 
+                            key={partIndex}
+                            className={`bg-${rhymeColor}/20 text-${rhymeColor} px-1 rounded font-medium`}
+                          >
+                            {part}
+                          </span>
+                        );
+                      }
+                      
+                      return <span key={partIndex} className="text-transparent">{part}</span>;
+                    })}
+                  </div>
+                </div>
               </div>
               
               {/* Syllable Count */}
@@ -404,29 +452,6 @@ export const AILyricsAssistant = ({ section, onLyricsUpdate }: AILyricsAssistant
         </div>
       </Card>
 
-      {/* Quick Stats */}
-      <div className="grid grid-cols-3 gap-4">
-        <Card className="p-4 text-center">
-          <div className="text-2xl font-semibold text-foreground">
-            {lines.filter(line => line.text.trim()).length}
-          </div>
-          <div className="text-sm text-muted-foreground">Lines</div>
-        </Card>
-        
-        <Card className="p-4 text-center">
-          <div className="text-2xl font-semibold text-foreground">
-            {Math.round(lines.reduce((sum, line) => sum + line.syllableCount, 0) / Math.max(lines.filter(line => line.text.trim()).length, 1))}
-          </div>
-          <div className="text-sm text-muted-foreground">Avg Syllables</div>
-        </Card>
-        
-        <Card className="p-4 text-center">
-          <div className="text-2xl font-semibold text-foreground">
-            {new Set(lines.map(line => line.rhymeLetter).filter(Boolean)).size}
-          </div>
-          <div className="text-sm text-muted-foreground">Rhyme Groups</div>
-        </Card>
-      </div>
 
       {/* Rhyme Finder Section */}
       <div>
