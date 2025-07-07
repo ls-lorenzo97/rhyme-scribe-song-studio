@@ -275,9 +275,11 @@ export const UnifiedTimeline = ({
                   <Input
                     id="start-time"
                     type="number"
-                    value={formData.startTime}
-                    onChange={(e) => setFormData(prev => ({ ...prev, startTime: Number(e.target.value) }))}
+                    value={formData.startTime === 0 ? '' : formData.startTime}
+                    onChange={(e) => setFormData(prev => ({ ...prev, startTime: e.target.value === '' ? 0 : Number(e.target.value) }))}
+                    onFocus={(e) => e.target.select()}
                     className="bg-background/50 border-border/50"
+                    placeholder="0"
                   />
                 </div>
                 
@@ -286,9 +288,11 @@ export const UnifiedTimeline = ({
                   <Input
                     id="end-time"
                     type="number"
-                    value={formData.endTime}
-                    onChange={(e) => setFormData(prev => ({ ...prev, endTime: Number(e.target.value) }))}
+                    value={formData.endTime === 0 ? '' : formData.endTime}
+                    onChange={(e) => setFormData(prev => ({ ...prev, endTime: e.target.value === '' ? 0 : Number(e.target.value) }))}
+                    onFocus={(e) => e.target.select()}
                     className="bg-background/50 border-border/50"
+                    placeholder="0"
                   />
                 </div>
               </div>
