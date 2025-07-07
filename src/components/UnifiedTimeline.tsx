@@ -202,6 +202,34 @@ export const UnifiedTimeline = ({
     };
   }, [audioRef, setCurrentTime, setDuration, setIsPlaying]);
 
+  // Spacebar play/pause functionality
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      // Only handle spacebar
+      if (event.code === 'Space') {
+        // Check if any text input is focused
+        const activeElement = document.activeElement;
+        const isTextInputFocused = activeElement && (
+          activeElement.tagName === 'INPUT' ||
+          activeElement.tagName === 'TEXTAREA' ||
+          (activeElement as HTMLElement).contentEditable === 'true'
+        );
+
+        // If no text input is focused, handle play/pause
+        if (!isTextInputFocused) {
+          event.preventDefault(); // Prevent page scroll
+          handlePlay();
+        }
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+    
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [handlePlay]);
+
   return (
     <div className="space-y-6">
       <audio ref={audioRef} src={audioUrl} />
