@@ -286,11 +286,32 @@ export const AILyricsAssistant = ({ section, onLyricsUpdate }: AILyricsAssistant
     const rhymeColorIndex = rhymeLetter.charCodeAt(0) - 'A'.charCodeAt(0);
     const color = rhymeColors[rhymeColorIndex % rhymeColors.length];
 
+    // Find all words in current line that rhyme with words in other lines with same rhyme letter
+    const currentLineWords = text.toLowerCase().split(/\s+/).map(w => w.replace(/[^a-z]/g, '')).filter(w => w.length > 0);
+    const rhymingWords = new Set<string>();
+    
+    // Check if any word in current line rhymes with words in other lines
+    lines.forEach(line => {
+      if (line.rhymeLetter === rhymeLetter && line.rhymeLetter) {
+        const lineWords = line.text.toLowerCase().split(/\s+/).map(w => w.replace(/[^a-z]/g, '')).filter(w => w.length > 0);
+        lineWords.forEach(word => {
+          if (word.length > 2) {
+            const rhymeKey = getSimpleRhymeKey(word, selectedLanguage);
+            currentLineWords.forEach(currentWord => {
+              if (currentWord.length > 2 && getSimpleRhymeKey(currentWord, selectedLanguage) === rhymeKey) {
+                rhymingWords.add(currentWord);
+              }
+            });
+          }
+        });
+      }
+    });
+
     return words.map((word, index) => {
       const cleanWord = word.toLowerCase().replace(/[^a-z]/g, '');
-      const isLastWord = index === words.length - 1 && cleanWord.length > 0;
+      const isRhymingWord = rhymingWords.has(cleanWord) && rhymeLetter && cleanWord.length > 2;
       
-      if (isLastWord && rhymeLetter) {
+      if (isRhymingWord) {
         return (
           <span
             key={index}
@@ -326,115 +347,121 @@ export const AILyricsAssistant = ({ section, onLyricsUpdate }: AILyricsAssistant
   }
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 h-full">
-      {/* Left Column - Lyrics Editor */}
-      <div className="space-y-4">
-        {/* Header with Language Selection */}
-        <div className="flex items-center justify-between">
-          <div>
-            <h3 className="text-xl font-semibold text-foreground">
-              {section.name} Lyrics
-            </h3>
-          </div>
-          
-          <Select value={selectedLanguage} onValueChange={setSelectedLanguage}>
-            <SelectTrigger className="w-32">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {languages.map(lang => (
-                <SelectItem key={lang.code} value={lang.code}>
-                  {lang.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+    <div className="space-y-6">
+      {/* Header with Language Selection */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h3 className="text-xl font-semibold text-foreground">
+            {section.name} Lyrics
+          </h3>
         </div>
-
-        {/* Line-by-Line Editor */}
-        <Card className="p-4">
-          <div className="space-y-3">
-            {lines.map((line, index) => (
-              <div key={line.id} className="flex items-center gap-3">
-                {/* Rhyme Letter */}
-                <div 
-                  className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-semibold text-white"
-                  style={{
-                    backgroundColor: line.rhymeLetter ? 
-                      rhymeColors[(line.rhymeLetter.charCodeAt(0) - 'A'.charCodeAt(0)) % rhymeColors.length] : 
-                      'hsl(var(--muted))'
-                  }}
-                >
-                  {line.rhymeLetter || (index + 1)}
-                </div>
-                
-                {/* Input Field with Highlighting */}
-                <div className="flex-1 relative">
-                  <Input
-                    value={line.text}
-                    onChange={(e) => handleLineChange(line.id, e.target.value)}
-                    placeholder={`Line ${index + 1}...`}
-                    className="text-base bg-transparent"
-                  />
-                  
-                  {/* Highlighted Text Overlay */}
-                  {line.text && (
-                    <div className="absolute inset-0 p-3 pointer-events-none text-transparent overflow-hidden whitespace-nowrap">
-                      {renderHighlightedText(line.text, line.rhymeLetter)}
-                    </div>
-                  )}
-                </div>
-                
-                {/* Syllable Count */}
-                <div className="w-12 text-center">
-                  <Badge variant="outline" className="text-xs">
-                    {line.syllableCount}
-                  </Badge>
-                </div>
-              </div>
+        
+        <Select value={selectedLanguage} onValueChange={setSelectedLanguage}>
+          <SelectTrigger className="w-32">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {languages.map(lang => (
+              <SelectItem key={lang.code} value={lang.code}>
+                {lang.name}
+              </SelectItem>
             ))}
-            
-            {/* Add Line Button */}
-            <Button
-              variant="outline"
-              onClick={addNewLine}
-              className="w-full mt-4 gap-2"
-            >
-              <Plus className="w-4 h-4" />
-              Add Line
-            </Button>
-          </div>
-        </Card>
-
-        {/* Quick Stats */}
-        <div className="grid grid-cols-3 gap-3">
-          <Card className="p-3 text-center">
-            <div className="text-lg font-semibold text-foreground">
-              {lines.filter(line => line.text.trim()).length}
-            </div>
-            <div className="text-xs text-muted-foreground">Lines</div>
-          </Card>
-          
-          <Card className="p-3 text-center">
-            <div className="text-lg font-semibold text-foreground">
-              {Math.round(lines.reduce((sum, line) => sum + line.syllableCount, 0) / Math.max(lines.filter(line => line.text.trim()).length, 1))}
-            </div>
-            <div className="text-xs text-muted-foreground">Avg Syllables</div>
-          </Card>
-          
-          <Card className="p-3 text-center">
-            <div className="text-lg font-semibold text-foreground">
-              {new Set(lines.map(line => line.rhymeLetter).filter(Boolean)).size}
-            </div>
-            <div className="text-xs text-muted-foreground">Rhyme Groups</div>
-          </Card>
-        </div>
+          </SelectContent>
+        </Select>
       </div>
 
-      {/* Right Column - Rhyme Suggestions */}
+      {/* Lyrics Editor */}
+      <Card className="p-6">
+        <div className="space-y-4">
+          {lines.map((line, index) => (
+            <div key={line.id} className="flex items-start gap-4">
+              {/* Rhyme Letter */}
+              <div 
+                className="w-10 h-10 rounded-full flex items-center justify-center text-sm font-semibold text-white mt-1 flex-shrink-0"
+                style={{
+                  backgroundColor: line.rhymeLetter ? 
+                    rhymeColors[(line.rhymeLetter.charCodeAt(0) - 'A'.charCodeAt(0)) % rhymeColors.length] : 
+                    'hsl(var(--muted))'
+                }}
+              >
+                {line.rhymeLetter || (index + 1)}
+              </div>
+              
+              {/* Input Field with Highlighting */}
+              <div className="flex-1 relative min-w-0">
+                <textarea
+                  value={line.text}
+                  onChange={(e) => handleLineChange(line.id, e.target.value)}
+                  placeholder={`Line ${index + 1}...`}
+                  className="w-full text-base bg-transparent border border-input rounded-md px-3 py-2 min-h-[2.5rem] resize-none overflow-hidden"
+                  style={{ 
+                    height: 'auto',
+                    minHeight: '2.5rem'
+                  }}
+                  onInput={(e) => {
+                    const target = e.target as HTMLTextAreaElement;
+                    target.style.height = 'auto';
+                    target.style.height = target.scrollHeight + 'px';
+                  }}
+                />
+                
+                {/* Highlighted Text Overlay */}
+                {line.text && (
+                  <div className="absolute inset-0 p-3 pointer-events-none text-transparent whitespace-pre-wrap break-words">
+                    {renderHighlightedText(line.text, line.rhymeLetter)}
+                  </div>
+                )}
+              </div>
+              
+              {/* Syllable Count */}
+              <div className="w-16 text-center mt-1 flex-shrink-0">
+                <Badge variant="outline" className="text-xs">
+                  {line.syllableCount}
+                </Badge>
+              </div>
+            </div>
+          ))}
+          
+          {/* Add Line Button */}
+          <Button
+            variant="outline"
+            onClick={addNewLine}
+            className="w-full mt-6 gap-2"
+          >
+            <Plus className="w-4 h-4" />
+            Add Line
+          </Button>
+        </div>
+      </Card>
+
+      {/* Quick Stats */}
+      <div className="grid grid-cols-3 gap-4">
+        <Card className="p-4 text-center">
+          <div className="text-2xl font-semibold text-foreground">
+            {lines.filter(line => line.text.trim()).length}
+          </div>
+          <div className="text-sm text-muted-foreground">Lines</div>
+        </Card>
+        
+        <Card className="p-4 text-center">
+          <div className="text-2xl font-semibold text-foreground">
+            {Math.round(lines.reduce((sum, line) => sum + line.syllableCount, 0) / Math.max(lines.filter(line => line.text.trim()).length, 1))}
+          </div>
+          <div className="text-sm text-muted-foreground">Avg Syllables</div>
+        </Card>
+        
+        <Card className="p-4 text-center">
+          <div className="text-2xl font-semibold text-foreground">
+            {new Set(lines.map(line => line.rhymeLetter).filter(Boolean)).size}
+          </div>
+          <div className="text-sm text-muted-foreground">Rhyme Groups</div>
+        </Card>
+      </div>
+
+      {/* Rhyme Finder Section */}
       <div>
         <h3 className="text-xl font-semibold text-foreground mb-4">Rhyme Finder</h3>
-        <Card className="p-4">
+        <Card className="p-6">
           <RhymeSuggestions
             selectedWord={selectedWord}
             language={selectedLanguage}
