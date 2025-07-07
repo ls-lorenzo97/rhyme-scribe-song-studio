@@ -134,21 +134,41 @@ export const UnifiedTimeline = ({
       return;
     }
 
-    // Check for overlaps with other sections
-    if (checkForOverlap(formData)) {
-      alert('Section times cannot overlap with existing sections');
-      return;
-    }
-
     if (editingSection) {
-      const updatedSections = sections.map(section =>
+      // First, update the edited section
+      let updatedSections = sections.map(section =>
         section.id === editingSection.id
           ? { ...section, ...formData }
           : section
       );
+
+      // Auto-adjust any overlapping sections
+      updatedSections = updatedSections.map(section => {
+        if (section.id === editingSection.id) return section;
+        
+        // Check if this section overlaps with the edited section
+        const editedSection = updatedSections.find(s => s.id === editingSection.id)!;
+        
+        // If current section overlaps with edited section, adjust it
+        if (section.startTime < editedSection.endTime && section.endTime > editedSection.startTime) {
+          // If edited section completely encompasses this section, remove overlap by adjusting times
+          if (editedSection.startTime <= section.startTime && editedSection.endTime >= section.endTime) {
+            return { ...section, startTime: editedSection.endTime, endTime: editedSection.endTime + (section.endTime - section.startTime) };
+          }
+          // If this section starts before edited section but overlaps
+          else if (section.startTime < editedSection.startTime) {
+            return { ...section, endTime: editedSection.startTime };
+          }
+          // If this section starts after edited section start but before its end
+          else {
+            return { ...section, startTime: editedSection.endTime };
+          }
+        }
+        
+        return section;
+      });
       
-      const adjustedSections = autoAdjustSectionTimes(updatedSections, editingSection.id);
-      onSectionsUpdate(adjustedSections);
+      onSectionsUpdate(updatedSections);
     } else {
       const newSection: SongSection = {
         id: Date.now().toString(),
@@ -158,9 +178,31 @@ export const UnifiedTimeline = ({
         lyrics: ''
       };
       
-      const newSections = [...sections, newSection];
-      const adjustedSections = autoAdjustSectionTimes(newSections, newSection.id);
-      onSectionsUpdate(adjustedSections);
+      // Auto-adjust any overlapping sections with the new section
+      let updatedSections = [...sections, newSection];
+      updatedSections = updatedSections.map(section => {
+        if (section.id === newSection.id) return section;
+        
+        // Check if this section overlaps with the new section
+        if (section.startTime < newSection.endTime && section.endTime > newSection.startTime) {
+          // If new section completely encompasses this section
+          if (newSection.startTime <= section.startTime && newSection.endTime >= section.endTime) {
+            return { ...section, startTime: newSection.endTime, endTime: newSection.endTime + (section.endTime - section.startTime) };
+          }
+          // If this section starts before new section but overlaps
+          else if (section.startTime < newSection.startTime) {
+            return { ...section, endTime: newSection.startTime };
+          }
+          // If this section starts after new section start but before its end
+          else {
+            return { ...section, startTime: newSection.endTime };
+          }
+        }
+        
+        return section;
+      });
+      
+      onSectionsUpdate(updatedSections);
     }
 
     setIsDialogOpen(false);

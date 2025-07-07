@@ -26,7 +26,8 @@ export const AudioUpload = ({ onFileUpload }: AudioUploadProps) => {
     setIsDragOver(false);
     
     const files = Array.from(e.dataTransfer.files);
-    const audioFile = files.find(file => file.type.startsWith('audio/'));
+    const allowedFormats = ['audio/mp3', 'audio/mpeg', 'audio/aac', 'audio/wav', 'audio/flac', 'audio/ogg'];
+    const audioFile = files.find(file => allowedFormats.includes(file.type));
     
     if (audioFile) {
       onFileUpload(audioFile);
@@ -75,7 +76,7 @@ export const AudioUpload = ({ onFileUpload }: AudioUploadProps) => {
               Drag and Drop
             </p>
             <p className="text-muted-foreground">
-              MP3, WAV, M4A, and other audio formats
+              MP3, AAC, WAV, FLAC, and OGG formats only
             </p>
           </div>
           <Button 
@@ -91,7 +92,7 @@ export const AudioUpload = ({ onFileUpload }: AudioUploadProps) => {
       <input
         id="audio-upload"
         type="file"
-        accept="audio/*"
+        accept=".mp3,.aac,.wav,.flac,.ogg,audio/mp3,audio/mpeg,audio/aac,audio/wav,audio/flac,audio/ogg"
         onChange={handleFileSelect}
         className="hidden"
       />
