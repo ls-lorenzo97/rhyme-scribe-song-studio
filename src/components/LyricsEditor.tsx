@@ -5,21 +5,22 @@ import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
 import { SongSection } from './SongwriterTool';
 import { ArrowUp, ArrowDown } from 'lucide-react';
+import { RhymeDetector } from './lyrics/RhymeDetector';
+import { RhymeGroup } from './lyrics/AILyricsAssistant';
 
 interface LyricsEditorProps {
   section: SongSection | undefined;
   onLyricsUpdate: (sectionId: string, lyrics: string) => void;
+  selectedLanguage?: string;
 }
 
-interface RhymeGroup {
-  words: string[];
-  color: string;
-  positions: Array<{ line: number; wordIndex: number; word: string }>;
-}
-
-export const LyricsEditor = ({ section, onLyricsUpdate }: LyricsEditorProps) => {
+export const LyricsEditor = ({ section, onLyricsUpdate, selectedLanguage = 'en' }: LyricsEditorProps) => {
   const [lyrics, setLyrics] = useState('');
   const [showRhymes, setShowRhymes] = useState(true);
+  const [rhymeGroups, setRhymeGroups] = useState<RhymeGroup[]>([]);
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
+  
+  const rhymeDetector = useMemo(() => new RhymeDetector(), []);
 
   useEffect(() => {
     if (section) {
@@ -27,66 +28,35 @@ export const LyricsEditor = ({ section, onLyricsUpdate }: LyricsEditorProps) => 
     }
   }, [section]);
 
-  const handleLyricsChange = (value: string) => {
+  const handleLyricsChange = async (value: string) => {
     setLyrics(value);
     if (section) {
       onLyricsUpdate(section.id, value);
+      
+      // Analyze rhymes asynchronously
+      if (value.trim()) {
+        setIsAnalyzing(true);
+        try {
+          const detectedRhymes = await rhymeDetector.detectRhymes(value, selectedLanguage);
+          setRhymeGroups(detectedRhymes);
+        } catch (error) {
+          console.error('Error detecting rhymes:', error);
+          setRhymeGroups([]);
+        } finally {
+          setIsAnalyzing(false);
+        }
+      } else {
+        setRhymeGroups([]);
+      }
     }
   };
 
-  // Simple rhyme detection algorithm
-  const detectRhymes = (text: string): RhymeGroup[] => {
-    const lines = text.split('\n').filter(line => line.trim());
-    const words: Array<{ word: string; line: number; wordIndex: number; sound: string }> = [];
-    
-    lines.forEach((line, lineIndex) => {
-      const lineWords = line.trim().split(/\s+/).filter(word => word.length > 2);
-      lineWords.forEach((word, wordIndex) => {
-        const cleanWord = word.toLowerCase().replace(/[^a-z]/g, '');
-        if (cleanWord.length > 2) {
-          // Simple phonetic matching based on word endings
-          const sound = cleanWord.slice(-2); // Last 2 characters as sound
-          words.push({ word: cleanWord, line: lineIndex, wordIndex, sound });
-        }
-      });
-    });
-
-    // Group words by sound
-    const soundGroups: { [sound: string]: Array<{ word: string; line: number; wordIndex: number }> } = {};
-    words.forEach(({ word, line, wordIndex, sound }) => {
-      if (!soundGroups[sound]) {
-        soundGroups[sound] = [];
-      }
-      soundGroups[sound].push({ word, line, wordIndex });
-    });
-
-    // Create rhyme groups (only for sounds with more than 1 word)
-    const rhymeColors = [
-      'hsl(var(--rhyme-1))',
-      'hsl(var(--rhyme-2))',
-      'hsl(var(--rhyme-3))',
-      'hsl(var(--rhyme-4))',
-      'hsl(var(--rhyme-5))',
-    ];
-
-    const rhymeGroups: RhymeGroup[] = [];
-    let colorIndex = 0;
-
-    Object.entries(soundGroups).forEach(([sound, groupWords]) => {
-      if (groupWords.length > 1) {
-        rhymeGroups.push({
-          words: groupWords.map(w => w.word),
-          color: rhymeColors[colorIndex % rhymeColors.length],
-          positions: groupWords
-        });
-        colorIndex++;
-      }
-    });
-
-    return rhymeGroups;
-  };
-
-  const rhymeGroups = useMemo(() => detectRhymes(lyrics), [lyrics]);
+  // Initialize rhyme analysis when lyrics change
+  useEffect(() => {
+    if (lyrics.trim()) {
+      handleLyricsChange(lyrics);
+    }
+  }, [selectedLanguage]); // Re-analyze when language changes
 
   const renderLyricsWithHighlights = () => {
     if (!showRhymes || !lyrics.trim()) return null;
@@ -169,28 +139,30 @@ export const LyricsEditor = ({ section, onLyricsUpdate }: LyricsEditorProps) => 
           className="min-h-[200px] resize-none bg-background/50 border-border focus:border-music-primary"
         />
 
-        {rhymeGroups.length > 0 && (
+        {(rhymeGroups.length > 0 || isAnalyzing) && (
           <div className="space-y-3">
             <h4 className="font-medium text-foreground flex items-center gap-2">
               <div className="w-4 h-4 text-music-primary text-sm">✨</div>
-              Detected Rhymes ({rhymeGroups.length} groups)
+              {isAnalyzing ? 'Analyzing Rhymes...' : `Detected Rhymes (${rhymeGroups.length} groups)`}
             </h4>
-            <div className="flex flex-wrap gap-2">
-              {rhymeGroups.map((group, index) => (
-                <Badge
-                  key={index}
-                  variant="secondary"
-                  className="text-xs"
-                  style={{
-                    backgroundColor: `${group.color}20`,
-                    borderColor: group.color,
-                    color: group.color,
-                  }}
-                >
-                  {group.words.join(', ')} ({group.words.length})
-                </Badge>
-              ))}
-            </div>
+            {!isAnalyzing && (
+              <div className="flex flex-wrap gap-2">
+                {rhymeGroups.map((group, index) => (
+                  <Badge
+                    key={group.id || index}
+                    variant="secondary"
+                    className="text-xs"
+                    style={{
+                      backgroundColor: `${group.color}20`,
+                      borderColor: group.color,
+                      color: group.color,
+                    }}
+                  >
+                    {group.words.join(', ')} ({group.words.length}) - {group.type} ({Math.round(group.strength * 100)}%)
+                  </Badge>
+                ))}
+              </div>
+            )}
           </div>
         )}
 
