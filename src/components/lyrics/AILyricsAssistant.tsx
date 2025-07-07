@@ -218,7 +218,7 @@ export const AILyricsAssistant = ({ section, onLyricsUpdate }: AILyricsAssistant
         return { ...line, syllableCount: 0, rhymeLetter: '' };
       }
 
-      // Count syllables
+      // Count syllables only when needed
       const words = line.text.split(/\s+/).filter(word => word.trim());
       const syllableCount = words.reduce((count, word) => 
         count + currentLanguage.syllableRules(word), 0
@@ -249,8 +249,9 @@ export const AILyricsAssistant = ({ section, onLyricsUpdate }: AILyricsAssistant
     );
     setLines(updatedLines);
     
-    // Debounced analysis update
-    setTimeout(() => updateAnalysis(updatedLines), 300);
+    // Longer debounce to reduce analysis frequency - only analyze when user stops typing
+    const timeoutId = setTimeout(() => updateAnalysis(updatedLines), 1000);
+    return () => clearTimeout(timeoutId);
   }, [lines, updateAnalysis]);
 
   const addNewLine = useCallback(() => {
@@ -279,63 +280,6 @@ export const AILyricsAssistant = ({ section, onLyricsUpdate }: AILyricsAssistant
     }
   }, [lines, handleLineChange]);
 
-  const renderHighlightedText = (text: string, rhymeLetter: string) => {
-    if (!text.trim()) return text;
-
-    const words = text.split(/(\s+)/);
-    const rhymeColorIndex = rhymeLetter.charCodeAt(0) - 'A'.charCodeAt(0);
-    const color = rhymeColors[rhymeColorIndex % rhymeColors.length];
-
-    // Find all words in current line that rhyme with words in other lines with same rhyme letter
-    const currentLineWords = text.toLowerCase().split(/\s+/).map(w => w.replace(/[^a-z]/g, '')).filter(w => w.length > 0);
-    const rhymingWords = new Set<string>();
-    
-    // Check if any word in current line rhymes with words in other lines
-    lines.forEach(line => {
-      if (line.rhymeLetter === rhymeLetter && line.rhymeLetter) {
-        const lineWords = line.text.toLowerCase().split(/\s+/).map(w => w.replace(/[^a-z]/g, '')).filter(w => w.length > 0);
-        lineWords.forEach(word => {
-          if (word.length > 2) {
-            const rhymeKey = getSimpleRhymeKey(word, selectedLanguage);
-            currentLineWords.forEach(currentWord => {
-              if (currentWord.length > 2 && getSimpleRhymeKey(currentWord, selectedLanguage) === rhymeKey) {
-                rhymingWords.add(currentWord);
-              }
-            });
-          }
-        });
-      }
-    });
-
-    return words.map((word, index) => {
-      const cleanWord = word.toLowerCase().replace(/[^a-z]/g, '');
-      const isRhymingWord = rhymingWords.has(cleanWord) && rhymeLetter && cleanWord.length > 2;
-      
-      if (isRhymingWord) {
-        return (
-          <span
-            key={index}
-            style={{
-              backgroundColor: `${color}20`,
-              borderBottom: `2px solid ${color}`,
-              borderRadius: '2px',
-              padding: '1px 2px'
-            }}
-            onClick={() => handleWordSelect(cleanWord)}
-            className="cursor-pointer"
-          >
-            {word}
-          </span>
-        );
-      }
-      
-      return (
-        <span key={index} onClick={() => cleanWord && handleWordSelect(cleanWord)} className="cursor-pointer">
-          {word}
-        </span>
-      );
-    });
-  };
 
   if (!section) {
     return (
@@ -387,30 +331,39 @@ export const AILyricsAssistant = ({ section, onLyricsUpdate }: AILyricsAssistant
                 {line.rhymeLetter || (index + 1)}
               </div>
               
-              {/* Input Field with Highlighting */}
-              <div className="flex-1 relative min-w-0">
+              {/* Simple Text Input */}
+              <div className="flex-1 min-w-0">
                 <textarea
                   value={line.text}
                   onChange={(e) => handleLineChange(line.id, e.target.value)}
+                  onClick={(e) => {
+                    const target = e.target as HTMLTextAreaElement;
+                    const words = target.value.split(/\s+/);
+                    const cursorPos = target.selectionStart;
+                    let charCount = 0;
+                    for (let i = 0; i < words.length; i++) {
+                      if (charCount <= cursorPos && cursorPos <= charCount + words[i].length) {
+                        const cleanWord = words[i].toLowerCase().replace(/[^a-z]/g, '');
+                        if (cleanWord.length > 2) {
+                          handleWordSelect(cleanWord);
+                        }
+                        break;
+                      }
+                      charCount += words[i].length + 1;
+                    }
+                  }}
                   placeholder={`Line ${index + 1}...`}
-                  className="w-full text-base bg-transparent border border-input rounded-md px-3 py-2 min-h-[2.5rem] resize-none overflow-hidden"
+                  className="w-full text-base bg-background border border-input rounded-md px-3 py-2 min-h-[3rem] resize-none overflow-hidden focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:outline-none"
                   style={{ 
                     height: 'auto',
-                    minHeight: '2.5rem'
+                    minHeight: '3rem'
                   }}
                   onInput={(e) => {
                     const target = e.target as HTMLTextAreaElement;
                     target.style.height = 'auto';
-                    target.style.height = target.scrollHeight + 'px';
+                    target.style.height = Math.max(target.scrollHeight, 48) + 'px';
                   }}
                 />
-                
-                {/* Highlighted Text Overlay */}
-                {line.text && (
-                  <div className="absolute inset-0 p-3 pointer-events-none text-transparent whitespace-pre-wrap break-words">
-                    {renderHighlightedText(line.text, line.rhymeLetter)}
-                  </div>
-                )}
               </div>
               
               {/* Syllable Count */}
