@@ -85,7 +85,9 @@ export default {
 			boxShadow: {
 				'sm': 'var(--shadow-sm)',
 				'card': 'var(--shadow-card)',
-				'large': 'var(--shadow-large)'
+				'large': 'var(--shadow-large)',
+				'glow': 'var(--shadow-glow)',
+				'medium': 'var(--shadow-medium)'
 			},
 			transitionTimingFunction: {
 				'smooth': 'var(--transition-smooth)',
