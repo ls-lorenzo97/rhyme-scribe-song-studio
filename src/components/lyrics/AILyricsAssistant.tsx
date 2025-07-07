@@ -11,6 +11,7 @@ import { RhymeSuggestions } from './RhymeSuggestions';
 import { LanguageDetector } from './LanguageDetector';
 import { PatternAnalyzer } from './PatternAnalyzer';
 import { AIWritingAssistant } from './AIWritingAssistant';
+import { analyzeRhymeScheme } from './utils';
 import { Edit, Search, Mic } from 'lucide-react';
 
 interface AILyricsAssistantProps {
