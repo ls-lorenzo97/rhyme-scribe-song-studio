@@ -86,7 +86,7 @@ export const LyricsEditor = ({ section, onLyricsUpdate, selectedLanguage = 'en' 
                 )
               );
 
-              if (rhymeGroup && cleanWord.length > 2) {
+              if (rhymeGroup && rhymeGroup.words.length >= 2 && cleanWord.length > 2) {
                 return (
                   <span
                     key={wordIndex}
