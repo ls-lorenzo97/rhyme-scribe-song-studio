@@ -203,85 +203,14 @@ export const UnifiedTimeline = ({
   }, [audioRef, setCurrentTime, setDuration, setIsPlaying]);
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
       <audio ref={audioRef} src={audioUrl} />
       
-      {/* Album Art and Player Controls */}
-      <div className="space-y-3">
-        {/* Album Art */}
-        <div className="flex justify-center">
-          <div className="w-64 h-64 bg-gradient-music rounded-3xl shadow-large flex items-center justify-center">
-            <div className="text-6xl text-white/80 font-light">♪</div>
-          </div>
-        </div>
-
-        {/* Song Info */}
-        {currentSectionData && (
-          <div className="text-center">
-            <h2 className="text-2xl font-semibold text-foreground mb-1">
-              {currentSectionData.name}
-            </h2>
-            <p className="text-muted-foreground">
-              {audioFile?.name || 'Unknown Track'}
-            </p>
-          </div>
-        )}
-
-        {/* Control Buttons */}
-        <div className="flex items-center justify-center space-x-6">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => navigateToSection('prev')}
-            className="w-12 h-12 text-muted-foreground hover:text-foreground rounded-full"
-          >
-            <SkipBack className="w-5 h-5" />
-          </Button>
-          
-          <Button
-            variant="default"
-            size="icon"
-            onClick={handlePlay}
-            className="w-16 h-16 bg-music-primary hover:bg-music-primary/90 text-white rounded-full shadow-large transition-transform hover:scale-105"
-          >
-            {isPlaying ? (
-              <Pause className="w-6 h-6" />
-            ) : (
-              <Play className="w-6 h-6 ml-1" />
-            )}
-          </Button>
-
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => navigateToSection('next')}
-            className="w-12 h-12 text-muted-foreground hover:text-foreground rounded-full"
-          >
-            <SkipForward className="w-5 h-5" />
-          </Button>
-        </div>
-
-        {/* Progress Bar */}
-        <div className="space-y-2">
-          <Slider
-            value={[currentTime]}
-            max={duration || 100}
-            step={0.1}
-            onValueChange={handleSeek}
-            className="w-full"
-          />
-          <div className="flex justify-between text-sm text-muted-foreground">
-            <span>{formatTime(currentTime)}</span>
-            <span>{formatTime(duration)}</span>
-          </div>
-        </div>
-      </div>
-
       <div className="flex items-center justify-between">
         <div>
-          <h3 className="text-xl font-semibold text-foreground">Song Sections</h3>
+          <h3 className="text-xl font-semibold text-foreground">Song Timeline</h3>
           <p className="text-muted-foreground text-sm">
-            Manage your song structure - sections automatically adjust to prevent gaps
+            Manage sections and playback - sections automatically adjust to prevent gaps
           </p>
         </div>
         
@@ -349,8 +278,72 @@ export const UnifiedTimeline = ({
         </Dialog>
       </div>
 
-      {/* Visual Timeline */}
+      {/* Integrated Player & Timeline */}
       <div className="space-y-4">
+        {/* Player Controls integrated with timeline */}
+        <div className="bg-muted/10 rounded-2xl p-6 space-y-4">
+          {/* Current Section Info & Controls */}
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-4">
+              {currentSectionData && (
+                <div>
+                  <h4 className="font-semibold text-foreground">{currentSectionData.name}</h4>
+                  <p className="text-sm text-muted-foreground">{audioFile?.name || 'Unknown Track'}</p>
+                </div>
+              )}
+            </div>
+            
+            <div className="flex items-center space-x-3">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => navigateToSection('prev')}
+                className="w-10 h-10 text-muted-foreground hover:text-foreground rounded-full"
+              >
+                <SkipBack className="w-4 h-4" />
+              </Button>
+              
+              <Button
+                variant="default"
+                size="sm"
+                onClick={handlePlay}
+                className="w-12 h-12 bg-music-primary hover:bg-music-primary/90 text-white rounded-full shadow-medium transition-transform hover:scale-105"
+              >
+                {isPlaying ? (
+                  <Pause className="w-5 h-5" />
+                ) : (
+                  <Play className="w-5 h-5 ml-0.5" />
+                )}
+              </Button>
+
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => navigateToSection('next')}
+                className="w-10 h-10 text-muted-foreground hover:text-foreground rounded-full"
+              >
+                <SkipForward className="w-4 h-4" />
+              </Button>
+            </div>
+          </div>
+
+          {/* Progress Bar with Time */}
+          <div className="space-y-2">
+            <Slider
+              value={[currentTime]}
+              max={duration || 100}
+              step={0.1}
+              onValueChange={handleSeek}
+              className="w-full"
+            />
+            <div className="flex justify-between text-xs text-muted-foreground">
+              <span>{formatTime(currentTime)}</span>
+              <span>{formatTime(duration)}</span>
+            </div>
+          </div>
+        </div>
+        
+        {/* Visual Timeline */}
         <div className="relative">
           <div className="h-20 bg-muted/20 rounded-xl relative overflow-hidden border border-border/30">
             {/* Progress Bar */}
