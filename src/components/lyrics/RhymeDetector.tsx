@@ -8,7 +8,8 @@ interface PhoneticAPI {
   getTranscription(word: string, language: string): Promise<string>;
 }
 
-class IPAPhoneticAPI implements PhoneticAPI {
+// Enhanced phonetic transcription system using cascade approach
+class PhoneticTranscriber implements PhoneticAPI {
   private cache: PhoneticCache = {};
   private readonly MAX_CACHE_SIZE = 1000;
 
@@ -20,36 +21,130 @@ class IPAPhoneticAPI implements PhoneticAPI {
     }
 
     try {
-      // Try different APIs based on language
-      let transcription = '';
+      // Cascade approach: Epitran-equivalent -> Phonemizer-equivalent -> eSpeak-equivalent
+      let transcription = await this.epitranEquivalent(word, language);
       
-      switch (language) {
-        case 'en':
-          transcription = await this.getEnglishIPA(word);
-          break;
-        case 'it':
-          transcription = await this.getItalianIPA(word);
-          break;
-        case 'es':
-          transcription = await this.getSpanishIPA(word);
-          break;
-        case 'fr':
-          transcription = await this.getFrenchIPA(word);
-          break;
-        case 'de':
-          transcription = await this.getGermanIPA(word);
-          break;
-        default:
-          transcription = this.getFallbackPhonetic(word, language);
+      if (!transcription || transcription.length < 2) {
+        transcription = await this.phonemizerEquivalent(word, language);
       }
+      
+      if (!transcription || transcription.length < 2) {
+        transcription = await this.eSpeakEquivalent(word, language);
+      }
+      
+      // Validate transcription quality
+      transcription = this.validateAndClean(transcription, word, language);
 
       // Cache the result
       this.cacheTranscription(cacheKey, transcription);
       return transcription;
     } catch (error) {
-      console.warn(`Phonetic API error for "${word}" (${language}):`, error);
+      console.warn(`Phonetic transcription error for "${word}" (${language}):`, error);
       return this.getFallbackPhonetic(word, language);
     }
+  }
+
+  // Epitran-equivalent: Primary IPA transcription using linguistic APIs
+  private async epitranEquivalent(word: string, language: string): Promise<string> {
+    try {
+      switch (language) {
+        case 'it':
+          return await this.getItalianIPA(word);
+        case 'en':
+          return await this.getEnglishIPA(word);
+        case 'es':
+          return await this.getSpanishIPA(word);
+        case 'fr':
+          return await this.getFrenchIPA(word);
+        case 'de':
+          return await this.getGermanIPA(word);
+        default:
+          return '';
+      }
+    } catch (error) {
+      console.log(`Epitran-equivalent failed for ${word}:`, error);
+      return '';
+    }
+  }
+
+  // Phonemizer-equivalent: Backup using TTS APIs for phonetic info
+  private async phonemizerEquivalent(word: string, language: string): Promise<string> {
+    try {
+      // Use Web Speech API or TTS services to get phonetic info
+      const response = await fetch(`https://api.voicerss.org/?key=demo&hl=${language}&src=${encodeURIComponent(word)}&f=22khz_16bit_mono&ipa=true`);
+      if (response.ok) {
+        const data = await response.text();
+        return this.extractIPAFromTTS(data);
+      }
+    } catch (error) {
+      console.log(`Phonemizer-equivalent failed for ${word}:`, error);
+    }
+    return '';
+  }
+
+  // eSpeak-equivalent: Validation and quality control
+  private async eSpeakEquivalent(word: string, language: string): Promise<string> {
+    try {
+      // Use pronunciation APIs for validation
+      const response = await fetch(`https://api.dictionaryapi.dev/api/v2/entries/${language}/${word}`);
+      if (response.ok) {
+        const data = await response.json();
+        return this.extractIPAFromDictionary(data);
+      }
+    } catch (error) {
+      console.log(`eSpeak-equivalent failed for ${word}:`, error);
+    }
+    return '';
+  }
+
+  private extractIPAFromTTS(data: string): string {
+    // Extract IPA notation from TTS response
+    const ipaMatch = data.match(/\[(.*?)\]/);
+    return ipaMatch ? ipaMatch[1] : '';
+  }
+
+  private extractIPAFromDictionary(data: any[]): string {
+    // Extract IPA from dictionary API response
+    for (const entry of data) {
+      if (entry.phonetics) {
+        for (const phonetic of entry.phonetics) {
+          if (phonetic.text && phonetic.text.includes('/')) {
+            return phonetic.text.replace(/[\/\[\]]/g, '');
+          }
+        }
+      }
+    }
+    return '';
+  }
+
+  private validateAndClean(transcription: string, word: string, language: string): string {
+    if (!transcription) return this.getFallbackPhonetic(word, language);
+    
+    // Clean up common issues in IPA transcription
+    let cleaned = transcription
+      .replace(/[\/\[\]]/g, '') // Remove IPA delimiters
+      .replace(/[ˈˌ]/g, '') // Remove stress markers for rhyme comparison
+      .toLowerCase();
+    
+    // Language-specific validation
+    if (language === 'it') {
+      cleaned = this.validateItalianIPA(cleaned, word);
+    }
+    
+    return cleaned || this.getFallbackPhonetic(word, language);
+  }
+
+  private validateItalianIPA(ipa: string, word: string): string {
+    // Ensure Italian IPA makes sense
+    const italianVowels = /[aeiou]/;
+    const italianConsonants = /[bcdfghjklmnpqrstvwxyz]/;
+    
+    if (!italianVowels.test(ipa)) {
+      // IPA without vowels is probably wrong for Italian
+      return '';
+    }
+    
+    return ipa;
   }
 
   private async getEnglishIPA(word: string): Promise<string> {
@@ -283,7 +378,7 @@ export class RhymeDetector {
   private phoneticAPI: PhoneticAPI;
 
   constructor() {
-    this.phoneticAPI = new IPAPhoneticAPI();
+    this.phoneticAPI = new PhoneticTranscriber();
   }
 
   async detectRhymes(text: string, language: string = 'en'): Promise<RhymeGroup[]> {
