@@ -359,14 +359,22 @@ export const AILyricsAssistant = ({ section, onLyricsUpdate, selectedLanguage }:
               
               {/* Simple Text Input */}
               <div className="flex-1 min-w-0">
-                <div className="relative">
-                  <textarea
-                    value={line.text}
-                    onChange={(e) => handleLineChange(line.id, e.target.value)}
-                    onClick={(e) => {
-                      const target = e.target as HTMLTextAreaElement;
-                      const words = target.value.split(/\s+/);
-                      const cursorPos = target.selectionStart;
+                <div
+                  contentEditable
+                  suppressContentEditableWarning={true}
+                  onInput={(e) => {
+                    const target = e.target as HTMLDivElement;
+                    const text = target.textContent || '';
+                    handleLineChange(line.id, text);
+                  }}
+                  onClick={(e) => {
+                    const target = e.target as HTMLDivElement;
+                    const text = target.textContent || '';
+                    const selection = window.getSelection();
+                    if (selection && selection.rangeCount > 0) {
+                      const range = selection.getRangeAt(0);
+                      const cursorPos = range.startOffset;
+                      const words = text.split(/\s+/);
                       let charCount = 0;
                       for (let i = 0; i < words.length; i++) {
                         if (charCount <= cursorPos && cursorPos <= charCount + words[i].length) {
@@ -378,59 +386,44 @@ export const AILyricsAssistant = ({ section, onLyricsUpdate, selectedLanguage }:
                         }
                         charCount += words[i].length + 1;
                       }
-                    }}
-                    placeholder={`Line ${index + 1}...`}
-                    className="w-full text-base bg-background border border-input rounded-md px-3 py-2 min-h-[3rem] resize-none overflow-hidden focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:outline-none relative z-10"
-                    style={{ 
-                      height: 'auto',
-                      minHeight: '3rem',
-                      background: 'transparent'
-                    }}
-                    onInput={(e) => {
-                      const target = e.target as HTMLTextAreaElement;
-                      target.style.height = 'auto';
-                      target.style.height = Math.max(target.scrollHeight, 48) + 'px';
-                    }}
-                  />
-                  
-                  {/* Rhyme highlighting overlay */}
-                  <div 
-                    className="absolute inset-0 px-3 py-2 text-base pointer-events-none whitespace-pre-wrap break-words z-0"
-                    style={{ 
-                      minHeight: '3rem',
-                      lineHeight: '1.5'
-                    }}
-                  >
-                    {line.text.split(/(\s+)/).map((part, partIndex) => {
-                      if (/\s/.test(part)) return <span key={partIndex}>{part}</span>;
+                    }
+                  }}
+                  className="w-full text-base bg-background border border-input rounded-md px-3 py-2 min-h-[3rem] resize-none overflow-hidden focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:outline-none"
+                  style={{ 
+                    minHeight: '3rem',
+                    lineHeight: '1.5'
+                  }}
+                  data-placeholder={`Line ${index + 1}...`}
+                >
+                  {line.text.split(/(\s+)/).map((part, partIndex) => {
+                    if (/\s/.test(part)) return <span key={partIndex}>{part}</span>;
+                    
+                    const cleanWord = part.toLowerCase().replace(/[^a-z]/g, '');
+                    const rhymeKey = getSimpleRhymeKey(cleanWord, selectedLanguage);
+                    
+                    // Find if this word rhymes with others
+                    const rhymingLines = lines.filter(l => l.rhymeLetter === line.rhymeLetter);
+                    const hasRhyme = rhymingLines.length > 1 && cleanWord.length > 2;
+                    
+                    if (hasRhyme && line.rhymeLetter) {
+                      const colorIndex = (line.rhymeLetter.charCodeAt(0) - 'A'.charCodeAt(0)) % 5;
+                      const rhymeColor = rhymeColors[colorIndex];
                       
-                      const cleanWord = part.toLowerCase().replace(/[^a-z]/g, '');
-                      const rhymeKey = getSimpleRhymeKey(cleanWord, selectedLanguage);
-                      
-                      // Find if this word rhymes with others
-                      const rhymingLines = lines.filter(l => l.rhymeLetter === line.rhymeLetter);
-                      const hasRhyme = rhymingLines.length > 1 && cleanWord.length > 2;
-                      
-                      if (hasRhyme && line.rhymeLetter) {
-                        const colorIndex = (line.rhymeLetter.charCodeAt(0) - 'A'.charCodeAt(0)) % 5;
-                        const rhymeColor = rhymeColors[colorIndex];
-                        
-                        return (
-                          <span 
-                            key={partIndex}
-                            className="font-medium"
-                            style={{
-                              color: rhymeColor
-                            }}
-                          >
-                            {part}
-                          </span>
-                        );
-                      }
-                      
-                      return <span key={partIndex} className="text-transparent">{part}</span>;
-                    })}
-                  </div>
+                      return (
+                        <span 
+                          key={partIndex}
+                          className="font-medium"
+                          style={{
+                            color: rhymeColor
+                          }}
+                        >
+                          {part}
+                        </span>
+                      );
+                    }
+                    
+                    return <span key={partIndex}>{part}</span>;
+                  })}
                 </div>
               </div>
               
