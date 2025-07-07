@@ -100,8 +100,45 @@ export const UnifiedTimeline = ({
     setIsDialogOpen(true);
   };
 
+  const checkForOverlap = (newSection: { startTime: number; endTime: number; id?: string }) => {
+    return sections.some(section => {
+      // Skip checking against the section being edited
+      if (editingSection && section.id === editingSection.id) return false;
+      
+      // Check if new section overlaps with existing section
+      const newStart = newSection.startTime;
+      const newEnd = newSection.endTime;
+      const existingStart = section.startTime;
+      const existingEnd = section.endTime;
+      
+      // Check for any overlap:
+      // 1. New section starts during existing section
+      // 2. New section ends during existing section  
+      // 3. New section completely encompasses existing section
+      // 4. Existing section completely encompasses new section
+      return (
+        (newStart >= existingStart && newStart < existingEnd) ||
+        (newEnd > existingStart && newEnd <= existingEnd) ||
+        (newStart <= existingStart && newEnd >= existingEnd) ||
+        (existingStart <= newStart && existingEnd >= newEnd)
+      );
+    });
+  };
+
   const handleSaveSection = () => {
     if (!formData.name.trim()) return;
+    
+    // Validate that start time is before end time
+    if (formData.startTime >= formData.endTime) {
+      alert('Start time must be before end time');
+      return;
+    }
+
+    // Check for overlaps with other sections
+    if (checkForOverlap(formData)) {
+      alert('Section times cannot overlap with existing sections');
+      return;
+    }
 
     if (editingSection) {
       const updatedSections = sections.map(section =>
