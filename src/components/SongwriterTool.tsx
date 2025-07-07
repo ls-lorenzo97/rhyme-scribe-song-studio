@@ -117,11 +117,11 @@ export const SongwriterTool = () => {
             </Card>
 
             {/* Content Grid */}
-            <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
-              {/* Left Column - Unified Timeline */}
-              <div className="xl:col-span-2">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* Left Column - Compact Timeline */}
+              <div>
                 <Card className="bg-card/80 backdrop-blur-xl border-0 shadow-card">
-                  <div className="p-6">
+                  <div className="p-4">
                     <UnifiedTimeline
                       sections={sections}
                       currentTime={currentTime}
@@ -136,7 +136,7 @@ export const SongwriterTool = () => {
               </div>
 
               {/* Right Column - Lyrics Editor */}
-              <div className="xl:col-span-1">
+              <div>
                 <Card className="bg-card/80 backdrop-blur-xl border-0 shadow-card sticky top-24">
                   <div className="p-6">
                     <LyricsEditor
