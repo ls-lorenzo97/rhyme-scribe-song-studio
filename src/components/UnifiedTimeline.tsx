@@ -207,7 +207,7 @@ export const UnifiedTimeline = ({
       <audio ref={audioRef} src={audioUrl} />
       
       {/* Album Art and Player Controls */}
-      <div className="space-y-6">
+      <div className="space-y-3">
         {/* Album Art */}
         <div className="flex justify-center">
           <div className="w-64 h-64 bg-gradient-music rounded-3xl shadow-large flex items-center justify-center">
