@@ -2,7 +2,7 @@ import { useState, useRef, useCallback } from 'react';
 import { Card } from '@/components/ui/card';
 import { AudioUpload } from './AudioUpload';
 import { UnifiedTimeline } from './UnifiedTimeline';
-import { LyricsEditor } from './LyricsEditor';
+import { AILyricsAssistant } from './lyrics/AILyricsAssistant';
 import { ExportDialog } from './ExportDialog';
 
 export interface SongSection {
@@ -124,7 +124,7 @@ export const SongwriterTool = () => {
             <div>
               <Card className="bg-card/80 backdrop-blur-xl border-0 shadow-card sticky top-24">
                 <div className="p-6">
-                  <LyricsEditor
+                  <AILyricsAssistant
                     section={currentSectionData}
                     onLyricsUpdate={handleLyricsUpdate}
                   />
