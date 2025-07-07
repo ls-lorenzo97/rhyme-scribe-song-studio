@@ -77,6 +77,7 @@ export const AILyricsAssistant = ({ section, onLyricsUpdate }: AILyricsAssistant
 
   // Initialize default lines when section changes
   useEffect(() => {
+    console.log('AILyricsAssistant: section changed', section?.name);
     if (section) {
       const existingLines = section.lyrics ? section.lyrics.split('\n') : [];
       const initialLines: LineData[] = [];
@@ -92,44 +93,57 @@ export const AILyricsAssistant = ({ section, onLyricsUpdate }: AILyricsAssistant
         });
       }
       
+      console.log('AILyricsAssistant: setting lines', initialLines.length);
       setLines(initialLines);
-      updateAnalysis(initialLines);
+      
+      // Only run analysis if there are actual lyrics
+      if (initialLines.some(line => line.text.trim())) {
+        console.log('AILyricsAssistant: starting analysis');
+        updateAnalysis(initialLines);
+      }
     }
-  }, [section, selectedLanguage]);
+  }, [section?.id, selectedLanguage]); // Remove updateAnalysis from dependencies
 
   const updateAnalysis = useCallback(async (currentLines: LineData[]) => {
-    const updatedLines = await Promise.all(
-      currentLines.map(async (line, index) => {
-        if (!line.text.trim()) {
-          return { ...line, syllableCount: 0, rhymeLetter: '', suggestions: [] };
-        }
+    console.log('AILyricsAssistant: updateAnalysis called with', currentLines.length, 'lines');
+    try {
+      const updatedLines = await Promise.all(
+        currentLines.map(async (line, index) => {
+          if (!line.text.trim()) {
+            return { ...line, syllableCount: 0, rhymeLetter: '', suggestions: [] };
+          }
 
-        // Count syllables
-        const words = line.text.split(/\s+/).filter(word => word.trim());
-        const syllableCount = words.reduce((count, word) => 
-          count + currentLanguage.syllableRules(word), 0
-        );
+          // Count syllables
+          const words = line.text.split(/\s+/).filter(word => word.trim());
+          const syllableCount = words.reduce((count, word) => 
+            count + currentLanguage.syllableRules(word), 0
+          );
 
-        // Get AI suggestions for incomplete lines
-        const suggestions = await generateLineSuggestions(line.text, selectedLanguage, index);
+          // Get AI suggestions for incomplete lines
+          const suggestions = await generateLineSuggestions(line.text, selectedLanguage, index);
 
-        return { ...line, syllableCount, suggestions };
-      })
-    );
+          return { ...line, syllableCount, suggestions };
+        })
+      );
 
-    // Calculate rhyme scheme
-    const rhymeScheme = await calculateRhymeScheme(updatedLines, selectedLanguage);
-    const linesWithRhyme = updatedLines.map((line, index) => ({
-      ...line,
-      rhymeLetter: rhymeScheme[index] || ''
-    }));
+      // Calculate rhyme scheme
+      const rhymeScheme = await calculateRhymeScheme(updatedLines, selectedLanguage);
+      const linesWithRhyme = updatedLines.map((line, index) => ({
+        ...line,
+        rhymeLetter: rhymeScheme[index] || ''
+      }));
 
-    setLines(linesWithRhyme);
-    
-    // Update the parent component
-    const lyricsText = linesWithRhyme.map(line => line.text).join('\n');
-    if (section) {
-      onLyricsUpdate(section.id, lyricsText);
+      console.log('AILyricsAssistant: analysis complete, updating lines');
+      setLines(linesWithRhyme);
+      
+      // Update the parent component
+      const lyricsText = linesWithRhyme.map(line => line.text).join('\n');
+      if (section) {
+        onLyricsUpdate(section.id, lyricsText);
+      }
+      console.log('AILyricsAssistant: parent updated');
+    } catch (error) {
+      console.error('AILyricsAssistant: error in updateAnalysis', error);
     }
   }, [currentLanguage, selectedLanguage, section, onLyricsUpdate]);
 

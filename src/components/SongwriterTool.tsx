@@ -24,9 +24,11 @@ export const SongwriterTool = () => {
   const audioRef = useRef<HTMLAudioElement>(null);
 
   const handleFileUpload = useCallback((file: File) => {
+    console.log('Starting file upload:', file.name, file.size);
     setAudioFile(file);
     const url = URL.createObjectURL(file);
     setAudioUrl(url);
+    console.log('Audio URL created:', url);
     
     // Create default sections
     const defaultSections: SongSection[] = [
@@ -40,6 +42,7 @@ export const SongwriterTool = () => {
     ];
     setSections(defaultSections);
     setCurrentSection(defaultSections[0].id);
+    console.log('File upload completed, sections created');
   }, []);
 
   const handleSectionUpdate = useCallback((updatedSections: SongSection[]) => {
