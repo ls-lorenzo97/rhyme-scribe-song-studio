@@ -418,11 +418,9 @@ export const AILyricsAssistant = ({ section, onLyricsUpdate, selectedLanguage }:
                         return (
                           <span 
                             key={partIndex}
-                            className="px-1 rounded font-medium"
+                            className="font-medium"
                             style={{
-                              backgroundColor: `${rhymeColor}20`,
-                              color: rhymeColor,
-                              borderBottom: `2px solid ${rhymeColor}`
+                              color: rhymeColor
                             }}
                           >
                             {part}
