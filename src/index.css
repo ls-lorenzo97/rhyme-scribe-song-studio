@@ -2,64 +2,65 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Music-themed design system with vibrant colors for a songwriter tool */
+/* Apple Music-inspired design system with sophisticated colors */
 
 @layer base {
   :root {
-    --background: 225 15% 5%;
-    --foreground: 210 40% 98%;
+    --background: 0 0% 100%;
+    --foreground: 240 10% 4%;
 
-    --card: 225 15% 8%;
-    --card-foreground: 210 40% 98%;
+    --card: 0 0% 100%;
+    --card-foreground: 240 10% 4%;
 
-    --popover: 225 15% 8%;
-    --popover-foreground: 210 40% 98%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 240 10% 4%;
 
-    --primary: 280 100% 60%;
-    --primary-foreground: 210 40% 98%;
-    --primary-glow: 280 80% 70%;
+    --primary: 0 0% 9%;
+    --primary-foreground: 0 0% 98%;
+    --primary-glow: 0 0% 20%;
 
-    --secondary: 200 60% 50%;
-    --secondary-foreground: 210 40% 98%;
+    --secondary: 240 5% 96%;
+    --secondary-foreground: 240 6% 10%;
 
-    --muted: 225 15% 15%;
-    --muted-foreground: 215 20% 65%;
+    --muted: 240 5% 96%;
+    --muted-foreground: 240 4% 46%;
 
-    --accent: 45 100% 60%;
-    --accent-foreground: 225 15% 8%;
+    --accent: 210 40% 98%;
+    --accent-foreground: 240 6% 10%;
 
     --destructive: 0 84% 60%;
-    --destructive-foreground: 210 40% 98%;
+    --destructive-foreground: 0 0% 98%;
 
-    --border: 225 15% 20%;
-    --input: 225 15% 15%;
-    --ring: 280 100% 60%;
+    --border: 240 6% 90%;
+    --input: 240 6% 90%;
+    --ring: 240 10% 4%;
 
-    /* Music-specific colors */
-    --music-primary: 280 100% 60%;
-    --music-secondary: 200 60% 50%;
-    --music-accent: 45 100% 60%;
-    --music-waveform: 280 50% 40%;
+    /* Apple Music colors */
+    --music-primary: 0 0% 9%;
+    --music-secondary: 240 5% 84%;
+    --music-accent: 211 100% 50%;
+    --music-waveform: 211 100% 50%;
     
-    /* Rhyme highlight colors */
-    --rhyme-1: 280 100% 60%;
-    --rhyme-2: 200 60% 50%;
-    --rhyme-3: 45 100% 60%;
-    --rhyme-4: 120 60% 50%;
-    --rhyme-5: 340 60% 60%;
+    /* Rhyme highlight colors - Apple-style pastels */
+    --rhyme-1: 211 100% 50%;
+    --rhyme-2: 142 71% 45%;
+    --rhyme-3: 32 95% 44%;
+    --rhyme-4: 271 91% 65%;
+    --rhyme-5: 326 78% 66%;
 
-    /* Gradients */
-    --gradient-primary: linear-gradient(135deg, hsl(var(--music-primary)), hsl(var(--primary-glow)));
-    --gradient-card: linear-gradient(145deg, hsl(var(--card)), hsl(225 15% 12%));
-    --gradient-waveform: linear-gradient(90deg, hsl(var(--music-waveform)), hsl(var(--music-primary)));
+    /* Apple-style gradients */
+    --gradient-primary: linear-gradient(180deg, hsl(0 0% 100%) 0%, hsl(240 5% 96%) 100%);
+    --gradient-card: linear-gradient(180deg, hsl(0 0% 100%) 0%, hsl(240 5% 98%) 100%);
+    --gradient-music: linear-gradient(135deg, hsl(211 100% 50%) 0%, hsl(271 91% 65%) 100%);
 
-    /* Shadows */
-    --shadow-glow: 0 0 30px hsl(var(--music-primary) / 0.3);
-    --shadow-card: 0 8px 32px hsl(225 15% 0% / 0.4);
+    /* Apple-style shadows */
+    --shadow-sm: 0 1px 2px 0 hsl(0 0% 0% / 0.05);
+    --shadow-card: 0 4px 16px -4px hsl(0 0% 0% / 0.1);
+    --shadow-large: 0 25px 50px -12px hsl(0 0% 0% / 0.25);
 
-    /* Animations */
-    --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    --transition-bounce: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+    /* Apple-style animations */
+    --transition-smooth: all 0.2s ease-in-out;
+    --transition-spring: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 
     --radius: 0.5rem;
 

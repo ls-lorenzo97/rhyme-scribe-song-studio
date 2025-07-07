@@ -41,47 +41,52 @@ export const AudioUpload = ({ onFileUpload }: AudioUploadProps) => {
   }, [onFileUpload]);
 
   return (
-    <div className="text-center space-y-6">
+    <div className="text-center space-y-8">
       <div className="flex justify-center">
-        <div className="w-20 h-20 bg-gradient-primary rounded-full flex items-center justify-center shadow-glow">
-          <div className="text-2xl font-bold text-primary-foreground">♪</div>
+        <div className="w-24 h-24 bg-gradient-music rounded-full flex items-center justify-center shadow-card">
+          <div className="text-3xl font-medium text-white">♪</div>
         </div>
       </div>
       
       <div>
-        <h2 className="text-2xl font-bold text-foreground mb-2">
-          Upload Your Song
+        <h2 className="text-2xl font-semibold text-foreground mb-3">
+          Add Music
         </h2>
-        <p className="text-muted-foreground">
-          Drop your audio file here or click to browse
+        <p className="text-muted-foreground text-base">
+          Choose a song from your library or drag it here
         </p>
       </div>
 
-      <Card
+      <div
         className={cn(
-          "border-2 border-dashed p-12 transition-all duration-300 cursor-pointer hover:border-music-primary",
-          isDragOver ? "border-music-primary bg-music-primary/5" : "border-border"
+          "border-2 border-dashed rounded-2xl p-16 transition-all duration-200 cursor-pointer",
+          "hover:bg-muted/30 hover:border-music-accent",
+          isDragOver ? "border-music-accent bg-music-accent/10 scale-[1.02]" : "border-border/40"
         )}
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
         onClick={() => document.getElementById('audio-upload')?.click()}
       >
-        <div className="space-y-4">
-          <ArrowUp className="w-12 h-12 text-muted-foreground mx-auto" />
+        <div className="space-y-6">
+          <ArrowUp className="w-16 h-16 text-muted-foreground mx-auto" />
           <div>
-            <p className="text-lg font-medium text-foreground">
-              Drag & drop your audio file
+            <p className="text-xl font-medium text-foreground mb-2">
+              Drag and Drop
             </p>
-            <p className="text-sm text-muted-foreground mt-1">
-              Supports MP3, WAV, M4A, and other audio formats
+            <p className="text-muted-foreground">
+              MP3, WAV, M4A, and other audio formats
             </p>
           </div>
-          <Button variant="secondary" size="lg" className="mx-auto">
-            Choose File
+          <Button 
+            variant="default" 
+            size="lg" 
+            className="bg-music-primary hover:bg-music-primary/90 text-white rounded-full px-8 py-3 font-medium"
+          >
+            Browse Files
           </Button>
         </div>
-      </Card>
+      </div>
 
       <input
         id="audio-upload"

@@ -65,17 +65,17 @@ export const SongwriterTool = () => {
   const currentSectionData = sections.find(s => s.id === currentSection);
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Header */}
-      <div className="border-b border-border bg-gradient-card">
-        <div className="container mx-auto px-6 py-4">
+    <div className="min-h-screen bg-gradient-primary">
+      {/* Apple Music-style Header */}
+      <div className="bg-card/80 backdrop-blur-xl border-b border-border/20 sticky top-0 z-50">
+        <div className="max-w-7xl mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-3xl font-bold bg-gradient-primary bg-clip-text text-transparent">
-                Songwriter Studio
+              <h1 className="text-3xl font-semibold text-foreground">
+                Music
               </h1>
-              <p className="text-muted-foreground mt-1">
-                Create, edit, and organize your lyrics with AI-powered rhyme detection
+              <p className="text-muted-foreground text-sm mt-1">
+                Songwriter Studio
               </p>
             </div>
             <ExportDialog sections={sections} audioFile={audioFile} />
@@ -83,20 +83,24 @@ export const SongwriterTool = () => {
         </div>
       </div>
 
-      <div className="container mx-auto px-6 py-8 space-y-8">
+      <div className="max-w-7xl mx-auto px-6 py-8">
         {/* Audio Upload */}
         {!audioFile && (
-          <Card className="p-8 bg-gradient-card shadow-card">
-            <AudioUpload onFileUpload={handleFileUpload} />
-          </Card>
+          <div className="flex items-center justify-center min-h-[60vh]">
+            <Card className="max-w-lg w-full bg-card/80 backdrop-blur-xl border-0 shadow-large">
+              <div className="p-12">
+                <AudioUpload onFileUpload={handleFileUpload} />
+              </div>
+            </Card>
+          </div>
         )}
 
         {/* Main Interface */}
         {audioFile && (
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            {/* Left Column - Audio Controls & Timeline */}
-            <div className="lg:col-span-2 space-y-6">
-              <Card className="p-6 bg-gradient-card shadow-card">
+          <div className="space-y-6">
+            {/* Now Playing Section */}
+            <Card className="bg-card/80 backdrop-blur-xl border-0 shadow-card">
+              <div className="p-8">
                 <AudioControls
                   audioRef={audioRef}
                   audioUrl={audioUrl}
@@ -108,37 +112,50 @@ export const SongwriterTool = () => {
                   setDuration={setDuration}
                   currentSection={currentSection}
                   sections={sections}
+                  audioFile={audioFile}
                 />
-              </Card>
+              </div>
+            </Card>
 
-              <Card className="p-6 bg-gradient-card shadow-card">
-                <Timeline
-                  sections={sections}
-                  currentTime={currentTime}
-                  duration={duration}
-                  currentSection={currentSection}
-                  onSectionClick={jumpToSection}
-                />
-              </Card>
+            {/* Content Grid */}
+            <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+              {/* Left Column - Timeline & Sections */}
+              <div className="xl:col-span-2 space-y-6">
+                <Card className="bg-card/80 backdrop-blur-xl border-0 shadow-card">
+                  <div className="p-6">
+                    <Timeline
+                      sections={sections}
+                      currentTime={currentTime}
+                      duration={duration}
+                      currentSection={currentSection}
+                      onSectionClick={jumpToSection}
+                    />
+                  </div>
+                </Card>
 
-              <Card className="p-6 bg-gradient-card shadow-card">
-                <SectionManager
-                  sections={sections}
-                  onSectionsUpdate={handleSectionUpdate}
-                  currentSection={currentSection}
-                  setCurrentSection={setCurrentSection}
-                />
-              </Card>
-            </div>
+                <Card className="bg-card/80 backdrop-blur-xl border-0 shadow-card">
+                  <div className="p-6">
+                    <SectionManager
+                      sections={sections}
+                      onSectionsUpdate={handleSectionUpdate}
+                      currentSection={currentSection}
+                      setCurrentSection={setCurrentSection}
+                    />
+                  </div>
+                </Card>
+              </div>
 
-            {/* Right Column - Lyrics Editor */}
-            <div className="lg:col-span-1">
-              <Card className="p-6 bg-gradient-card shadow-card h-fit sticky top-8">
-                <LyricsEditor
-                  section={currentSectionData}
-                  onLyricsUpdate={handleLyricsUpdate}
-                />
-              </Card>
+              {/* Right Column - Lyrics Editor */}
+              <div className="xl:col-span-1">
+                <Card className="bg-card/80 backdrop-blur-xl border-0 shadow-card sticky top-24">
+                  <div className="p-6">
+                    <LyricsEditor
+                      section={currentSectionData}
+                      onLyricsUpdate={handleLyricsUpdate}
+                    />
+                  </div>
+                </Card>
+              </div>
             </div>
           </div>
         )}

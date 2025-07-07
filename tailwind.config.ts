@@ -80,11 +80,12 @@ export default {
 			backgroundImage: {
 				'gradient-primary': 'var(--gradient-primary)',
 				'gradient-card': 'var(--gradient-card)',
-				'gradient-waveform': 'var(--gradient-waveform)'
+				'gradient-music': 'var(--gradient-music)'
 			},
 			boxShadow: {
-				'glow': 'var(--shadow-glow)',
-				'card': 'var(--shadow-card)'
+				'sm': 'var(--shadow-sm)',
+				'card': 'var(--shadow-card)',
+				'large': 'var(--shadow-large)'
 			},
 			transitionTimingFunction: {
 				'smooth': 'var(--transition-smooth)',
