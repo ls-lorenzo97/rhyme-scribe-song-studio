@@ -26,7 +26,8 @@ export default {
 				foreground: 'hsl(var(--foreground))',
 				primary: {
 					DEFAULT: 'hsl(var(--primary))',
-					foreground: 'hsl(var(--primary-foreground))'
+					foreground: 'hsl(var(--primary-foreground))',
+					glow: 'hsl(var(--primary-glow))'
 				},
 				secondary: {
 					DEFAULT: 'hsl(var(--secondary))',
@@ -61,7 +62,33 @@ export default {
 					'accent-foreground': 'hsl(var(--sidebar-accent-foreground))',
 					border: 'hsl(var(--sidebar-border))',
 					ring: 'hsl(var(--sidebar-ring))'
+				},
+				music: {
+					primary: 'hsl(var(--music-primary))',
+					secondary: 'hsl(var(--music-secondary))',
+					accent: 'hsl(var(--music-accent))',
+					waveform: 'hsl(var(--music-waveform))'
+				},
+				rhyme: {
+					1: 'hsl(var(--rhyme-1))',
+					2: 'hsl(var(--rhyme-2))',
+					3: 'hsl(var(--rhyme-3))',
+					4: 'hsl(var(--rhyme-4))',
+					5: 'hsl(var(--rhyme-5))'
 				}
+			},
+			backgroundImage: {
+				'gradient-primary': 'var(--gradient-primary)',
+				'gradient-card': 'var(--gradient-card)',
+				'gradient-waveform': 'var(--gradient-waveform)'
+			},
+			boxShadow: {
+				'glow': 'var(--shadow-glow)',
+				'card': 'var(--shadow-card)'
+			},
+			transitionTimingFunction: {
+				'smooth': 'var(--transition-smooth)',
+				'bounce': 'var(--transition-bounce)'
 			},
 			borderRadius: {
 				lg: 'var(--radius)',
