@@ -5,34 +5,58 @@ interface PhoneticCache {
 }
 
 interface PhoneticAPI {
-  getTranscription(word: string, language: string): Promise<string>;
+  getTranscription(word: string, language: string): string;
 }
 
-// Enhanced phonetic transcription system using cascade approach
+// Local JavaScript IPA transcription system
 class PhoneticTranscriber implements PhoneticAPI {
   private cache: PhoneticCache = {};
   private readonly MAX_CACHE_SIZE = 1000;
 
-  async getTranscription(word: string, language: string): Promise<string> {
+  // Common Italian word endings to IPA mappings
+  private italianIpaDict: { [key: string]: string } = {
+    'male': 'ale',
+    'irreale': 'eale',
+    'finale': 'ale', 
+    'reale': 'eale',
+    'normale': 'ale',
+    'generale': 'ale',
+    'speciale': 'ale',
+    'sociale': 'ale',
+    'nazionale': 'ale',
+    'regionale': 'ale',
+    'personale': 'ale',
+    'naturale': 'ale',
+    'centrale': 'ale',
+    'totale': 'ale',
+    'vitale': 'ale',
+    'locale': 'ale',
+    'musicale': 'ale',
+    'animale': 'ale',
+    'mentale': 'ale',
+    'fatale': 'ale'
+  };
+
+  getTranscription(word: string, language: string): string {
     const cacheKey = `${word}-${language}`;
     
     if (this.cache[cacheKey]) {
       return this.cache[cacheKey];
     }
 
+    let transcription = '';
+    
     try {
-      // Cascade approach: Epitran-equivalent -> Phonemizer-equivalent -> eSpeak-equivalent
-      let transcription = await this.epitranEquivalent(word, language);
-      
-      if (!transcription || transcription.length < 2) {
-        transcription = await this.phonemizerEquivalent(word, language);
+      // Use local dictionaries and rules
+      if (language === 'it') {
+        transcription = this.getItalianIPA(word);
+      } else if (language === 'en') {
+        transcription = this.getEnglishIPA(word);
+      } else {
+        transcription = this.getGenericIPA(word, language);
       }
       
-      if (!transcription || transcription.length < 2) {
-        transcription = await this.eSpeakEquivalent(word, language);
-      }
-      
-      // Validate transcription quality
+      // Validate and clean transcription
       transcription = this.validateAndClean(transcription, word, language);
 
       // Cache the result
@@ -44,77 +68,75 @@ class PhoneticTranscriber implements PhoneticAPI {
     }
   }
 
-  // Epitran-equivalent: Primary IPA transcription using linguistic APIs
-  private async epitranEquivalent(word: string, language: string): Promise<string> {
-    try {
-      switch (language) {
-        case 'it':
-          return await this.getItalianIPA(word);
-        case 'en':
-          return await this.getEnglishIPA(word);
-        case 'es':
-          return await this.getSpanishIPA(word);
-        case 'fr':
-          return await this.getFrenchIPA(word);
-        case 'de':
-          return await this.getGermanIPA(word);
-        default:
-          return '';
-      }
-    } catch (error) {
-      console.log(`Epitran-equivalent failed for ${word}:`, error);
-      return '';
+  private getItalianIPA(word: string): string {
+    // Check if word is in our dictionary
+    if (this.italianIpaDict[word]) {
+      return this.italianIpaDict[word];
     }
-  }
 
-  // Phonemizer-equivalent: Backup using TTS APIs for phonetic info
-  private async phonemizerEquivalent(word: string, language: string): Promise<string> {
-    try {
-      // Use Web Speech API or TTS services to get phonetic info
-      const response = await fetch(`https://api.voicerss.org/?key=demo&hl=${language}&src=${encodeURIComponent(word)}&f=22khz_16bit_mono&ipa=true`);
-      if (response.ok) {
-        const data = await response.text();
-        return this.extractIPAFromTTS(data);
-      }
-    } catch (error) {
-      console.log(`Phonemizer-equivalent failed for ${word}:`, error);
-    }
-    return '';
-  }
+    // Apply Italian phonetic rules
+    let ipa = word.toLowerCase();
+    
+    // Italian-specific IPA conversion rules focusing on rhyme endings
+    const rules = [
+      // Main rhyme endings
+      [/ale$/, 'ale'],  // male, reale, finale
+      [/are$/, 'are'],  // amare, cantare
+      [/ere$/, 'ere'],  // vedere, credere
+      [/ire$/, 'ire'],  // sentire, partire
+      [/ore$/, 'ore'],  // amore, dolore
+      [/ione$/, 'jone'], // azione, nazione
+      [/zione$/, 'tsjone'], // protezione, creazione
+      [/sione$/, 'sjone'], // dimensione, decisione
+      [/mente$/, 'ente'], // certamente, rapidamente
+      [/anza$/, 'antsa'], // speranza, danza
+      [/enza$/, 'entsa'], // presenza, violenza
+      [/ità$/, 'ita'],   // città, verità
+      [/ezza$/, 'ettsa'], // bellezza, tristezza
+    ];
 
-  // eSpeak-equivalent: Validation and quality control
-  private async eSpeakEquivalent(word: string, language: string): Promise<string> {
-    try {
-      // Use pronunciation APIs for validation
-      const response = await fetch(`https://api.dictionaryapi.dev/api/v2/entries/${language}/${word}`);
-      if (response.ok) {
-        const data = await response.json();
-        return this.extractIPAFromDictionary(data);
-      }
-    } catch (error) {
-      console.log(`eSpeak-equivalent failed for ${word}:`, error);
-    }
-    return '';
-  }
-
-  private extractIPAFromTTS(data: string): string {
-    // Extract IPA notation from TTS response
-    const ipaMatch = data.match(/\[(.*?)\]/);
-    return ipaMatch ? ipaMatch[1] : '';
-  }
-
-  private extractIPAFromDictionary(data: any[]): string {
-    // Extract IPA from dictionary API response
-    for (const entry of data) {
-      if (entry.phonetics) {
-        for (const phonetic of entry.phonetics) {
-          if (phonetic.text && phonetic.text.includes('/')) {
-            return phonetic.text.replace(/[\/\[\]]/g, '');
-          }
-        }
+    for (const [pattern, replacement] of rules) {
+      if ((pattern as RegExp).test(ipa)) {
+        ipa = ipa.replace(pattern as RegExp, replacement as string);
+        break; // Use first match only
       }
     }
-    return '';
+
+    // Return last 3 characters for rhyme matching
+    return ipa.slice(-3);
+  }
+
+  private getEnglishIPA(word: string): string {
+    // Basic English IPA conversion
+    let ipa = word.toLowerCase();
+    
+    // English phonetic rules for common endings
+    const rules = [
+      [/tion$/, 'ʃən'],
+      [/sion$/, 'ʒən'],
+      [/ing$/, 'ɪŋ'],
+      [/ed$/, 'd'],
+      [/er$/, 'ər'],
+      [/ly$/, 'li'],
+      [/y$/, 'i'],
+      [/ight$/, 'aɪt'],
+      [/ough$/, 'ʌf'],
+      [/augh$/, 'ɔːf']
+    ];
+
+    for (const [pattern, replacement] of rules) {
+      if ((pattern as RegExp).test(ipa)) {
+        ipa = ipa.replace(pattern as RegExp, replacement as string);
+        break;
+      }
+    }
+
+    return ipa.slice(-3);
+  }
+
+  private getGenericIPA(word: string, language: string): string {
+    // Generic IPA approximation for other languages
+    return this.getFallbackPhonetic(word, language);
   }
 
   private validateAndClean(transcription: string, word: string, language: string): string {
@@ -126,77 +148,7 @@ class PhoneticTranscriber implements PhoneticAPI {
       .replace(/[ˈˌ]/g, '') // Remove stress markers for rhyme comparison
       .toLowerCase();
     
-    // Language-specific validation
-    if (language === 'it') {
-      cleaned = this.validateItalianIPA(cleaned, word);
-    }
-    
     return cleaned || this.getFallbackPhonetic(word, language);
-  }
-
-  private validateItalianIPA(ipa: string, word: string): string {
-    // Ensure Italian IPA makes sense
-    const italianVowels = /[aeiou]/;
-    const italianConsonants = /[bcdfghjklmnpqrstvwxyz]/;
-    
-    if (!italianVowels.test(ipa)) {
-      // IPA without vowels is probably wrong for Italian
-      return '';
-    }
-    
-    return ipa;
-  }
-
-  private async getEnglishIPA(word: string): Promise<string> {
-    // Use a combination of APIs for English
-    try {
-      // Primary: Use easypronunciation.com API
-      const response = await fetch('https://easypronunciation.com/en/ipa-phonetic-converter-rest-api', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ text: word, language: 'en' })
-      });
-      
-      if (response.ok) {
-        const data = await response.json();
-        return data.transcription || this.getFallbackPhonetic(word, 'en');
-      }
-    } catch (error) {
-      // Fallback to local approximation
-    }
-    
-    return this.getFallbackPhonetic(word, 'en');
-  }
-
-  private async getItalianIPA(word: string): Promise<string> {
-    try {
-      // Try phonetics-api for Italian
-      const response = await fetch(`https://api.phonetics.dev/italian/${encodeURIComponent(word)}`);
-      
-      if (response.ok) {
-        const data = await response.json();
-        return data.ipa || this.getFallbackPhonetic(word, 'it');
-      }
-    } catch (error) {
-      // Fallback
-    }
-    
-    return this.getFallbackPhonetic(word, 'it');
-  }
-
-  private async getSpanishIPA(word: string): Promise<string> {
-    // Similar implementation for Spanish
-    return this.getFallbackPhonetic(word, 'es');
-  }
-
-  private async getFrenchIPA(word: string): Promise<string> {
-    // Similar implementation for French
-    return this.getFallbackPhonetic(word, 'fr');
-  }
-
-  private async getGermanIPA(word: string): Promise<string> {
-    // Similar implementation for German
-    return this.getFallbackPhonetic(word, 'de');
   }
 
   private getFallbackPhonetic(word: string, language: string): string {
@@ -214,30 +166,14 @@ class PhoneticTranscriber implements PhoneticAPI {
   private getEnglishPhoneticFallback(word: string): string {
     let phonetic = word.toLowerCase();
     
-    // Enhanced English phonetic rules
     const rules = [
-      [/ght$/, 'aɪt'],
-      [/ough$/, 'ʌf'],
-      [/augh$/, 'ɔːf'],
       [/tion$/, 'ʃən'],
       [/sion$/, 'ʒən'],
-      [/ious$/, 'iəs'],
-      [/eous$/, 'iəs'],
       [/ed$/, 't'],
       [/ing$/, 'ɪŋ'],
       [/ly$/, 'li'],
       [/y$/, 'i'],
-      [/ey$/, 'i'],
-      [/ay$/, 'eɪ'],
-      [/oy$/, 'ɔɪ'],
-      [/aw$/, 'ɔː'],
-      [/ow$/, 'oʊ'],
-      [/ew$/, 'juː'],
-      [/er$/, 'ər'],
-      [/ar$/, 'ɑːr'],
-      [/or$/, 'ɔːr'],
-      [/ir$/, 'ɪr'],
-      [/ur$/, 'ər']
+      [/er$/, 'ər']
     ];
 
     for (const [pattern, replacement] of rules) {
@@ -251,25 +187,15 @@ class PhoneticTranscriber implements PhoneticAPI {
     let phonetic = word.toLowerCase();
     
     const rules = [
-      [/zione$/, 'tsjone'],
-      [/sione$/, 'sjone'],
-      [/gione$/, 'dʒone'],
-      [/ità$/, 'ita'],
-      [/ezza$/, 'ettsa'],
-      [/anza$/, 'antsa'],
-      [/enza$/, 'entsa'],
-      [/mente$/, 'mente'],
-      [/ando$/, 'ando'],
-      [/endo$/, 'endo'],
-      [/iero$/, 'jero'],
-      [/iera$/, 'jera'],
+      [/ale$/, 'ale'],
       [/are$/, 'are'],
       [/ere$/, 'ere'],
       [/ire$/, 'ire'],
-      [/chi$/, 'ki'],
-      [/che$/, 'ke'],
-      [/ghi$/, 'gi'],
-      [/ghe$/, 'ge']
+      [/ore$/, 'ore'],
+      [/zione$/, 'tsjone'],
+      [/sione$/, 'sjone'],
+      [/mente$/, 'ente'],
+      [/ità$/, 'ita']
     ];
 
     for (const [pattern, replacement] of rules) {
@@ -285,15 +211,8 @@ class PhoneticTranscriber implements PhoneticAPI {
     const rules = [
       [/ción$/, 'θjon'],
       [/sión$/, 'sjon'],
-      [/dad$/, 'ðað'],
-      [/idad$/, 'ið̞að'],
-      [/mente$/, 'mente'],
+      [/mente$/, 'ente'],
       [/ando$/, 'ando'],
-      [/iendo$/, 'jendo'],
-      [/ería$/, 'eria'],
-      [/ura$/, 'ura'],
-      [/oso$/, 'oso'],
-      [/osa$/, 'osa'],
       [/ar$/, 'ar'],
       [/er$/, 'er'],
       [/ir$/, 'ir']
@@ -314,15 +233,8 @@ class PhoneticTranscriber implements PhoneticAPI {
       [/sion$/, 'zjɔ̃'],
       [/ment$/, 'mɑ̃'],
       [/ent$/, 'ɑ̃'],
-      [/ant$/, 'ɑ̃'],
       [/age$/, 'aʒ'],
-      [/ige$/, 'iʒ'],
-      [/eur$/, 'œr'],
-      [/aire$/, 'ɛr'],
-      [/oire$/, 'war'],
-      [/ique$/, 'ik'],
-      [/able$/, 'abl'],
-      [/ible$/, 'ibl']
+      [/eur$/, 'œr']
     ];
 
     for (const [pattern, replacement] of rules) {
@@ -337,14 +249,10 @@ class PhoneticTranscriber implements PhoneticAPI {
     
     const rules = [
       [/ung$/, 'ʊŋ'],
-      [/heit$/, 'haɪt'],
-      [/keit$/, 'kaɪt'],
-      [/lich$/, 'lɪç'],
-      [/isch$/, 'ɪʃ'],
-      [/tion$/, 'tsi̯oːn'],
-      [/ieren$/, 'iːrən'],
-      [/chen$/, 'çən'],
-      [/lein$/, 'laɪn']
+      [/heit$/, 'aɪt'],
+      [/keit$/, 'aɪt'],
+      [/lich$/, 'ɪç'],
+      [/tion$/, 'oːn']
     ];
 
     for (const [pattern, replacement] of rules) {
@@ -394,69 +302,36 @@ export class RhymeDetector {
     
     let globalCharIndex = 0;
     
-    // Process all lines in parallel
-    const linePromises = lines.map(async (line, lineIndex) => {
+    // Process all lines
+    lines.forEach((line, lineIndex) => {
       const lineWords = line.trim().split(/\s+/);
       
-      // Process words in parallel for better performance
-      const wordPromises = lineWords.map(async (word, wordIndex) => {
+      lineWords.forEach((word, wordIndex) => {
         const cleanWord = word.toLowerCase().replace(/[^a-z]/g, '');
         if (cleanWord.length > 2) {
-          try {
-            const phonetic = await this.phoneticAPI.getTranscription(cleanWord, language);
-            const startChar = globalCharIndex + wordIndex * (word.length + 1);
-            const endChar = startChar + word.length;
-            
-            return { 
-              word: cleanWord, 
-              line: lineIndex, 
-              wordIndex, 
-              startChar,
-              endChar,
-              phonetic
-            };
-          } catch (error) {
-            // Fallback to simple phonetic if API fails
-            const phonetic = this.getSimplePhonetic(cleanWord, language);
-            const startChar = globalCharIndex + wordIndex * (word.length + 1);
-            const endChar = startChar + word.length;
-            
-            return { 
-              word: cleanWord, 
-              line: lineIndex, 
-              wordIndex, 
-              startChar,
-              endChar,
-              phonetic
-            };
-          }
+          const phonetic = this.phoneticAPI.getTranscription(cleanWord, language);
+          const startChar = globalCharIndex + wordIndex * (word.length + 1);
+          const endChar = startChar + word.length;
+          
+          words.push({ 
+            word: cleanWord, 
+            line: lineIndex, 
+            wordIndex, 
+            startChar,
+            endChar,
+            phonetic
+          });
         }
-        return null;
       });
 
-      const processedWords = await Promise.all(wordPromises);
       globalCharIndex += line.length + 1; // +1 for newline
-      
-      return processedWords.filter(Boolean) as Array<{ 
-        word: string; 
-        line: number; 
-        wordIndex: number; 
-        startChar: number;
-        endChar: number;
-        phonetic: string;
-      }>;
     });
 
-    const allLineResults = await Promise.all(linePromises);
-    allLineResults.forEach(lineResult => {
-      words.push(...lineResult);
-    });
-
-    // Group words by phonetic similarity with advanced matching
+    // Group words by phonetic similarity
     const phoneticGroups: { [key: string]: typeof words } = {};
     
     words.forEach(wordData => {
-      // Extract rhyme part from IPA transcription
+      // Extract rhyme part from phonetic transcription
       const rhymeKey = this.extractRhymeSound(wordData.phonetic, language);
       if (!phoneticGroups[rhymeKey]) {
         phoneticGroups[rhymeKey] = [];
@@ -491,239 +366,20 @@ export class RhymeDetector {
       }
     });
 
-    // Detect internal rhymes
-    const internalRhymes = await this.detectInternalRhymes(lines, language);
-    rhymeGroups.push(...internalRhymes.map((group, index) => ({
-      ...group,
-      id: `internal-${index}`,
-      color: this.rhymeColors[(colorIndex + index) % this.rhymeColors.length]
-    })));
-
     return rhymeGroups;
   }
 
   private extractRhymeSound(ipa: string, language: string): string {
-    // Extract the rhyming part from IPA transcription
+    // Extract the rhyming part from phonetic transcription
     if (!ipa || ipa.length < 2) return ipa;
     
-    // For most languages, the rhyme is the nucleus + coda of the last syllable
-    // This is a simplified approach - in reality, we'd need proper syllable parsing
-    
-    switch (language) {
-      case 'en':
-        return this.extractEnglishRhyme(ipa);
-      case 'it':
-        return this.extractItalianRhyme(ipa);
-      case 'es':
-        return this.extractSpanishRhyme(ipa);
-      case 'fr':
-        return this.extractFrenchRhyme(ipa);
-      case 'de':
-        return this.extractGermanRhyme(ipa);
-      default:
-        // Default: last 2-3 phonemes
-        return ipa.slice(-3);
-    }
-  }
-
-  private extractEnglishRhyme(ipa: string): string {
-    // Extract vowel + consonants at end for English rhymes
-    const vowels = /[aeiouæɑɔɪʊʌəɛɜɝɞɘɵɤʉɨɯɪʏʊʌəɛɝɞɘɵɤɞɨɪʊɛʌɚɛɪæɑɔɪʊʌə]/;
-    let rhymeStart = ipa.length;
-    
-    // Find the last vowel
-    for (let i = ipa.length - 1; i >= 0; i--) {
-      if (vowels.test(ipa[i])) {
-        rhymeStart = i;
-        break;
-      }
+    // For Italian, we focus on endings which are very consistent
+    if (language === 'it') {
+      return ipa; // Already processed to be the rhyme ending
     }
     
-    return ipa.slice(rhymeStart);
-  }
-
-  private extractItalianRhyme(ipa: string): string {
-    // Italian typically rhymes from the stressed vowel to the end
-    const stressMarkers = /[ˈˌ]/g;
-    let cleanIpa = ipa.replace(stressMarkers, '');
-    
-    // For Italian, usually last 2-3 phonemes make the rhyme
-    return cleanIpa.slice(-3);
-  }
-
-  private extractSpanishRhyme(ipa: string): string {
-    // Similar to Italian, Spanish rhymes from last stressed vowel
-    const stressMarkers = /[ˈˌ]/g;
-    let cleanIpa = ipa.replace(stressMarkers, '');
-    return cleanIpa.slice(-3);
-  }
-
-  private extractFrenchRhyme(ipa: string): string {
-    // French rhyming is complex due to silent letters
-    const stressMarkers = /[ˈˌ]/g;
-    let cleanIpa = ipa.replace(stressMarkers, '');
-    return cleanIpa.slice(-3);
-  }
-
-  private extractGermanRhyme(ipa: string): string {
-    // German rhymes from the stressed syllable
-    const stressMarkers = /[ˈˌ]/g;
-    let cleanIpa = ipa.replace(stressMarkers, '');
-    return cleanIpa.slice(-3);
-  }
-
-  private getSimplePhonetic(word: string, language: string): string {
-    // Fallback method using simple rules (existing implementation)
-    switch (language) {
-      case 'en':
-        return this.getEnglishPhonetic(word);
-      case 'it':
-        return this.getItalianPhonetic(word);
-      case 'es':
-        return this.getSpanishPhonetic(word);
-      case 'fr':
-        return this.getFrenchPhonetic(word);
-      case 'de':
-        return this.getGermanPhonetic(word);
-      default:
-        return this.getGenericPhonetic(word);
-    }
-  }
-
-  private getEnglishPhonetic(word: string): string {
-    // Simplified English phonetic rules (fallback)
-    let phonetic = word.toLowerCase();
-    
-    const rules = [
-      [/ght$/, 'aɪt'],
-      [/ough$/, 'ʌf'],
-      [/tion$/, 'ʃən'],
-      [/sion$/, 'ʒən'],
-      [/ed$/, 't'],
-      [/ing$/, 'ɪŋ'],
-      [/ly$/, 'li'],
-      [/y$/, 'i'],
-      [/ey$/, 'i'],
-      [/ay$/, 'eɪ'],
-      [/oy$/, 'ɔɪ'],
-      [/aw$/, 'ɔː'],
-      [/ow$/, 'oʊ'],
-      [/ew$/, 'juː'],
-      [/er$/, 'ər'],
-      [/ar$/, 'ɑːr'],
-      [/or$/, 'ɔːr'],
-      [/ir$/, 'ɪr'],
-      [/ur$/, 'ər']
-    ];
-
-    for (const [pattern, replacement] of rules) {
-      phonetic = phonetic.replace(pattern as RegExp, replacement as string);
-    }
-
-    return phonetic.slice(-3);
-  }
-
-  private getItalianPhonetic(word: string): string {
-    // Italian phonetic rules (fallback)
-    let phonetic = word.toLowerCase();
-    
-    const rules = [
-      [/zione$/, 'tsjone'],
-      [/sione$/, 'sjone'],
-      [/gione$/, 'dʒone'],
-      [/ità$/, 'ita'],
-      [/ezza$/, 'ettsa'],
-      [/anza$/, 'antsa'],
-      [/enza$/, 'entsa'],
-      [/mente$/, 'mente'],
-      [/ando$/, 'ando'],
-      [/endo$/, 'endo'],
-      [/are$/, 'are'],
-      [/ere$/, 'ere'],
-      [/ire$/, 'ire']
-    ];
-
-    for (const [pattern, replacement] of rules) {
-      phonetic = phonetic.replace(pattern as RegExp, replacement as string);
-    }
-
-    return phonetic.slice(-3);
-  }
-
-  private getSpanishPhonetic(word: string): string {
-    // Spanish phonetic rules (fallback)
-    let phonetic = word.toLowerCase();
-    
-    const rules = [
-      [/ción$/, 'θjon'],
-      [/sión$/, 'sjon'],
-      [/dad$/, 'ðað'],
-      [/idad$/, 'ið̞að'],
-      [/mente$/, 'mente'],
-      [/ando$/, 'ando'],
-      [/iendo$/, 'jendo'],
-      [/ar$/, 'ar'],
-      [/er$/, 'er'],
-      [/ir$/, 'ir']
-    ];
-
-    for (const [pattern, replacement] of rules) {
-      phonetic = phonetic.replace(pattern as RegExp, replacement as string);
-    }
-
-    return phonetic.slice(-3);
-  }
-
-  private getFrenchPhonetic(word: string): string {
-    // French phonetic rules (fallback)
-    let phonetic = word.toLowerCase();
-    
-    const rules = [
-      [/tion$/, 'sjɔ̃'],
-      [/sion$/, 'zjɔ̃'],
-      [/ment$/, 'mɑ̃'],
-      [/ent$/, 'ɑ̃'],
-      [/ant$/, 'ɑ̃'],
-      [/age$/, 'aʒ'],
-      [/ige$/, 'iʒ'],
-      [/eur$/, 'œr'],
-      [/aire$/, 'ɛr'],
-      [/oire$/, 'war']
-    ];
-
-    for (const [pattern, replacement] of rules) {
-      phonetic = phonetic.replace(pattern as RegExp, replacement as string);
-    }
-
-    return phonetic.slice(-3);
-  }
-
-  private getGermanPhonetic(word: string): string {
-    // German phonetic rules (fallback)
-    let phonetic = word.toLowerCase();
-    
-    const rules = [
-      [/ung$/, 'ʊŋ'],
-      [/heit$/, 'haɪt'],
-      [/keit$/, 'kaɪt'],
-      [/lich$/, 'lɪç'],
-      [/isch$/, 'ɪʃ'],
-      [/tion$/, 'tsi̯oːn'],
-      [/ieren$/, 'iːrən'],
-      [/chen$/, 'çən'],
-      [/lein$/, 'laɪn']
-    ];
-
-    for (const [pattern, replacement] of rules) {
-      phonetic = phonetic.replace(pattern as RegExp, replacement as string);
-    }
-
-    return phonetic.slice(-3);
-  }
-
-  private getGenericPhonetic(word: string): string {
-    // Generic fallback - use word endings
-    return word.slice(-2);
+    // For other languages, use last 2-3 characters
+    return ipa.slice(-3);
   }
 
   private analyzeRhymeType(words: Array<{ word: string; phonetic: string }>): { 
@@ -741,28 +397,13 @@ export class RhymeDetector {
       return { type: 'perfect', strength: 1.0 };
     }
     
-    // Near rhyme: similar but not identical sounds
+    // Calculate similarity
     const similarity = this.calculatePhoneticSimilarity(phonetics);
+    
     if (similarity > 0.8) {
       return { type: 'near', strength: similarity };
-    }
-    
-    // Slant rhyme: partial phonetic similarity
-    if (similarity > 0.6) {
+    } else if (similarity > 0.6) {
       return { type: 'slant', strength: similarity };
-    }
-    
-    // Check for multisyllabic rhymes
-    const avgLength = phonetics.reduce((sum, p) => sum + p.length, 0) / phonetics.length;
-    if (avgLength > 4 && similarity > 0.5) {
-      return { type: 'multisyllabic', strength: similarity };
-    }
-    
-    // Eye rhyme: looks similar but sounds different
-    const words_text = words.map(w => w.word);
-    const visualSimilarity = this.calculateVisualSimilarity(words_text);
-    if (visualSimilarity > 0.7 && similarity < 0.4) {
-      return { type: 'eye', strength: 0.4 };
     }
     
     return { type: 'near', strength: similarity };
@@ -828,122 +469,5 @@ export class RhymeDetector {
     return similarGroups.some(group => 
       group.includes(a) && group.includes(b)
     );
-  }
-
-  private calculateVisualSimilarity(words: string[]): number {
-    if (words.length < 2) return 0;
-    
-    const first = words[0];
-    let totalSimilarity = 0;
-    
-    for (let i = 1; i < words.length; i++) {
-      const similarity = this.compareVisually(first, words[i]);
-      totalSimilarity += similarity;
-    }
-    
-    return totalSimilarity / (words.length - 1);
-  }
-
-  private compareVisually(a: string, b: string): number {
-    const maxLen = Math.max(a.length, b.length);
-    const minLen = Math.min(a.length, b.length);
-    
-    if (maxLen === 0) return 0;
-    
-    // Compare endings
-    let matches = 0;
-    for (let i = 0; i < minLen; i++) {
-      if (a[a.length - 1 - i] === b[b.length - 1 - i]) {
-        matches++;
-      }
-    }
-    
-    return matches / maxLen;
-  }
-
-  private extractVowelPattern(word: string): string {
-    return word.replace(/[^aeiou]/g, '');
-  }
-
-  private async detectInternalRhymes(lines: string[], language: string): Promise<Omit<RhymeGroup, 'id' | 'color'>[]> {
-    const internalRhymes: Omit<RhymeGroup, 'id' | 'color'>[] = [];
-    
-    for (let lineIndex = 0; lineIndex < lines.length; lineIndex++) {
-      const line = lines[lineIndex];
-      const words = line.trim().split(/\s+/);
-      if (words.length < 2) continue;
-      
-      // Process word pairs in parallel for better performance
-      const pairPromises: Promise<any>[] = [];
-      
-      for (let i = 0; i < words.length - 1; i++) {
-        for (let j = i + 1; j < words.length; j++) {
-          const word1 = words[i].toLowerCase().replace(/[^a-z]/g, '');
-          const word2 = words[j].toLowerCase().replace(/[^a-z]/g, '');
-          
-          if (word1.length > 2 && word2.length > 2 && word1 !== word2) {
-            pairPromises.push(
-              this.checkInternalRhyme(word1, word2, lineIndex, i, j, language)
-            );
-          }
-        }
-      }
-      
-      const results = await Promise.all(pairPromises);
-      internalRhymes.push(...results.filter(Boolean));
-    }
-    
-    return internalRhymes;
-  }
-
-  private async checkInternalRhyme(
-    word1: string, 
-    word2: string, 
-    lineIndex: number, 
-    wordIndex1: number, 
-    wordIndex2: number, 
-    language: string
-  ): Promise<Omit<RhymeGroup, 'id' | 'color'> | null> {
-    try {
-      const [phonetic1, phonetic2] = await Promise.all([
-        this.phoneticAPI.getTranscription(word1, language),
-        this.phoneticAPI.getTranscription(word2, language)
-      ]);
-      
-      const rhymeKey1 = this.extractRhymeSound(phonetic1, language);
-      const rhymeKey2 = this.extractRhymeSound(phonetic2, language);
-      
-      if (rhymeKey1 === rhymeKey2) {
-        const similarity = this.comparePhonetics(phonetic1, phonetic2);
-        
-        return {
-          words: [word1, word2],
-          type: 'internal',
-          strength: Math.max(0.7, similarity),
-          positions: [
-            { line: lineIndex, wordIndex: wordIndex1, word: word1, startChar: 0, endChar: word1.length },
-            { line: lineIndex, wordIndex: wordIndex2, word: word2, startChar: 0, endChar: word2.length }
-          ]
-        };
-      }
-    } catch (error) {
-      // Fallback to simple comparison
-      const phonetic1 = this.getSimplePhonetic(word1, language);
-      const phonetic2 = this.getSimplePhonetic(word2, language);
-      
-      if (phonetic1 === phonetic2) {
-        return {
-          words: [word1, word2],
-          type: 'internal',
-          strength: 0.6,
-          positions: [
-            { line: lineIndex, wordIndex: wordIndex1, word: word1, startChar: 0, endChar: word1.length },
-            { line: lineIndex, wordIndex: wordIndex2, word: word2, startChar: 0, endChar: word2.length }
-          ]
-        };
-      }
-    }
-    
-    return null;
   }
 }
