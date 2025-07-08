@@ -1,41 +1,34 @@
 import { RhymeGroup } from './AILyricsAssistant';
 
+// Import IPA libraries with proper fallbacks
+let textToIPA: any = null;
+let ipaDict: any = null;
+
+try {
+  textToIPA = require('text-to-ipa');
+} catch (e) {
+  console.warn('text-to-ipa library not available, using fallback');
+}
+
+try {
+  ipaDict = require('ipa-dict');
+} catch (e) {
+  console.warn('ipa-dict library not available, using fallback');
+}
+
 interface PhoneticCache {
   [key: string]: string;
 }
 
 interface PhoneticAPI {
   getTranscription(word: string, language: string): string;
+  extractStressTail(ipaWord: string): string;
 }
 
-// Local JavaScript IPA transcription system
-class PhoneticTranscriber implements PhoneticAPI {
+// Advanced IPA-based phonetic transcription system
+class AdvancedPhoneticTranscriber implements PhoneticAPI {
   private cache: PhoneticCache = {};
   private readonly MAX_CACHE_SIZE = 1000;
-
-  // Common Italian word endings to IPA mappings - more precise for rhyme detection
-  private italianIpaDict: { [key: string]: string } = {
-    'male': 'ale',
-    'irreale': 'ale',
-    'finale': 'ale', 
-    'reale': 'ale',
-    'normale': 'ale',
-    'generale': 'ale',
-    'speciale': 'ale',
-    'sociale': 'ale',
-    'nazionale': 'ale',
-    'regionale': 'ale',
-    'personale': 'ale',
-    'naturale': 'ale',
-    'centrale': 'ale',
-    'totale': 'ale',
-    'vitale': 'ale',
-    'locale': 'ale',
-    'musicale': 'ale',
-    'animale': 'ale',
-    'mentale': 'ale',
-    'fatale': 'ale'
-  };
 
   getTranscription(word: string, language: string): string {
     const cacheKey = `${word}-${language}`;
@@ -47,11 +40,11 @@ class PhoneticTranscriber implements PhoneticAPI {
     let transcription = '';
     
     try {
-      // Use local dictionaries and rules
-      if (language === 'it') {
-        transcription = this.getItalianIPA(word);
-      } else if (language === 'en') {
+      // Use actual IPA libraries for authentic conversion
+      if (language === 'en') {
         transcription = this.getEnglishIPA(word);
+      } else if (language === 'it') {
+        transcription = this.getItalianIPA(word);
       } else {
         transcription = this.getGenericIPA(word, language);
       }
@@ -62,94 +55,160 @@ class PhoneticTranscriber implements PhoneticAPI {
       // Cache the result
       this.cacheTranscription(cacheKey, transcription);
       return transcription;
-      } catch (error) {
+    } catch (error) {
       console.warn(`Phonetic transcription error for "${word}" (${language}):`, error);
       return '';
     }
   }
 
-  private getItalianIPA(word: string): string {
-    // Check if word is in our dictionary first
-    if (this.italianIpaDict[word]) {
-      return this.italianIpaDict[word];
-    }
-
-    // Apply Italian phonetic rules only for words with known rhyming endings
-    let ipa = word.toLowerCase();
-    
-    // Italian-specific IPA conversion rules focusing on rhyme endings
-    const rules = [
-      // Main rhyme endings - only process words that actually end with these patterns
-      [/ale$/, 'ale'],  // male, reale, finale
-      [/are$/, 'are'],  // amare, cantare
-      [/ere$/, 'ere'],  // vedere, credere
-      [/ire$/, 'ire'],  // sentire, partire
-      [/ore$/, 'ore'],  // amore, dolore
-      [/ione$/, 'jone'], // azione, nazione
-      [/zione$/, 'tsjone'], // protezione, creazione
-      [/sione$/, 'sjone'], // dimensione, decisione
-      [/mente$/, 'ente'], // certamente, rapidamente
-      [/anza$/, 'antsa'], // speranza, danza
-      [/enza$/, 'entsa'], // presenza, violenza
-      [/ità$/, 'ita'],   // città, verità
-      [/ezza$/, 'ettsa'], // bellezza, tristezza
-    ];
-
-    for (const [pattern, replacement] of rules) {
-      if ((pattern as RegExp).test(ipa)) {
-        return replacement as string; // Return the exact rhyme pattern
+  private getEnglishIPA(word: string): string {
+    try {
+      // Use text-to-ipa library for authentic English IPA conversion if available
+      if (textToIPA && textToIPA.lookup) {
+        const ipaResult = textToIPA.lookup(word.toLowerCase());
+        
+        if (ipaResult && ipaResult.length > 0) {
+          // Extract stress tail from IPA transcription
+          return this.extractStressTail(ipaResult);
+        }
       }
+      
+      // Fallback for English if library not available
+      return this.getEnglishFallback(word);
+    } catch (error) {
+      console.warn(`English IPA conversion failed for "${word}":`, error);
+      return this.getEnglishFallback(word);
     }
-
-    // If no rhyming pattern found, return empty to exclude from rhyme detection
-    return '';
   }
 
-  private getEnglishIPA(word: string): string {
-    // Basic English IPA conversion
-    let ipa = word.toLowerCase();
+  private getEnglishFallback(word: string): string {
+    const cleanWord = word.toLowerCase();
     
-    // English phonetic rules for common endings
-    const rules = [
-      [/tion$/, 'ʃən'],
-      [/sion$/, 'ʒən'],
-      [/ing$/, 'ɪŋ'],
-      [/ed$/, 'd'],
-      [/er$/, 'ər'],
-      [/ly$/, 'li'],
-      [/y$/, 'i'],
-      [/ight$/, 'aɪt'],
-      [/ough$/, 'ʌf'],
-      [/augh$/, 'ɔːf']
+    // Common English rhyme patterns
+    const englishPatterns = [
+      [/ight$/, 'aɪt'],    // light, night, fight
+      [/tion$/, 'ʃən'],    // nation, creation
+      [/sion$/, 'ʒən'],    // decision, collision
+      [/ing$/, 'ɪŋ'],      // sing, ring, bring
+      [/ed$/, 'd'],        // played, stayed
+      [/er$/, 'ər'],       // singer, player
+      [/ly$/, 'li'],       // quickly, slowly
+      [/y$/, 'i'],         // happy, lucky
+      [/ough$/, 'ʌf'],     // tough, rough
+      [/augh$/, 'ɔːf'],    // laugh, cough
+      [/ake$/, 'eɪk'],     // make, take, bake
+      [/ame$/, 'eɪm'],     // name, game, same
+      [/ate$/, 'eɪt'],     // late, fate, gate
+      [/ice$/, 'aɪs'],     // nice, price, dice
+      [/ine$/, 'aɪn'],     // line, mine, fine
+      [/ove$/, 'ʌv'],      // love, above, dove
+      [/eet$/, 'iːt'],     // meet, feet, sweet
     ];
 
-    for (const [pattern, replacement] of rules) {
-      if ((pattern as RegExp).test(ipa)) {
-        ipa = ipa.replace(pattern as RegExp, replacement as string);
-        break;
+    for (const [pattern, replacement] of englishPatterns) {
+      if ((pattern as RegExp).test(cleanWord)) {
+        return replacement as string;
       }
     }
 
-    return ipa.slice(-3);
+    return ''; // No valid rhyme pattern found
+  }
+
+  private getItalianIPA(word: string): string {
+    try {
+      // Use ipa-dict for Italian IPA conversion
+      const ipaResult = ipaDict.lookup(word.toLowerCase(), 'it');
+      
+      if (ipaResult && ipaResult.length > 0) {
+        // Extract stress tail from IPA transcription
+        return this.extractStressTail(ipaResult);
+      }
+      
+      // Fallback to pattern-based approach for common Italian endings
+      return this.getItalianFallback(word);
+    } catch (error) {
+      console.warn(`Italian IPA conversion failed for "${word}":`, error);
+      return this.getItalianFallback(word);
+    }
+  }
+
+  private getItalianFallback(word: string): string {
+    const cleanWord = word.toLowerCase();
+    
+    // Common Italian rhyme patterns - only for well-known endings
+    const italianPatterns = [
+      [/ale$/, 'ale'],     // male, reale, finale
+      [/are$/, 'are'],     // amare, cantare  
+      [/ere$/, 'ere'],     // vedere, credere
+      [/ire$/, 'ire'],     // sentire, partire
+      [/ore$/, 'ore'],     // amore, dolore
+      [/ione$/, 'jone'],   // azione, nazione
+      [/zione$/, 'tsjone'], // protezione, creazione
+      [/anza$/, 'antsa'],  // speranza, danza
+      [/enza$/, 'entsa'],  // presenza, violenza
+      [/ità$/, 'ita'],     // città, verità
+      [/ezza$/, 'ettsa'],  // bellezza, tristezza
+    ];
+
+    for (const [pattern, replacement] of italianPatterns) {
+      if ((pattern as RegExp).test(cleanWord)) {
+        return replacement as string;
+      }
+    }
+
+    return ''; // No valid rhyme pattern found
   }
 
   private getGenericIPA(word: string, language: string): string {
-    // For non-supported languages, return empty to exclude from rhyme detection
-    return '';
+    try {
+      // Try ipa-dict for other languages
+      const ipaResult = ipaDict.lookup(word.toLowerCase(), language);
+      
+      if (ipaResult && ipaResult.length > 0) {
+        return this.extractStressTail(ipaResult);
+      }
+      
+      return '';
+    } catch (error) {
+      return '';
+    }
+  }
+
+  extractStressTail(ipaWord: string): string {
+    if (!ipaWord || ipaWord.length === 0) return '';
+    
+    // Clean IPA string
+    let cleanIPA = ipaWord
+      .replace(/[\/\[\]]/g, '') // Remove IPA delimiters
+      .replace(/[ˈˌ]/g, '')     // Remove stress markers for now
+      .toLowerCase();
+    
+    // For syllable extraction, we need to identify the primary stress position
+    // This is a simplified approach - extract last 2-4 phonemes as rhyme tail
+    const phonemes = cleanIPA.split('');
+    
+    // Extract stress tail (last 2-4 characters for rhyming)
+    const tailLength = Math.min(4, Math.max(2, phonemes.length));
+    const stressTail = phonemes.slice(-tailLength).join('');
+    
+    return stressTail;
   }
 
   private validateAndClean(transcription: string, word: string, language: string): string {
-    if (!transcription) return '';
+    if (!transcription || transcription.length === 0) return '';
     
-    // Clean up common issues in IPA transcription
+    // Additional validation - ensure it's not just the original word
+    if (transcription === word.toLowerCase()) return '';
+    
+    // Clean and normalize
     let cleaned = transcription
       .replace(/[\/\[\]]/g, '') // Remove IPA delimiters
-      .replace(/[ˈˌ]/g, '') // Remove stress markers for rhyme comparison
-      .toLowerCase();
+      .replace(/[ˈˌ]/g, '')     // Remove stress markers
+      .toLowerCase()
+      .trim();
     
-    return cleaned || '';
+    return cleaned.length >= 2 ? cleaned : '';
   }
-
 
   private cacheTranscription(key: string, value: string): void {
     if (Object.keys(this.cache).length >= this.MAX_CACHE_SIZE) {
@@ -175,18 +234,32 @@ export class RhymeDetector {
   private phoneticAPI: PhoneticAPI;
 
   constructor() {
-    this.phoneticAPI = new PhoneticTranscriber();
+    this.phoneticAPI = new AdvancedPhoneticTranscriber();
   }
 
   private isValidIpaTranscription(phonetic: string, word: string, language: string): boolean {
-    // Ensure the transcription is not just a fallback pattern
+    // Strict validation to eliminate false positives
+    if (!phonetic || phonetic.length === 0) return false;
+    
+    // Reject if phonetic is just the original word
+    if (phonetic === word.toLowerCase()) return false;
+    
     if (language === 'it') {
-      const validItalianEndings = ['ale', 'are', 'ere', 'ire', 'ore', 'jone', 'tsjone', 'sjone', 'ente', 'antsa', 'entsa', 'ita', 'ettsa'];
+      // For Italian, only accept known rhyme patterns
+      const validItalianEndings = ['ale', 'are', 'ere', 'ire', 'ore', 'jone', 'tsjone', 'antsa', 'entsa', 'ita', 'ettsa'];
       return validItalianEndings.includes(phonetic);
     }
     
+    // For English, ensure it's a valid IPA transcription (not just word ending)
+    if (language === 'en') {
+      // IPA should contain actual phonetic symbols or be significantly different from original
+      const hasIpaSymbols = /[æɑɛɪʊʌəɜɔaɪaʊɔɪeɪoʊɪər]/.test(phonetic);
+      const isDifferentFromWord = phonetic !== word.slice(-phonetic.length);
+      return hasIpaSymbols || (isDifferentFromWord && phonetic.length >= 2);
+    }
+    
     // For other languages, ensure it's not just the end of the word
-    return phonetic !== word.slice(-phonetic.length);
+    return phonetic !== word.slice(-phonetic.length) && phonetic.length >= 2;
   }
 
   async detectRhymes(text: string, language: string = 'en'): Promise<RhymeGroup[]> {
@@ -405,7 +478,7 @@ export class RhymeDetector {
     
     // For Italian, validate that all words in the group have the same known rhyme ending
     if (language === 'it') {
-      const validItalianEndings = ['ale', 'are', 'ere', 'ire', 'ore', 'jone', 'tsjone', 'sjone', 'ente', 'antsa', 'entsa', 'ita', 'ettsa'];
+      const validItalianEndings = ['ale', 'are', 'ere', 'ire', 'ore', 'jone', 'tsjone', 'antsa', 'entsa', 'ita', 'ettsa'];
       const phonetic = words[0].phonetic;
       
       // Must be a valid Italian rhyme ending
