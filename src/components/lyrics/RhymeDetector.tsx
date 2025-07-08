@@ -19,12 +19,18 @@ export class RhymeDetector {
     const regex=/\b[A-Za-zÀ-ÖØ-öø-ÿ]{3,}\b/g;
     let index=0; const words=[];
     text.split('\n').forEach((line,lineIdx)=>{
-      let m; while((m=regex.exec(line))!==null){
+      let m; const lineWords=[];
+      while((m=regex.exec(line))!==null){
         const w=m[0].toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
         if(!this.functionWords[language]?.includes(w) && w.length>=3){
-          words.push({word:w,orig:m[0],line:lineIdx,idx:words.filter(x=>x.line===lineIdx).length,start:index+m.index,end:index+m.index+m[0].length});
+          lineWords.push({word:w,orig:m[0],line:lineIdx,idx:lineWords.length,start:index+m.index,end:index+m.index+m[0].length});
         }
       }
+      // Mark only the last word as isLineEnd
+      if(lineWords.length>0){
+        lineWords[lineWords.length-1].isLineEnd = true;
+      }
+      words.push(...lineWords);
       index+=line.length+1;
     });
     return words;
@@ -114,21 +120,24 @@ export class RhymeDetector {
   }
 
   private formatGroups(clusters:number[][],words:any[]){
+    // Only consider positions where isLineEnd is true
     return clusters.map((c,idx)=>{
       let tot=0,cmp=0;
-      for(let i=0;i<c.length;i++) for(let j=i+1;j<c.length;j++){
-        tot+=this.phoneticSim(words[c[i]].stressTail,words[c[j]].stressTail,'it');
+      // Only use words at line end for scoring
+      const lineEndIndices = c.filter(i => words[i].isLineEnd);
+      for(let i=0;i<lineEndIndices.length;i++) for(let j=i+1;j<lineEndIndices.length;j++){
+        tot+=this.phoneticSim(words[lineEndIndices[i]].stressTail,words[lineEndIndices[j]].stressTail,'it');
         cmp++;
       }
       const avg=cmp?tot/cmp:0;
-      if(avg<0.75) return null;
+      if(avg<0.75 || lineEndIndices.length<2) return null;
       return {
         id:`rhyme-${idx}`,
-        words:c.map(i=>words[i].word),
+        words:lineEndIndices.map(i=>words[i].word),
         color:this.rhymeColors[idx%this.rhymeColors.length],
         type: avg>=0.95 ? 'perfect' : avg>=0.85 ? 'near' : 'slant',
         strength:avg,
-        positions:c.map(i=>({
+        positions:lineEndIndices.map(i=>({
           line:words[i].line,wordIndex:words[i].idx,
           word:words[i].word,startChar:words[i].start,endChar:words[i].end
         }))
