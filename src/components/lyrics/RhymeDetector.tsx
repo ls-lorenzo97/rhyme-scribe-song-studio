@@ -6,13 +6,89 @@ export class RhymeDetector {
   private epitranEndpoint = 'https://rhyme-scribe-song-studio-eumx.onrender.com/stress-tail';
   private ipaCache = new Map<string,string>();
 
-  async detectRhymes(text:string, language:'it'|'en'|'es'|'fr'|'de'='it') {
-    const words = this.extractWords(text, language);
-    if (words.length<2) return [];
-    const enriched = await Promise.all(words.map(w=>this.addStressTail(w,language)));
-    const matrix = this.buildSimilarityMatrix(enriched,language);
-    const clusters = this.clusterWords(enriched,matrix,language);
-    return this.formatGroups(clusters,enriched);
+  async detectRhymes(text: string, language: 'it' | 'en' | 'es' | 'fr' | 'de' = 'it') {
+    // 1. Split lines and extract last valid word per line
+    const regex = /\b[A-Za-zÀ-ÖØ-öø-ÿ]{3,}\b/g;
+    const lines = text.split('\n');
+    const lastWords = lines.map((line, lineIdx) => {
+      let m, last = null, lastIdx = -1, start = -1, end = -1;
+      let idx = 0;
+      while ((m = regex.exec(line)) !== null) {
+        last = m[0].toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+        lastIdx = idx;
+        start = m.index;
+        end = m.index + m[0].length;
+        idx++;
+      }
+      if (last) {
+        return { word: last, orig: last, line: lineIdx, idx: lastIdx, start, end };
+      }
+      return null;
+    }).filter(Boolean);
+
+    if (lastWords.length < 2) return [];
+
+    // 2. Get IPA and rhyme tail for each last word
+    const ipaResults = await Promise.all(lastWords.map(async w => {
+      let ipa = '';
+      let stressTail = '';
+      try {
+        const res = await fetch(this.epitranEndpoint, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ word: w.word, language })
+        });
+        if (res.ok) {
+          const j = await res.json();
+          ipa = j.ipa;
+          // Estrarre la coda rimica dalla vocale accentata in poi
+          if (j.stress_tail) {
+            stressTail = j.stress_tail;
+          } else if (ipa.includes('ˈ')) {
+            stressTail = ipa.split('ˈ').pop();
+          } else if (ipa.length > 3) {
+            stressTail = ipa.slice(-3);
+          } else {
+            stressTail = ipa;
+          }
+        }
+      } catch {}
+      return { ...w, ipa, stressTail };
+    }));
+
+    // 3. Group lines by rhyme tail similarity (scientific, thresholded)
+    const threshold = 0.9; // adjustable for strictness
+    const groups: number[][] = [];
+    const used = new Array(ipaResults.length).fill(false);
+    for (let i = 0; i < ipaResults.length; i++) {
+      if (used[i]) continue;
+      const group = [i];
+      used[i] = true;
+      for (let j = i + 1; j < ipaResults.length; j++) {
+        if (used[j]) continue;
+        if (this.rhymeTailSim(ipaResults[i].stressTail, ipaResults[j].stressTail, language) >= threshold) {
+          group.push(j);
+          used[j] = true;
+        }
+      }
+      if (group.length > 1) groups.push(group);
+    }
+
+    // 4. Format groups for highlighting
+    return groups.map((g, idx) => ({
+      id: `rhyme-${idx}`,
+      words: g.map(i => ipaResults[i].word),
+      color: this.rhymeColors[idx % this.rhymeColors.length],
+      type: 'perfect', // could be refined by similarity
+      strength: 1,
+      positions: g.map(i => ({
+        line: ipaResults[i].line,
+        wordIndex: ipaResults[i].idx,
+        word: ipaResults[i].word,
+        startChar: ipaResults[i].start,
+        endChar: ipaResults[i].end
+      }))
+    }));
   }
 
   private extractWords(text:string, language:string) {
@@ -117,6 +193,15 @@ export class RhymeDetector {
       dp[b.length]=prev;
     }
     return dp[b.length];
+  }
+
+  // Similarity between rhyme tails (IPA)
+  private rhymeTailSim(t1: string, t2: string, lang: string) {
+    if (t1 === t2) return 1;
+    if (!t1 || !t2) return 0;
+    // Simple: normalized Levenshtein distance
+    const lev = this.lev(t1, t2);
+    return 1 - lev / Math.max(t1.length, t2.length);
   }
 
   private formatGroups(clusters:number[][],words:any[]){
