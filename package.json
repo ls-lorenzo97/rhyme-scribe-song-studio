@@ -63,9 +63,9 @@
     "tailwindcss-animate": "^1.0.7",
     "text-to-ipa": "^1.0.0",
     "vaul": "^0.9.3",
-    "zod": "^3.23.8"
+    "zod": "^3.23.8",
     "phonemize": "^1.0.0",
-    "pronouncingjs": "^0.2.0",
+    "pronouncingjs": "^0.2.0"
 
   },
   "devDependencies": {
