@@ -29,6 +29,24 @@ export class RhymeDetector {
     '#D1FFB3'   // Verde lime
   ];
 
+  // Italian-specific vowel mapping for phonetic analysis
+  private vowelMap = {
+    'a': 'a', 'e': 'e', 'i': 'i', 'o': 'o', 'u': 'u',
+    'à': 'a', 'è': 'ɛ', 'é': 'e', 'ì': 'i', 'ò': 'ɔ', 'ó': 'o', 'ù': 'u'
+  };
+
+  // Common Italian suffixes that should be penalized
+  private irrelevantSuffixes = [
+    'mente', 'zione', 'sione', 'amento', 'imento',
+    'abile', 'ibile', 'evole', 'ando', 'endo', 'ante', 'ente'
+  ];
+
+  // Italian function words to exclude
+  private functionWords = [
+    'il', 'la', 'lo', 'gli', 'le', 'un', 'una', 'di', 'del', 'della',
+    'che', 'con', 'per', 'in', 'su', 'da', 'tra', 'fra', 'ma', 'e', 'o'
+  ];
+
   async detectRhymes(text: string, language: string = 'en'): Promise<RhymeGroup[]> {
     // Phase 1: Preprocessing del testo con regex multilingue
     const words = this.extractWords(text);
@@ -127,38 +145,56 @@ export class RhymeDetector {
   }
 
   private extractStressTailFallback(word: string): string {
-    // Fase 2: Identificazione stress pattern multilingue scientifica
-    const vowels = 'aeiouáéíóúàèìòùâêîôûäëïöüæøå';
+    return this.extractItalianStressTail(word);
+  }
+
+  // Italian-specific stress tail extraction
+  private extractItalianStressTail(word: string): string {
+    const cleanWord = word.toLowerCase().replace(/[^\w]/g, '');
+    
+    // Minimum length requirement for reliable rhyme detection
+    if (cleanWord.length < 3) return '';
+    
+    // Italian stress rules - oxytone words (stress on last syllable)
+    if (cleanWord.endsWith('à') || cleanWord.endsWith('ì') || 
+        cleanWord.endsWith('ò') || cleanWord.endsWith('ù') ||
+        cleanWord.endsWith('é')) {
+      return cleanWord.slice(-3); // Include trisyllabic ending
+    }
+    
+    // Common Italian rhyme patterns - check for specific endings
+    const commonPatterns = [
+      'ale', 'are', 'ere', 'ire', 'ore', 'ato', 'eto', 'ito', 'oto', 'uto',
+      'ane', 'ene', 'ine', 'one', 'une', 'ante', 'ente', 'zione', 'sione'
+    ];
+    
+    for (const pattern of commonPatterns) {
+      if (cleanWord.endsWith(pattern)) {
+        return pattern;
+      }
+    }
+    
+    // Default: extract from penultimate vowel (typical Italian stress)
+    const vowels = 'aeiou';
     const vowelPositions = [];
     
-    // Trova tutte le posizioni vocaliche
-    for (let i = 0; i < word.length; i++) {
-      if (vowels.includes(word[i].toLowerCase())) {
+    for (let i = 0; i < cleanWord.length; i++) {
+      if (vowels.includes(cleanWord[i])) {
         vowelPositions.push(i);
       }
     }
     
-    if (vowelPositions.length === 0) return word.slice(-2);
-    
-    // Pattern di stress scientifici per lingue diverse
-    let stressVowelIndex = -1;
-    
-    // Italiano: stress tipicamente penultima sillaba 
-    // Inglese: stress pattern più variabile, ultima vocale tonica
-    // Francese: stress ultima sillaba
-    // Spagnolo: stress penultima sillaba
-    // Tedesco: stress prima sillaba, ma per rime conta l'ultima
-    
     if (vowelPositions.length >= 2) {
-      // Per le rime, la terminazione più importante è dall'ultima vocale accentuata
-      // In italiano/spagnolo tipicamente penultima, ma per rime conta dalla fine
-      stressVowelIndex = vowelPositions[vowelPositions.length - 1];
-    } else {
-      stressVowelIndex = vowelPositions[0];
+      // Extract from penultimate vowel for paroxytone words
+      const penultimateVowel = vowelPositions[vowelPositions.length - 2];
+      return cleanWord.slice(penultimateVowel);
+    } else if (vowelPositions.length === 1) {
+      return cleanWord.slice(vowelPositions[0]);
     }
     
-    // Estrae stress tail dalla vocale tonica identificata
-    return word.slice(stressVowelIndex);
+    // Fallback - last 3 characters but ensure minimum length
+    const tail = cleanWord.slice(-3);
+    return tail.length >= 3 ? tail : '';
   }
 
   // Phase 3: Calcolo similarità fonetica pesata
@@ -183,19 +219,33 @@ export class RhymeDetector {
     if (tail1 === tail2) return 1.0;
     if (!tail1 || !tail2) return 0.0;
 
-    // Fase 3: Estrazione vocali e consonanti con normalizzazione fonetica
+    // Calculate base phonetic score using Italian-optimized weights
     const vowels = 'aeiouáéíóúàèìòùâêîôûäëïöüæøå';
     const vowels1 = tail1.split('').filter(c => vowels.includes(c.toLowerCase()));
     const vowels2 = tail2.split('').filter(c => vowels.includes(c.toLowerCase()));
     const consonants1 = tail1.split('').filter(c => !vowels.includes(c.toLowerCase()));
     const consonants2 = tail2.split('').filter(c => !vowels.includes(c.toLowerCase()));
 
-    // Calcolo similarità fonetica avanzata
     const vowelSimilarity = this.phoneticSequenceSimilarity(vowels1, vowels2, true);
     const consonantSimilarity = this.phoneticSequenceSimilarity(consonants1, consonants2, false);
 
-    // Pesi scientifici validati: 70% vocali, 30% consonanti
-    return (vowelSimilarity * 0.7) + (consonantSimilarity * 0.3);
+    // Italian-optimized weights: 80% vowels, 20% consonants
+    let baseScore = (vowelSimilarity * 0.8) + (consonantSimilarity * 0.2);
+
+    // Apply Italian-specific filters
+    baseScore = this.filterIrrelevantSuffixes(tail1, tail2, baseScore);
+    
+    return baseScore;
+  }
+
+  // Filter irrelevant Italian suffixes
+  private filterIrrelevantSuffixes(tail1: string, tail2: string, similarity: number): number {
+    for (const suffix of this.irrelevantSuffixes) {
+      if (tail1.endsWith(suffix) && tail2.endsWith(suffix)) {
+        return similarity * 0.3; // Drastically penalize common suffixes
+      }
+    }
+    return similarity;
   }
 
   private phoneticSequenceSimilarity(seq1: string[], seq2: string[], isVowels: boolean): number {
@@ -273,18 +323,25 @@ export class RhymeDetector {
     return matches / maxLength;
   }
 
-  // Phase 4: Union-Find clustering
+  // Phase 4: Union-Find clustering with Italian-specific validation
   private unionFindClustering(words: Array<any>, similarityMatrix: number[][]): number[][] {
     const n = words.length;
     const { find, union } = this.createUnionFind(n);
 
-    // Soglia scientificamente validata dalla ricerca
-    const threshold = 0.7;
-
-    // Unione di parole con similarità >= threshold
+    // Use dynamic threshold calculation instead of fixed 0.7
     for (let i = 0; i < n; i++) {
       for (let j = i + 1; j < n; j++) {
-        if (similarityMatrix[i][j] >= threshold) {
+        const word1 = words[i].word;
+        const word2 = words[j].word;
+        const similarity = similarityMatrix[i][j];
+        
+        // Calculate optimal threshold for this word pair
+        const threshold = this.calculateOptimalThreshold(words[i].stressTail, words[j].stressTail);
+        
+        // Validate rhyme context (exclude function words, etc.)
+        const isValidRhyme = this.validateRhymeContext(word1, word2, similarity);
+        
+        if (isValidRhyme && similarity >= threshold) {
           union(i, j);
         }
       }
@@ -303,6 +360,70 @@ export class RhymeDetector {
 
     // Filtra cluster con almeno 2 elementi
     return Array.from(clusters.values()).filter(cluster => cluster.length >= 2);
+  }
+
+  // Calculate dynamic threshold based on word characteristics
+  private calculateOptimalThreshold(tail1: string, tail2: string): number {
+    const baseThreshold = 0.85; // Much higher base threshold
+    
+    // Perfect rhymes for common Italian patterns
+    const commonPatterns = [
+      'ale', 'are', 'ere', 'ire', 'ore', 'ato', 'eto', 'ito', 'oto', 'uto',
+      'ane', 'ene', 'ine', 'one', 'une', 'ante', 'ente', 'zione', 'sione'
+    ];
+    
+    for (const pattern of commonPatterns) {
+      if (tail1.endsWith(pattern) && tail2.endsWith(pattern)) {
+        return Math.min(baseThreshold + 0.1, 0.95); // Even higher for perfect patterns
+      }
+    }
+    
+    return baseThreshold;
+  }
+
+  // Validate rhyme context to eliminate false positives
+  private validateRhymeContext(word1: string, word2: string, phoneticScore: number): boolean {
+    // Exclude words that are too similar (potential false positives)
+    if (this.levenshteinDistance(word1, word2) <= 1 && word1.length > 3) {
+      return false; // Too similar, likely variants of same word
+    }
+    
+    // Exclude Italian function words
+    if (this.functionWords.includes(word1) || this.functionWords.includes(word2)) {
+      return false;
+    }
+    
+    // Require minimum phonetic score
+    return phoneticScore >= 0.75;
+  }
+
+  // Simple Levenshtein distance calculation
+  private levenshteinDistance(str1: string, str2: string): number {
+    const matrix = [];
+    
+    for (let i = 0; i <= str2.length; i++) {
+      matrix[i] = [i];
+    }
+    
+    for (let j = 0; j <= str1.length; j++) {
+      matrix[0][j] = j;
+    }
+    
+    for (let i = 1; i <= str2.length; i++) {
+      for (let j = 1; j <= str1.length; j++) {
+        if (str2.charAt(i - 1) === str1.charAt(j - 1)) {
+          matrix[i][j] = matrix[i - 1][j - 1];
+        } else {
+          matrix[i][j] = Math.min(
+            matrix[i - 1][j - 1] + 1, // substitution
+            matrix[i][j - 1] + 1,     // insertion
+            matrix[i - 1][j] + 1      // deletion
+          );
+        }
+      }
+    }
+    
+    return matrix[str2.length][str1.length];
   }
 
   private createUnionFind(n: number) {
