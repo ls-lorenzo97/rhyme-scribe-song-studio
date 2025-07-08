@@ -9,6 +9,7 @@ import { Slider } from '@/components/ui/slider';
 import { cn } from '@/lib/utils';
 import { SongSection } from './SongwriterTool';
 import { Play, Pause, Plus, Edit3, Trash2, SkipBack, SkipForward } from 'lucide-react';
+import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
 
 interface UnifiedTimelineProps {
   sections: SongSection[];
@@ -311,38 +312,41 @@ export const UnifiedTimeline = ({
 
   // Apple Music style: single compact horizontal bar
   return (
-    <div className="w-full flex items-center gap-4 bg-background rounded-xl p-2 shadow-sm border border-border/40">
-      {/* Player left-aligned */}
-      <div className="flex flex-col items-center justify-center mr-2">
+    <div className="w-full flex items-center gap-2 bg-background rounded-xl p-2 shadow-sm border border-border/40 overflow-x-auto">
+      {/* Player left-aligned, compact, centered */}
+      <div className="flex flex-col items-center justify-center mr-2 min-w-[80px]">
         <audio ref={audioRef} src={audioUrl} />
         <div className="flex items-center gap-1">
           <Button
             variant="ghost"
             size="icon"
+            aria-label="Previous section"
             onClick={() => navigateToSection('prev')}
-            className="w-8 h-8 text-muted-foreground hover:text-foreground rounded-full"
+            className="w-8 h-8 text-muted-foreground hover:text-foreground rounded-full focus:ring-2 focus:ring-[color:var(--accent)]"
           >
             <SkipBack className="w-4 h-4" />
           </Button>
           <Button
             variant="default"
             size="icon"
+            aria-label={isPlaying ? 'Pause' : 'Play'}
             onClick={handlePlay}
-            className="w-12 h-12 bg-[color:var(--accent)] hover:bg-[color:var(--accent)]/90 text-white rounded-full shadow-glow transition-transform hover:scale-105"
+            className="w-12 h-12 bg-[color:var(--accent)] hover:bg-[color:var(--accent)]/90 text-white rounded-full shadow-glow transition-transform duration-200 hover:scale-110 focus:ring-2 focus:ring-[color:var(--accent)]"
           >
             {isPlaying ? <Pause className="w-6 h-6" /> : <Play className="w-6 h-6 ml-1" />}
           </Button>
           <Button
             variant="ghost"
             size="icon"
+            aria-label="Next section"
             onClick={() => navigateToSection('next')}
-            className="w-8 h-8 text-muted-foreground hover:text-foreground rounded-full"
+            className="w-8 h-8 text-muted-foreground hover:text-foreground rounded-full focus:ring-2 focus:ring-[color:var(--accent)]"
           >
             <SkipForward className="w-4 h-4" />
           </Button>
         </div>
         {/* Progress Bar */}
-        <div className="w-32 flex flex-col items-center mt-1">
+        <div className="w-28 flex flex-col items-center mt-1">
           <Slider
             value={[currentTime]}
             max={duration || 100}
@@ -356,77 +360,109 @@ export const UnifiedTimeline = ({
           </div>
         </div>
       </div>
-      {/* Timeline + Section blocks */}
-      <div className="flex-1 flex flex-col gap-1">
+      {/* Timeline + Section pills, horizontally scrollable */}
+      <div className="flex-1 flex flex-col gap-1 min-w-0">
         {/* Section Labels */}
-        <div className="flex justify-between w-full px-1">
+        <div className="flex justify-between w-full px-1 min-w-0">
           {sortedSections.map((section) => (
-            <div
-              key={section.id}
-              className="text-xs text-muted-foreground font-medium text-center flex-1 truncate"
-              style={{ minWidth: 0 }}
-            >
-              {section.name}
-            </div>
+            <Tooltip key={section.id}>
+              <TooltipTrigger asChild>
+                <div
+                  className="text-xs text-muted-foreground font-medium text-center flex-1 truncate cursor-default"
+                  style={{ minWidth: 0 }}
+                >
+                  {section.name}
+                </div>
+              </TooltipTrigger>
+              <TooltipContent>{section.name}</TooltipContent>
+            </Tooltip>
           ))}
         </div>
-        {/* Timeline Bar with Section Blocks */}
-        <div className="flex w-full h-10 rounded-lg overflow-hidden border border-border/30 bg-muted/10">
+        {/* Timeline Bar with Section Pills */}
+        <div className="flex w-full h-12 rounded-lg overflow-x-auto border border-border/30 bg-muted/10 gap-2 scrollbar-thin scrollbar-thumb-[color:var(--accent)]/30 snap-x snap-mandatory">
           {sortedSections.map((section, idx) => {
             const hasLyrics = !!section.lyrics && section.lyrics.trim().length > 0;
+            const isActive = currentSection === section.id;
             return (
               <div
                 key={section.id}
+                tabIndex={0}
+                aria-label={`Section ${section.name}`}
                 className={cn(
-                  "flex-1 flex items-center gap-2 px-2 h-full cursor-pointer border-r border-border/20 transition-all duration-200 relative group",
-                  currentSection === section.id ? "ring-2 ring-[color:var(--accent)] bg-[color:var(--accent)]/10 z-10" : "",
-                  hasLyrics ? "bg-[color:var(--accent)]/20" : "bg-background/80 hover:bg-muted/20"
+                  "flex items-center gap-2 px-3 h-10 rounded-full cursor-pointer border transition-all duration-200 relative group min-w-[120px] max-w-[180px] snap-center outline-none",
+                  isActive ? "ring-2 ring-[color:var(--accent)] bg-[color:var(--accent)]/10 z-10 scale-105 shadow-lg" : "hover:ring-1 hover:ring-[color:var(--accent)] hover:scale-105",
+                  hasLyrics ? "bg-[color:var(--accent)]/20 border-[color:var(--accent)]/30" : "bg-background/80 border-border/20 hover:bg-muted/20"
                 )}
                 style={{ minWidth: 0 }}
                 onClick={() => {
                   setCurrentSection(section.id);
                   onSectionClick(section.id);
                 }}
+                onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { setCurrentSection(section.id); onSectionClick(section.id); } }}
               >
                 {/* Play icon */}
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="w-6 h-6 p-0 hover:bg-[color:var(--accent)]/20"
-                  onClick={e => { e.stopPropagation(); onSectionClick(section.id); }}
-                >
-                  <Play className="w-4 h-4" />
-                </Button>
-                {/* Section name bold if selected */}
-                <span className={cn("font-semibold text-sm truncate", currentSection === section.id ? "text-foreground" : "text-muted-foreground")}>{section.name}</span>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      aria-label={`Play ${section.name}`}
+                      className="w-6 h-6 p-0 hover:bg-[color:var(--accent)]/20 focus:ring-1 focus:ring-[color:var(--accent)]"
+                      onClick={e => { e.stopPropagation(); onSectionClick(section.id); }}
+                    >
+                      <Play className="w-4 h-4" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>Play {section.name}</TooltipContent>
+                </Tooltip>
+                {/* Section name bold if selected, tooltip for long names */}
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <span className={cn("font-semibold text-sm truncate max-w-[60px]", isActive ? "text-foreground" : "text-muted-foreground")}>{section.name}</span>
+                  </TooltipTrigger>
+                  <TooltipContent>{section.name}</TooltipContent>
+                </Tooltip>
                 {/* Time badge */}
                 <span className={cn(
-                  "ml-1 px-2 py-0.5 rounded-full text-xs font-medium",
+                  "ml-1 px-2 py-0.5 rounded-full text-xs font-medium transition-colors duration-200",
                   hasLyrics ? "bg-[color:var(--accent)]/30 text-[color:var(--accent)]" : "bg-muted text-muted-foreground"
                 )}>
                   {formatTime(section.startTime)} - {formatTime(section.endTime)}
                 </span>
-                {/* Controls only on selected */}
-                {currentSection === section.id && (
-                  <div className="flex gap-1 ml-2">
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={e => { e.stopPropagation(); handleEditSection(section); }}
-                      className="w-6 h-6 p-0 hover:bg-[color:var(--accent)]/20"
-                    >
-                      <Edit3 className="w-4 h-4" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={e => { e.stopPropagation(); handleDeleteSection(section.id); }}
-                      className="w-6 h-6 p-0 text-destructive hover:text-destructive hover:bg-destructive/10"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </Button>
-                  </div>
-                )}
+                {/* Controls only on hover or active */}
+                <div className={cn(
+                  "flex gap-1 ml-1 transition-opacity duration-200",
+                  isActive ? "opacity-100" : "opacity-0 group-hover:opacity-100"
+                )}>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        aria-label="Edit section"
+                        onClick={e => { e.stopPropagation(); handleEditSection(section); }}
+                        className="w-6 h-6 p-0 hover:bg-[color:var(--accent)]/20 focus:ring-1 focus:ring-[color:var(--accent)]"
+                      >
+                        <Edit3 className="w-4 h-4" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>Edit section</TooltipContent>
+                  </Tooltip>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        aria-label="Delete section"
+                        onClick={e => { e.stopPropagation(); handleDeleteSection(section.id); }}
+                        className="w-6 h-6 p-0 text-destructive hover:text-destructive hover:bg-destructive/10 focus:ring-1 focus:ring-destructive"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>Delete section</TooltipContent>
+                  </Tooltip>
+                </div>
               </div>
             );
           })}
@@ -434,7 +470,7 @@ export const UnifiedTimeline = ({
       </div>
       {/* Add Section Button */}
       <div className="ml-2 flex items-center">
-        <Button onClick={handleAddSection} className="bg-[color:var(--accent)] text-white font-semibold px-4 py-2 rounded-lg shadow-glow">
+        <Button onClick={handleAddSection} className="bg-[color:var(--accent)] text-white font-semibold px-4 py-2 rounded-lg shadow-glow focus:ring-2 focus:ring-[color:var(--accent)]">
           <Plus className="w-4 h-4 mr-2" />
           Add Section
         </Button>
