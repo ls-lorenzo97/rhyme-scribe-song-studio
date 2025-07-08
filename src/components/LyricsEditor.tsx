@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -22,6 +22,7 @@ export const LyricsEditor = ({ section, onLyricsUpdate, selectedLanguage = 'en',
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [suggestIdx, setSuggestIdx] = useState<number|null>(null);
   const [suggestWord, setSuggestWord] = useState<string>('');
+  const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
 
   const rhymeDetector = useMemo(() => new RhymeDetector(), []);
 
@@ -89,6 +90,30 @@ export const LyricsEditor = ({ section, onLyricsUpdate, selectedLanguage = 'en',
     return group ? group.color : 'hsl(var(--muted))';
   };
 
+  // Helper to render a line with the last word colored if it's a rhyme
+  const renderColoredLine = (line: string, idx: number) => {
+    if (!line) return <span>&nbsp;</span>;
+    const words = line.split(/(\s+)/);
+    // Find the last non-empty word
+    let lastWordIdx = -1;
+    for (let i = words.length - 1; i >= 0; i--) {
+      if (words[i].trim() && !/\s+/.test(words[i])) {
+        lastWordIdx = i;
+        break;
+      }
+    }
+    if (lastWordIdx === -1) return <span>{line}</span>;
+    // Check if this last word is a rhyme
+    const rhymeGroup = rhymeGroups.find(g => g.positions.some(pos => pos.line === idx));
+    const color = rhymeGroup ? rhymeGroup.color : undefined;
+    return words.map((w, i) => {
+      if (i === lastWordIdx && color) {
+        return <span key={i} style={{ color, fontWeight: 600 }}>{w}</span>;
+      }
+      return <span key={i}>{w}</span>;
+    });
+  };
+
   return (
     <div className="space-y-6">
       <div>
@@ -96,12 +121,12 @@ export const LyricsEditor = ({ section, onLyricsUpdate, selectedLanguage = 'en',
           {section?.name} Lyrics
         </h3>
         <p className="text-sm text-muted-foreground mb-4">
-          Scrivi una frase per riga. Le rime saranno colorate e marcate con una lettera.
+          Scrivi una frase per riga. L'ultima parola di ogni riga sarà colorata se fa rima.
         </p>
       </div>
       <div className="space-y-2">
         {lines.map((line, idx) => (
-          <div key={idx} className="flex items-center gap-2">
+          <div key={idx} className="flex items-center gap-2 relative">
             {/* Rhyme Letter & Color */}
             <div
               className="min-w-8 min-h-8 w-8 h-8 rounded-full flex items-center justify-center text-base font-bold border flex-shrink-0"
@@ -113,15 +138,21 @@ export const LyricsEditor = ({ section, onLyricsUpdate, selectedLanguage = 'en',
             >
               {getRhymeLetter(idx)}
             </div>
-            {/* Single-line input, fixed height, full width */}
+            {/* Overlay for colored text */}
+            <div className="absolute left-12 right-12 top-0 bottom-0 pointer-events-none flex items-center h-10 px-3" style={{zIndex:1, whiteSpace:'pre-wrap', fontSize:'1rem'}}>
+              {renderColoredLine(line, idx)}
+            </div>
+            {/* Transparent input for typing */}
             <input
+              ref={el => inputRefs.current[idx] = el}
               type="text"
               value={line}
               onChange={e => handleLineChange(idx, e.target.value)}
               placeholder={`Frase ${idx + 1}`}
-              className="flex-1 h-10 px-3 py-2 rounded border bg-background text-base focus:ring-2 focus:ring-music-primary outline-none"
+              className="flex-1 h-10 px-3 py-2 rounded border bg-background text-base focus:ring-2 focus:ring-music-primary outline-none relative"
               autoComplete="off"
-              style={{ minHeight: '2.5rem', maxHeight: '2.5rem' }}
+              style={{ minHeight: '2.5rem', maxHeight: '2.5rem', background: 'transparent', color: 'transparent', caretColor: '#222', zIndex:2 }}
+              spellCheck={false}
             />
             {/* Rhyme Suggestion Button */}
             <button
@@ -160,34 +191,6 @@ export const LyricsEditor = ({ section, onLyricsUpdate, selectedLanguage = 'en',
           </div>
         </div>
       )}
-      {/* Live Preview */}
-      <div className="mt-6">
-        <h4 className="font-medium text-foreground mb-2">Anteprima con rime</h4>
-        <div className="space-y-1 bg-muted/30 border border-border rounded-md px-3 py-3">
-          {lines.map((line, idx) => {
-            const letter = getRhymeLetter(idx);
-            const color = getRhymeColor(idx);
-            const isRhyme = !!letter;
-            return (
-              <div key={idx} className="flex items-center gap-2">
-                <span
-                  className="min-w-8 min-h-8 w-8 h-8 rounded-full flex items-center justify-center text-base font-bold border flex-shrink-0"
-                  style={{
-                    backgroundColor: isRhyme ? color + '20' : 'transparent',
-                    color: isRhyme ? color : 'inherit',
-                    borderColor: isRhyme ? color : 'var(--border)',
-                  }}
-                >
-                  {isRhyme ? letter : ''}
-                </span>
-                <span style={{ color: isRhyme ? color : undefined }}>
-                  {line}
-                </span>
-              </div>
-            );
-          })}
-        </div>
-      </div>
       {isAnalyzing && (
         <div className="text-music-primary text-sm flex items-center gap-2 mt-2">
           <span className="w-4 h-4">✨</span> Analisi delle rime in corso...
