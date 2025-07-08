@@ -9,7 +9,8 @@ import { LanguageSelector } from './LanguageSelector';
 import { useLocalStorage } from '../hooks/useLocalStorage';
 import { LyricsEditor } from './LyricsEditor';
 import { RhymeGroup } from './lyrics/AILyricsAssistant';
-import { Upload, Music, Clock, Edit3, Eye } from 'lucide-react';
+import { Upload, Music, Clock, Edit3, Eye, History } from 'lucide-react';
+import { toast } from '@/hooks/use-toast';
 
 // Map country codes to language codes
 const countryToLanguage: Record<string, string> = {
@@ -21,6 +22,57 @@ const countryToLanguage: Record<string, string> = {
   ES: 'es',
   // Add more mappings as needed
 };
+
+// Simple translation dictionary
+const translations: Record<string, Record<string, string>> = {
+  en: {
+    music: 'Music',
+    songwriterStudio: 'Songwriter Studio',
+    uploadYourSong: 'Upload Your Song',
+    changeFile: 'Change File',
+    songInformation: 'Song Information',
+    uploadToUnlockInfo: 'Upload a song to unlock song information',
+    songTimeline: 'Song Timeline',
+    uploadToCreateTimeline: 'Upload a song to create timeline sections',
+    writeLyrics: 'Write Lyrics',
+    editLyrics: 'Edit Lyrics',
+    preview: 'Preview',
+    uploadToWriteLyrics: 'Upload a song to start writing lyrics',
+    openLastSession: 'Open Last Session',
+    sessionRestored: 'Session Restored',
+    sessionRestoredDesc: 'Your last session has been loaded.',
+    noSessionFound: 'No Session Found',
+    noSessionFoundDesc: 'No previous session was found in your browser.',
+    error: 'Error',
+    errorRestore: 'Could not restore the last session.'
+  },
+  it: {
+    music: 'Musica',
+    songwriterStudio: 'Studio Cantautore',
+    uploadYourSong: 'Carica la tua canzone',
+    changeFile: 'Cambia File',
+    songInformation: 'Informazioni Canzone',
+    uploadToUnlockInfo: 'Carica una canzone per sbloccare le informazioni',
+    songTimeline: 'Timeline Canzone',
+    uploadToCreateTimeline: 'Carica una canzone per creare le sezioni',
+    writeLyrics: 'Scrivi Testo',
+    editLyrics: 'Modifica Testo',
+    preview: 'Anteprima',
+    uploadToWriteLyrics: 'Carica una canzone per iniziare a scrivere il testo',
+    openLastSession: 'Apri Ultima Sessione',
+    sessionRestored: 'Sessione Ripristinata',
+    sessionRestoredDesc: 'La tua ultima sessione è stata caricata.',
+    noSessionFound: 'Nessuna Sessione',
+    noSessionFoundDesc: 'Nessuna sessione precedente trovata nel browser.',
+    error: 'Errore',
+    errorRestore: 'Impossibile ripristinare la sessione.'
+  }
+  // Add more languages as needed
+};
+
+function t(lang: string, key: string): string {
+  return translations[lang]?.[key] || translations['en'][key] || key;
+}
 
 export interface SongSection {
   id: string;
@@ -154,6 +206,30 @@ export const SongwriterTool = () => {
 
   const currentSectionData = sections.find(s => s.id === currentSection);
 
+  // Restore last session handler
+  const handleRestoreLastSession = () => {
+    try {
+      const lastSession = localStorage.getItem('songwriter-data');
+      if (lastSession) {
+        setSongData(JSON.parse(lastSession));
+        toast({
+          title: t(selectedLanguage, 'sessionRestored'),
+          description: t(selectedLanguage, 'sessionRestoredDesc'),
+        });
+      } else {
+        toast({
+          title: t(selectedLanguage, 'noSessionFound'),
+          description: t(selectedLanguage, 'noSessionFoundDesc'),
+        });
+      }
+    } catch (e) {
+      toast({
+        title: t(selectedLanguage, 'error'),
+        description: t(selectedLanguage, 'errorRestore'),
+      });
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gradient-primary">
       {/* Apple Music-style Header */}
@@ -162,10 +238,10 @@ export const SongwriterTool = () => {
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-3xl font-semibold text-foreground">
-                Music
+                {t(selectedLanguage, 'music')}
               </h1>
               <p className="text-muted-foreground text-sm mt-1">
-                Songwriter Studio
+                {t(selectedLanguage, 'songwriterStudio')}
               </p>
             </div>
             <div className="flex items-center gap-4">
@@ -174,6 +250,15 @@ export const SongwriterTool = () => {
                 onLanguageChange={handleLanguageChange}
               />
               <ExportDialog sections={sections} audioFile={audioFile} />
+              {/* Open Last Session Button */}
+              <button
+                onClick={handleRestoreLastSession}
+                className="flex items-center gap-2 px-4 py-2 rounded-lg border border-border bg-background hover:bg-muted transition-colors text-foreground text-sm font-medium shadow-sm"
+                title={t(selectedLanguage, 'openLastSession')}
+              >
+                <History className="w-4 h-4" />
+                {t(selectedLanguage, 'openLastSession')}
+              </button>
             </div>
           </div>
         </div>
@@ -188,7 +273,7 @@ export const SongwriterTool = () => {
             </div>
             <div className="flex items-center gap-2">
               <Upload className="w-5 h-5 text-music-primary" />
-              <h2 className="text-xl font-semibold text-foreground">Upload Your Song</h2>
+              <h2 className="text-xl font-semibold text-foreground">{t(selectedLanguage, 'uploadYourSong')}</h2>
             </div>
           </div>
           
@@ -217,7 +302,7 @@ export const SongwriterTool = () => {
                     }}
                     className="text-sm text-muted-foreground hover:text-foreground transition-colors"
                   >
-                    Change File
+                    {t(selectedLanguage, 'changeFile')}
                   </button>
                 </div>
               )}
@@ -235,7 +320,7 @@ export const SongwriterTool = () => {
             </div>
             <div className="flex items-center gap-2">
               <Music className={`w-5 h-5 ${audioFile ? 'text-music-primary' : 'text-muted-foreground'}`} />
-              <h2 className="text-xl font-semibold text-foreground">Song Information</h2>
+              <h2 className="text-xl font-semibold text-foreground">{t(selectedLanguage, 'songInformation')}</h2>
             </div>
           </div>
           
@@ -248,7 +333,7 @@ export const SongwriterTool = () => {
                 />
               ) : (
                 <div className="text-center py-8">
-                  <p className="text-muted-foreground">Upload a song to unlock song information</p>
+                  <p className="text-muted-foreground">{t(selectedLanguage, 'uploadToUnlockInfo')}</p>
                 </div>
               )}
             </div>
@@ -265,7 +350,7 @@ export const SongwriterTool = () => {
             </div>
             <div className="flex items-center gap-2">
               <Clock className={`w-5 h-5 ${audioFile ? 'text-music-primary' : 'text-muted-foreground'}`} />
-              <h2 className="text-xl font-semibold text-foreground">Song Timeline</h2>
+              <h2 className="text-xl font-semibold text-foreground">{t(selectedLanguage, 'songTimeline')}</h2>
             </div>
           </div>
           
@@ -290,7 +375,7 @@ export const SongwriterTool = () => {
                 />
               ) : (
                 <div className="text-center py-8">
-                  <p className="text-muted-foreground">Upload a song to create timeline sections</p>
+                  <p className="text-muted-foreground">{t(selectedLanguage, 'uploadToCreateTimeline')}</p>
                 </div>
               )}
             </div>
@@ -307,7 +392,7 @@ export const SongwriterTool = () => {
             </div>
             <div className="flex items-center gap-2">
               <Edit3 className={`w-5 h-5 ${audioFile ? 'text-music-primary' : 'text-muted-foreground'}`} />
-              <h2 className="text-xl font-semibold text-foreground">Write Lyrics</h2>
+              <h2 className="text-xl font-semibold text-foreground">{t(selectedLanguage, 'writeLyrics')}</h2>
             </div>
           </div>
           
@@ -318,7 +403,7 @@ export const SongwriterTool = () => {
                 <div className="p-6">
                   <div className="flex items-center gap-2 mb-4">
                     <Edit3 className="w-4 h-4 text-music-primary" />
-                    <h3 className="font-semibold text-foreground">Edit Lyrics</h3>
+                    <h3 className="font-semibold text-foreground">{t(selectedLanguage, 'editLyrics')}</h3>
                   </div>
                   <LyricsEditor
                     section={currentSectionData}
@@ -336,7 +421,7 @@ export const SongwriterTool = () => {
                 <div className="p-6">
                   <div className="flex items-center gap-2 mb-4">
                     <Eye className="w-4 h-4 text-music-primary" />
-                    <h3 className="font-semibold text-foreground">Preview</h3>
+                    <h3 className="font-semibold text-foreground">{t(selectedLanguage, 'preview')}</h3>
                   </div>
                   <LyricsPreview lines={lyricsPreview.lines} rhymeGroups={lyricsPreview.rhymeGroups} />
                 </div>
@@ -346,7 +431,7 @@ export const SongwriterTool = () => {
             <Card className="bg-card/80 backdrop-blur-xl border-0 shadow-card">
               <div className="text-center py-12">
                 <Edit3 className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-                <p className="text-muted-foreground">Upload a song to start writing lyrics</p>
+                <p className="text-muted-foreground">{t(selectedLanguage, 'uploadToWriteLyrics')}</p>
               </div>
             </Card>
           )}
