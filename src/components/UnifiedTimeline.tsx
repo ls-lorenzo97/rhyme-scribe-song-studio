@@ -379,7 +379,7 @@ export const UnifiedTimeline = ({
           ))}
         </div>
         {/* Timeline Bar with Section Pills */}
-        <div className="flex w-full h-14 rounded-lg overflow-x-auto border border-border/30 bg-muted/10 gap-4 scrollbar-thin scrollbar-thumb-[color:var(--accent)]/30 snap-x snap-mandatory">
+        <div className="flex w-full h-16 rounded-xl overflow-x-auto border border-separator bg-secondarySystemBackground gap-5 scrollbar-thin scrollbar-thumb-accent/20 snap-x snap-mandatory py-1 px-2">
           {sortedSections.map((section, idx) => {
             const hasLyrics = !!section.lyrics && section.lyrics.trim().length > 0;
             const isActive = currentSection === section.id;
@@ -389,9 +389,8 @@ export const UnifiedTimeline = ({
                 tabIndex={0}
                 aria-label={`Section ${section.name}`}
                 className={cn(
-                  "flex flex-col items-center justify-center px-6 py-2 h-12 rounded-full cursor-pointer border transition-all duration-200 relative group min-w-[120px] max-w-[160px] snap-center outline-none text-[15px] font-semibold bg-white/80 overflow-hidden",
-                  isActive ? "ring-2 ring-accent bg-accent/20 z-10 scale-105 shadow-lg" : "hover:ring-1 hover:ring-accent hover:scale-105",
-                  hasLyrics ? "bg-accent/10 border-accent/30" : "bg-background/80 border-border/20 hover:bg-muted/20"
+                  "flex flex-col items-center justify-center px-6 py-2 min-w-[100px] max-w-[160px] rounded-full cursor-pointer border border-separator transition-all duration-200 relative group bg-secondarySystemBackground overflow-hidden focus:ring-2 focus:ring-accent outline-none",
+                  isActive ? "bg-accentSystemFill shadow-lg scale-105 z-10 border-accent transition-all duration-200" : "hover:bg-tertiarySystemFill hover:scale-105",
                 )}
                 style={{ minWidth: 0 }}
                 onClick={() => {
@@ -400,29 +399,29 @@ export const UnifiedTimeline = ({
                 }}
               >
                 <div className="flex items-center w-full justify-center gap-2">
-                  {/* Play icon */}
+                  {/* Play icon solo su hover/attivo */}
                   <Tooltip>
                     <TooltipTrigger asChild>
                       <Button
                         variant="outline"
                         size="icon"
                         aria-label={`Play ${section.name}`}
-                        className="w-6 h-6 p-0 hover:bg-accent/20 focus:ring-1 focus:ring-accent"
+                        className={cn("w-7 h-7 p-0 transition-all duration-200 focus:ring-2 focus:ring-accent", isActive ? "opacity-100" : "opacity-0 group-hover:opacity-100")}
                         onClick={e => { e.stopPropagation(); onSectionClick(section.id); }}
                       >
-                        <Play className="w-4 h-4" />
+                        <Play className="w-5 h-5" />
                       </Button>
                     </TooltipTrigger>
                     <TooltipContent>Play {section.name}</TooltipContent>
                   </Tooltip>
-                  {/* Section name bold if selected, tooltip solo se troncato */}
+                  {/* Section name centrato, ellissi, tooltip se lungo */}
                   <Tooltip>
                     <TooltipTrigger asChild>
-                      <span className={cn("font-semibold text-[15px] truncate max-w-[70px]", isActive ? "text-foreground" : "text-muted-foreground")}>{section.name}</span>
+                      <span className={cn("font-semibold text-[15px] text-label truncate max-w-[80px] text-center", isActive ? "text-label" : "text-secondaryLabel")}>{section.name}</span>
                     </TooltipTrigger>
                     {section.name.length > 10 && <TooltipContent>{section.name}</TooltipContent>}
                   </Tooltip>
-                  {/* Controls only on hover or active */}
+                  {/* Controlli solo su hover/attivo */}
                   <div className={cn(
                     "flex gap-1 ml-1 transition-opacity duration-200",
                     isActive ? "opacity-100" : "opacity-0 group-hover:opacity-100"
@@ -434,7 +433,7 @@ export const UnifiedTimeline = ({
                           size="icon"
                           aria-label="Edit section"
                           onClick={e => { e.stopPropagation(); handleEditSection(section); }}
-                          className="w-6 h-6 p-0 hover:bg-accent/20 focus:ring-1 focus:ring-accent"
+                          className="w-7 h-7 p-0 focus:ring-2 focus:ring-accent"
                         >
                           <Edit3 className="w-4 h-4" />
                         </Button>
@@ -448,7 +447,7 @@ export const UnifiedTimeline = ({
                           size="icon"
                           aria-label="Delete section"
                           onClick={e => { e.stopPropagation(); handleDeleteSection(section.id); }}
-                          className="w-6 h-6 p-0 text-destructive hover:text-destructive hover:bg-destructive/10 focus:ring-1 focus:ring-destructive"
+                          className="w-7 h-7 p-0 text-destructive hover:text-destructive hover:bg-destructive/10 focus:ring-2 focus:ring-destructive"
                         >
                           <Trash2 className="w-4 h-4" />
                         </Button>
@@ -457,10 +456,10 @@ export const UnifiedTimeline = ({
                     </Tooltip>
                   </div>
                 </div>
-                {/* Time badge sotto, sempre leggibile */}
+                {/* Time badge Apple-style sotto, sempre leggibile */}
                 <span className={cn(
-                  "mt-1 px-2 py-0.5 rounded-full text-[13px] font-bold transition-colors duration-200 min-w-[48px] text-center bg-white/80 border border-border/30 text-foreground shadow-sm",
-                  isActive ? "bg-accent/80 text-accent-foreground border-accent/40" : "bg-white/80 border-border/30 text-foreground"
+                  "mt-1 px-2 py-0.5 rounded-full text-[13px] font-bold min-w-[60px] text-center bg-tertiarySystemFill border border-separator text-secondaryLabel shadow-sm",
+                  isActive ? "bg-accentSystemFill text-label border-accent" : ""
                 )}>
                   {formatTime(section.startTime)} - {formatTime(section.endTime)}
                 </span>
