@@ -79,26 +79,30 @@ export const LyricsEditor = ({ section, onLyricsUpdate, selectedLanguage = 'en' 
         </div>
         
         {lines.map((line, lineIndex) => {
-          const words = line.split(/\s+/);
-          const lastWordIndex = words.length - 1;
+          // For each rhyme position in this line, map start and end char
+          const rhymePositions = rhymeGroups.flatMap(group =>
+            group.positions.filter(pos => pos.line === lineIndex).map(pos => ({...pos, color: group.color}))
+          );
+          let charIdx = 0;
           return (
             <div key={lineIndex} className="text-sm leading-relaxed">
-              {words.map((word, wordIndex) => {
+              {line.split(/(\s+)/).map((word, wordIndex) => {
                 const cleanWord = word.toLowerCase().replace(/[^a-z]/g, '');
-                const rhymeGroup = rhymeGroups.find(group => 
-                  group.positions.some(pos => 
-                    pos.line === lineIndex && pos.word === cleanWord && pos.wordIndex === wordIndex
-                  )
-                );
-                const isLastWord = wordIndex === lastWordIndex;
-                if (isLastWord && rhymeGroup && rhymeGroup.words.length >= 2 && cleanWord.length > 2) {
+                const start = charIdx;
+                const end = charIdx + word.length;
+                const rhymePos = rhymePositions.find(pos => pos.startChar === start && pos.endChar === end && cleanWord.length > 2);
+                charIdx += word.length;
+                if (/^\s+$/.test(word)) {
+                  return <span key={wordIndex}>{word}</span>;
+                }
+                if (rhymePos) {
                   return (
                     <span
                       key={wordIndex}
                       className="px-1 py-0.5 rounded text-foreground font-medium"
                       style={{
-                        backgroundColor: `${rhymeGroup.color}20`,
-                        borderBottom: `2px solid ${rhymeGroup.color}`,
+                        backgroundColor: `${rhymePos.color}20`,
+                        borderBottom: `2px solid ${rhymePos.color}`,
                       }}
                     >
                       {word}
@@ -106,9 +110,7 @@ export const LyricsEditor = ({ section, onLyricsUpdate, selectedLanguage = 'en' 
                   );
                 }
                 return <span key={wordIndex}>{word}</span>;
-              }).reduce((prev, curr, index) => 
-                index === 0 ? [curr] : [...prev, ' ', curr], [] as React.ReactNode[]
-              )}
+              })}
             </div>
           );
         })}
