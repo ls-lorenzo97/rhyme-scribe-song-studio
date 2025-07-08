@@ -388,7 +388,7 @@ export const UnifiedTimeline = ({
                 tabIndex={0}
                 aria-label={`Section ${section.name}`}
                 className={cn(
-                  "grid grid-cols-3 grid-rows-2 gap-x-2 gap-y-1 min-w-[140px] max-w-[200px] px-4 py-3 rounded-xl cursor-pointer border border-separator transition-all duration-200 bg-secondarySystemBackground overflow-hidden focus:ring-2 focus:ring-accent outline-none",
+                  "grid grid-rows-2 grid-cols-3 gap-x-2 gap-y-1 min-w-[140px] max-w-[200px] px-4 py-3 rounded-xl cursor-pointer border border-separator transition-all duration-200 bg-secondarySystemBackground overflow-hidden focus:ring-2 focus:ring-accent outline-none",
                   isActive ? "bg-accentSystemFill shadow-lg scale-105 z-10 border-accent transition-all duration-200" : "hover:bg-tertiarySystemFill hover:scale-105",
                 )}
                 style={{ minWidth: 0 }}
@@ -397,8 +397,8 @@ export const UnifiedTimeline = ({
                   onSectionClick(section.id);
                 }}
               >
-                {/* Riga 1: Play | Nome | (vuoto) */}
-                <div className="flex justify-center items-center col-span-1 row-span-1">
+                {/* Top row: Play (left), Edit (center), Delete (right) */}
+                <div className="flex justify-start items-center col-span-1 row-span-1">
                   <Tooltip>
                     <TooltipTrigger asChild>
                       <Button
@@ -417,24 +417,20 @@ export const UnifiedTimeline = ({
                 <div className="flex justify-center items-center col-span-1 row-span-1">
                   <Tooltip>
                     <TooltipTrigger asChild>
-                      <span className={cn(
-                        "font-semibold text-[17px] truncate max-w-[100px] text-center block whitespace-nowrap mx-auto",
-                        isActive ? "text-label" : "text-secondaryLabel"
-                      )}>{section.name}</span>
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        aria-label="Edit section"
+                        onClick={e => { e.stopPropagation(); handleEditSection(section); }}
+                        className="w-6 h-6 p-0 focus:ring-2 focus:ring-accent text-label opacity-80"
+                      >
+                        <Edit3 className="w-5 h-5" />
+                      </Button>
                     </TooltipTrigger>
-                    {section.name.length > 10 && <TooltipContent>{section.name}</TooltipContent>}
+                    <TooltipContent>Edit section</TooltipContent>
                   </Tooltip>
                 </div>
-                <div></div>
-                {/* Riga 2: (vuoto) | Badge tempo grande + Delete | (vuoto) */}
-                <div></div>
-                <div className="flex justify-center items-center col-span-1 row-span-1 gap-2">
-                  <span className={cn(
-                    "px-4 py-1 rounded-full text-[16px] font-bold min-w-[90px] max-w-[120px] text-center border border-separator shadow-sm whitespace-nowrap overflow-hidden truncate mx-auto",
-                    isActive ? "bg-accentSystemFill text-label border-accent" : "bg-tertiarySystemFill text-secondaryLabel"
-                  )}>
-                    {formatTime(section.startTime)} - {formatTime(section.endTime)}
-                  </span>
+                <div className="flex justify-end items-center col-span-1 row-span-1">
                   <Tooltip>
                     <TooltipTrigger asChild>
                       <Button
@@ -449,6 +445,16 @@ export const UnifiedTimeline = ({
                     </TooltipTrigger>
                     <TooltipContent>Delete section</TooltipContent>
                   </Tooltip>
+                </div>
+                {/* Bottom row: Time badge centered */}
+                <div></div>
+                <div className="flex justify-center items-center col-span-1 row-span-1">
+                  <span className={cn(
+                    "px-4 py-1 rounded-full text-[16px] font-bold min-w-[90px] max-w-[120px] text-center border border-separator shadow-sm whitespace-nowrap overflow-hidden truncate mx-auto",
+                    isActive ? "bg-accentSystemFill text-label border-accent" : "bg-tertiarySystemFill text-secondaryLabel"
+                  )}>
+                    {formatTime(section.startTime)} - {formatTime(section.endTime)}
+                  </span>
                 </div>
                 <div></div>
               </div>
