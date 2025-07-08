@@ -11,6 +11,17 @@ import { LyricsEditor } from './LyricsEditor';
 import { RhymeGroup } from './lyrics/AILyricsAssistant';
 import { Upload, Music, Clock, Edit3, Eye } from 'lucide-react';
 
+// Map country codes to language codes
+const countryToLanguage: Record<string, string> = {
+  IT: 'it',
+  US: 'en',
+  GB: 'en',
+  FR: 'fr',
+  DE: 'de',
+  ES: 'es',
+  // Add more mappings as needed
+};
+
 export interface SongSection {
   id: string;
   name: string;
@@ -57,6 +68,34 @@ export const SongwriterTool = () => {
   // Extract state from songData for easier access
   const { metadata, sections, selectedLanguage, currentSection } = songData;
 
+  // Default language detection on first load
+  useEffect(() => {
+    // Only run if no language is set in localStorage
+    const localLang = localStorage.getItem('songwriter-language');
+    if (!localLang) {
+      fetch('https://ipapi.co/json/')
+        .then(res => res.json())
+        .then(data => {
+          const country = data.country_code;
+          const lang = countryToLanguage[country] || 'en';
+          setSongData(prev => ({ ...prev, selectedLanguage: lang }));
+          localStorage.setItem('songwriter-language', lang);
+        })
+        .catch(() => {
+          setSongData(prev => ({ ...prev, selectedLanguage: 'en' }));
+          localStorage.setItem('songwriter-language', 'en');
+        });
+    } else {
+      setSongData(prev => ({ ...prev, selectedLanguage: localLang }));
+    }
+  }, [setSongData]);
+
+  // When user changes language, persist it
+  const handleLanguageChange = useCallback((language: string) => {
+    setSongData(prev => ({ ...prev, selectedLanguage: language }));
+    localStorage.setItem('songwriter-language', language);
+  }, [setSongData]);
+
   const handleFileUpload = useCallback((file: File) => {
     console.log('Starting file upload:', file.name, file.size);
     setAudioFile(file);
@@ -99,10 +138,6 @@ export const SongwriterTool = () => {
 
   const handleMetadataUpdate = useCallback((newMetadata: typeof metadata) => {
     setSongData(prev => ({ ...prev, metadata: newMetadata }));
-  }, [setSongData]);
-
-  const handleLanguageChange = useCallback((language: string) => {
-    setSongData(prev => ({ ...prev, selectedLanguage: language }));
   }, [setSongData]);
 
   const handleCurrentSectionChange = useCallback((sectionId: string | null) => {
