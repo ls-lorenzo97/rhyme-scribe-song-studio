@@ -211,6 +211,12 @@ export class RhymeDetector {
         if (cleanWord.length > 2) {
           const phonetic = this.phoneticAPI.getTranscription(cleanWord, language);
           
+          console.log(`🔍 Debug word "${cleanWord}":`, {
+            originalWord: word,
+            phonetic: phonetic,
+            isValid: phonetic && phonetic.length > 0 && this.isValidIpaTranscription(phonetic, cleanWord, language)
+          });
+          
           // Only add words that have a valid IPA transcription (not empty and not from fallback)
           if (phonetic && phonetic.length > 0 && this.isValidIpaTranscription(phonetic, cleanWord, language)) {
             const startChar = globalCharIndex + wordIndex * (word.length + 1);
