@@ -381,7 +381,6 @@ export const UnifiedTimeline = ({
         {/* Timeline Bar with Section Pills */}
         <div className="flex w-full h-16 rounded-xl overflow-x-auto border border-separator bg-secondarySystemBackground gap-5 scrollbar-thin scrollbar-thumb-accent/20 snap-x snap-mandatory py-1 px-2">
           {sortedSections.map((section, idx) => {
-            const hasLyrics = !!section.lyrics && section.lyrics.trim().length > 0;
             const isActive = currentSection === section.id;
             return (
               <div
@@ -389,7 +388,7 @@ export const UnifiedTimeline = ({
                 tabIndex={0}
                 aria-label={`Section ${section.name}`}
                 className={cn(
-                  "flex flex-col items-center justify-center px-5 py-2 min-w-[100px] max-w-[140px] rounded-full cursor-pointer border border-separator transition-all duration-200 relative group bg-secondarySystemBackground overflow-hidden focus:ring-2 focus:ring-accent outline-none",
+                  "flex flex-col items-center justify-center px-4 py-2 min-w-[90px] max-w-[130px] rounded-full cursor-pointer border border-separator transition-all duration-200 relative group bg-secondarySystemBackground overflow-hidden focus:ring-2 focus:ring-accent outline-none",
                   isActive ? "bg-accentSystemFill shadow-lg scale-105 z-10 border-accent transition-all duration-200" : "hover:bg-tertiarySystemFill hover:scale-105",
                 )}
                 style={{ minWidth: 0 }}
@@ -402,15 +401,15 @@ export const UnifiedTimeline = ({
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <span className={cn(
-                      "font-semibold text-[15px] truncate max-w-[90px] text-center block",
+                      "font-semibold text-[15px] truncate max-w-[90px] text-center block whitespace-nowrap",
                       isActive ? "text-label" : "text-secondaryLabel"
                     )}>{section.name}</span>
                   </TooltipTrigger>
                   {section.name.length > 10 && <TooltipContent>{section.name}</TooltipContent>}
                 </Tooltip>
-                {/* Badge tempo Apple-style sotto, sempre leggibile */}
+                {/* Badge tempo Apple-style sotto, sempre leggibile, sempre su una riga */}
                 <span className={cn(
-                  "mt-1 px-2 py-0.5 rounded-full text-[13px] font-bold min-w-[60px] text-center border border-separator shadow-sm",
+                  "mt-1 px-2 py-0.5 rounded-full text-[13px] font-bold min-w-[60px] max-w-[90px] text-center border border-separator shadow-sm whitespace-nowrap overflow-hidden truncate",
                   isActive ? "bg-accentSystemFill text-label border-accent" : "bg-tertiarySystemFill text-secondaryLabel"
                 )}>
                   {formatTime(section.startTime)} - {formatTime(section.endTime)}
