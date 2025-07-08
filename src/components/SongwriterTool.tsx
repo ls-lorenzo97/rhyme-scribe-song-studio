@@ -9,6 +9,7 @@ import { LanguageSelector } from './LanguageSelector';
 import { useLocalStorage } from '../hooks/useLocalStorage';
 import { LyricsEditor } from './LyricsEditor';
 import { RhymeGroup } from './lyrics/AILyricsAssistant';
+import { Upload, Music, Clock, Edit3, Eye } from 'lucide-react';
 
 export interface SongSection {
   id: string;
@@ -143,57 +144,147 @@ export const SongwriterTool = () => {
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-6 py-8">
-        {/* Audio Upload */}
-        {!audioFile && (
-          <div className="flex items-center justify-center min-h-[60vh]">
-            <Card className="max-w-lg w-full bg-card/80 backdrop-blur-xl border-0 shadow-large">
-              <div className="p-12">
+      <div className="max-w-7xl mx-auto px-6 py-8 space-y-8">
+        {/* Step 1: Audio Upload - Always Visible */}
+        <div className="space-y-4">
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 bg-music-primary rounded-full flex items-center justify-center text-white font-semibold text-sm">
+              1
+            </div>
+            <div className="flex items-center gap-2">
+              <Upload className="w-5 h-5 text-music-primary" />
+              <h2 className="text-xl font-semibold text-foreground">Upload Your Song</h2>
+            </div>
+          </div>
+          
+          <Card className="bg-card/80 backdrop-blur-xl border-0 shadow-card">
+            <div className="p-6">
+              {!audioFile ? (
                 <AudioUpload onFileUpload={handleFileUpload} />
-              </div>
-            </Card>
+              ) : (
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 bg-music-primary/20 rounded-xl flex items-center justify-center">
+                      <Music className="w-6 h-6 text-music-primary" />
+                    </div>
+                    <div>
+                      <h3 className="font-semibold text-foreground">{audioFile.name}</h3>
+                      <p className="text-sm text-muted-foreground">
+                        {(audioFile.size / 1024 / 1024).toFixed(1)} MB
+                      </p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => {
+                      setAudioFile(null);
+                      setAudioUrl('');
+                      setSongData(prev => ({ ...prev, sections: [], currentSection: null }));
+                    }}
+                    className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+                  >
+                    Change File
+                  </button>
+                </div>
+              )}
+            </div>
+          </Card>
+        </div>
+
+        {/* Step 2: Song Metadata */}
+        <div className={`space-y-4 transition-opacity duration-300 ${!audioFile ? 'opacity-50 pointer-events-none' : ''}`}>
+          <div className="flex items-center gap-3">
+            <div className={`w-8 h-8 rounded-full flex items-center justify-center font-semibold text-sm ${
+              audioFile ? 'bg-music-primary text-white' : 'bg-muted text-muted-foreground'
+            }`}>
+              2
+            </div>
+            <div className="flex items-center gap-2">
+              <Music className={`w-5 h-5 ${audioFile ? 'text-music-primary' : 'text-muted-foreground'}`} />
+              <h2 className="text-xl font-semibold text-foreground">Song Information</h2>
+            </div>
           </div>
-        )}
+          
+          <Card className="bg-card/80 backdrop-blur-xl border-0 shadow-card">
+            <div className="p-6">
+              {audioFile ? (
+                <SongMetadata
+                  metadata={metadata}
+                  onMetadataUpdate={handleMetadataUpdate}
+                />
+              ) : (
+                <div className="text-center py-8">
+                  <p className="text-muted-foreground">Upload a song to unlock song information</p>
+                </div>
+              )}
+            </div>
+          </Card>
+        </div>
 
-        {/* Song Metadata */}
-        {audioFile && (
-          <SongMetadata
-            metadata={metadata}
-            onMetadataUpdate={handleMetadataUpdate}
-          />
-        )}
-
-        {/* Timeline compatta sotto i metadata */}
-        {audioFile && (
-          <div className="mt-4 mb-6">
-            <Card className="bg-card/80 backdrop-blur-xl border-0 shadow-card p-2">
-              <UnifiedTimeline
-                sections={sections}
-                currentTime={currentTime}
-                duration={duration}
-                currentSection={currentSection}
-                onSectionClick={jumpToSection}
-                onSectionsUpdate={handleSectionUpdate}
-                setCurrentSection={handleCurrentSectionChange}
-                audioRef={audioRef}
-                audioUrl={audioUrl}
-                isPlaying={isPlaying}
-                setIsPlaying={setIsPlaying}
-                setCurrentTime={setCurrentTime}
-                setDuration={setDuration}
-                audioFile={audioFile}
-              />
-            </Card>
+        {/* Step 3: Timeline */}
+        <div className={`space-y-4 transition-opacity duration-300 ${!audioFile ? 'opacity-50 pointer-events-none' : ''}`}>
+          <div className="flex items-center gap-3">
+            <div className={`w-8 h-8 rounded-full flex items-center justify-center font-semibold text-sm ${
+              audioFile ? 'bg-music-primary text-white' : 'bg-muted text-muted-foreground'
+            }`}>
+              3
+            </div>
+            <div className="flex items-center gap-2">
+              <Clock className={`w-5 h-5 ${audioFile ? 'text-music-primary' : 'text-muted-foreground'}`} />
+              <h2 className="text-xl font-semibold text-foreground">Song Timeline</h2>
+            </div>
           </div>
-        )}
+          
+          <Card className="bg-card/80 backdrop-blur-xl border-0 shadow-card">
+            <div className="p-2">
+              {audioFile ? (
+                <UnifiedTimeline
+                  sections={sections}
+                  currentTime={currentTime}
+                  duration={duration}
+                  currentSection={currentSection}
+                  onSectionClick={jumpToSection}
+                  onSectionsUpdate={handleSectionUpdate}
+                  setCurrentSection={handleCurrentSectionChange}
+                  audioRef={audioRef}
+                  audioUrl={audioUrl}
+                  isPlaying={isPlaying}
+                  setIsPlaying={setIsPlaying}
+                  setCurrentTime={setCurrentTime}
+                  setDuration={setDuration}
+                  audioFile={audioFile}
+                />
+              ) : (
+                <div className="text-center py-8">
+                  <p className="text-muted-foreground">Upload a song to create timeline sections</p>
+                </div>
+              )}
+            </div>
+          </Card>
+        </div>
 
-        {/* Main Interface: input frasi a sinistra, testo completo a destra */}
-        {audioFile && (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Left Column - LyricsEditor */}
-            <div>
+        {/* Step 4: Lyrics Editor & Preview */}
+        <div className={`space-y-4 transition-opacity duration-300 ${!audioFile ? 'opacity-50 pointer-events-none' : ''}`}>
+          <div className="flex items-center gap-3">
+            <div className={`w-8 h-8 rounded-full flex items-center justify-center font-semibold text-sm ${
+              audioFile ? 'bg-music-primary text-white' : 'bg-muted text-muted-foreground'
+            }`}>
+              4
+            </div>
+            <div className="flex items-center gap-2">
+              <Edit3 className={`w-5 h-5 ${audioFile ? 'text-music-primary' : 'text-muted-foreground'}`} />
+              <h2 className="text-xl font-semibold text-foreground">Write Lyrics</h2>
+            </div>
+          </div>
+          
+          {audioFile ? (
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* Left Column - LyricsEditor */}
               <Card className="bg-card/80 backdrop-blur-xl border-0 shadow-card">
-                <div className="p-4">
+                <div className="p-6">
+                  <div className="flex items-center gap-2 mb-4">
+                    <Edit3 className="w-4 h-4 text-music-primary" />
+                    <h3 className="font-semibold text-foreground">Edit Lyrics</h3>
+                  </div>
                   <LyricsEditor
                     section={currentSectionData}
                     onLyricsUpdate={handleLyricsUpdate}
@@ -204,18 +295,27 @@ export const SongwriterTool = () => {
                   />
                 </div>
               </Card>
-            </div>
 
-            {/* Right Column - Testo completo con rime evidenziate */}
-            <div>
+              {/* Right Column - Lyrics Preview */}
               <Card className="bg-card/80 backdrop-blur-xl border-0 shadow-card">
-                <div className="p-4">
+                <div className="p-6">
+                  <div className="flex items-center gap-2 mb-4">
+                    <Eye className="w-4 h-4 text-music-primary" />
+                    <h3 className="font-semibold text-foreground">Preview</h3>
+                  </div>
                   <LyricsPreview lines={lyricsPreview.lines} rhymeGroups={lyricsPreview.rhymeGroups} />
                 </div>
               </Card>
             </div>
-          </div>
-        )}
+          ) : (
+            <Card className="bg-card/80 backdrop-blur-xl border-0 shadow-card">
+              <div className="text-center py-12">
+                <Edit3 className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+                <p className="text-muted-foreground">Upload a song to start writing lyrics</p>
+              </div>
+            </Card>
+          )}
+        </div>
       </div>
     </div>
   );

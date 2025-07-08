@@ -1,7 +1,6 @@
 import { useState, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
-import { ArrowUp } from 'lucide-react';
+import { ArrowUp, Music } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface AudioUploadProps {
@@ -42,25 +41,25 @@ export const AudioUpload = ({ onFileUpload }: AudioUploadProps) => {
   }, [onFileUpload]);
 
   return (
-    <div className="text-center space-y-8">
+    <div className="text-center space-y-6">
       <div className="flex justify-center">
-        <div className="w-24 h-24 bg-gradient-music rounded-full flex items-center justify-center shadow-card">
-          <div className="text-3xl font-medium text-white">♪</div>
+        <div className="w-16 h-16 bg-gradient-music rounded-2xl flex items-center justify-center shadow-card">
+          <Music className="w-8 h-8 text-white" />
         </div>
       </div>
       
       <div>
-        <h2 className="text-2xl font-semibold text-foreground mb-3">
-          Add Music
-        </h2>
-        <p className="text-muted-foreground text-base">
-          Choose a song from your library or drag it here
+        <h3 className="text-lg font-semibold text-foreground mb-2">
+          Choose Your Song
+        </h3>
+        <p className="text-muted-foreground text-sm">
+          Drag and drop or click to browse your music files
         </p>
       </div>
 
       <div
         className={cn(
-          "border-2 border-dashed rounded-2xl p-16 transition-all duration-200 cursor-pointer",
+          "border-2 border-dashed rounded-xl p-8 transition-all duration-200 cursor-pointer",
           "hover:bg-muted/30 hover:border-music-accent",
           isDragOver ? "border-music-accent bg-music-accent/10 scale-[1.02]" : "border-border/40"
         )}
@@ -69,20 +68,20 @@ export const AudioUpload = ({ onFileUpload }: AudioUploadProps) => {
         onDrop={handleDrop}
         onClick={() => document.getElementById('audio-upload')?.click()}
       >
-        <div className="space-y-6">
-          <ArrowUp className="w-16 h-16 text-muted-foreground mx-auto" />
+        <div className="space-y-4">
+          <ArrowUp className="w-10 h-10 text-muted-foreground mx-auto" />
           <div>
-            <p className="text-xl font-medium text-foreground mb-2">
-              Drag and Drop
+            <p className="text-base font-medium text-foreground mb-1">
+              Drop your audio file here
             </p>
-            <p className="text-muted-foreground">
-              MP3, AAC, WAV, FLAC, and OGG formats only
+            <p className="text-xs text-muted-foreground">
+              MP3, AAC, WAV, FLAC, OGG
             </p>
           </div>
           <Button 
             variant="default" 
-            size="lg" 
-            className="bg-music-primary hover:bg-music-primary/90 text-white rounded-full px-8 py-3 font-medium"
+            size="sm" 
+            className="bg-music-primary hover:bg-music-primary/90 text-white rounded-lg px-6 py-2 font-medium"
           >
             Browse Files
           </Button>
