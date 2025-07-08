@@ -183,9 +183,10 @@ interface AILyricsAssistantProps {
   section: SongSection | undefined;
   onLyricsUpdate: (sectionId: string, lyrics: string) => void;
   selectedLanguage: string;
+  rhymeGroups: RhymeGroup[];
 }
 
-export const AILyricsAssistant = ({ section, onLyricsUpdate, selectedLanguage }: AILyricsAssistantProps) => {
+export const AILyricsAssistant = ({ section, onLyricsUpdate, selectedLanguage, rhymeGroups }: AILyricsAssistantProps) => {
   const [lines, setLines] = useState<LineData[]>([]);
   const [selectedWord, setSelectedWord] = useState<string>('');
   const debounceTimeoutRef = useRef<NodeJS.Timeout>();
@@ -356,7 +357,6 @@ export const AILyricsAssistant = ({ section, onLyricsUpdate, selectedLanguage }:
               >
                 {line.rhymeLetter || (index + 1)}
               </div>
-              
               {/* Text Input */}
               <div className="flex-1 min-w-0 space-y-2">
                 <textarea
@@ -386,7 +386,29 @@ export const AILyricsAssistant = ({ section, onLyricsUpdate, selectedLanguage }:
                     lineHeight: '1.5'
                   }}
                 />
-                
+                {/* Rhyme Info Box */}
+                <div className="flex gap-2 items-center mt-1">
+                  {/* Rhyme Tail/IPA Box */}
+                  <div className="px-2 py-1 rounded bg-muted/40 border text-xs text-muted-foreground">
+                    {/* Show rhyme tail or IPA for this line's last word if available */}
+                    {(() => {
+                      // Find rhyme group for this line
+                      const rhymeGroup = rhymeGroups.find(group => group.positions.some(pos => pos.line === index));
+                      if (rhymeGroup) {
+                        const pos = rhymeGroup.positions.find(pos => pos.line === index);
+                        return pos && pos.word ? `Rhyme: ${pos.word}` : 'No rhyme';
+                      }
+                      return 'No rhyme';
+                    })()}
+                  </div>
+                  {/* Rhyme Group Box */}
+                  <div className="px-2 py-1 rounded bg-muted/40 border text-xs text-muted-foreground">
+                    {(() => {
+                      const rhymeGroup = rhymeGroups.find(group => group.positions.some(pos => pos.line === index));
+                      return rhymeGroup ? `Group: ${rhymeGroup.words.join(', ')}` : 'No group';
+                    })()}
+                  </div>
+                </div>
                 {/* Colored Preview */}
                 {line.text.trim() && (
                   <div className="w-full text-base bg-muted/30 border border-border rounded-md px-3 py-2 min-h-[3rem] text-muted-foreground">

@@ -7,6 +7,8 @@ import { ExportDialog } from './ExportDialog';
 import { SongMetadata } from './SongMetadata';
 import { LanguageSelector } from './LanguageSelector';
 import { useLocalStorage } from '../hooks/useLocalStorage';
+import { LyricsEditor } from './LyricsEditor';
+import { RhymeGroup } from './lyrics/AILyricsAssistant';
 
 export interface SongSection {
   id: string;
@@ -35,6 +37,7 @@ export const SongwriterTool = () => {
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
   const audioRef = useRef<HTMLAudioElement>(null);
+  const [rhymeGroups, setRhymeGroups] = useState<RhymeGroup[]>([]);
 
   // Persistent data using localStorage
   const [songData, setSongData] = useLocalStorage<SongData>('songwriter-data', {
@@ -190,10 +193,18 @@ export const SongwriterTool = () => {
             <div>
               <Card className="bg-card/80 backdrop-blur-xl border-0 shadow-card sticky top-24">
                 <div className="p-6">
+                  <LyricsEditor
+                    section={currentSectionData}
+                    onLyricsUpdate={handleLyricsUpdate}
+                    selectedLanguage={selectedLanguage}
+                    rhymeGroups={rhymeGroups}
+                    setRhymeGroups={setRhymeGroups}
+                  />
                   <AILyricsAssistant
                     section={currentSectionData}
                     onLyricsUpdate={handleLyricsUpdate}
                     selectedLanguage={selectedLanguage}
+                    rhymeGroups={rhymeGroups}
                   />
                 </div>
               </Card>

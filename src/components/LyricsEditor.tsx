@@ -12,12 +12,13 @@ interface LyricsEditorProps {
   section: SongSection | undefined;
   onLyricsUpdate: (sectionId: string, lyrics: string) => void;
   selectedLanguage?: string;
+  rhymeGroups: RhymeGroup[];
+  setRhymeGroups: React.Dispatch<React.SetStateAction<RhymeGroup[]>>;
 }
 
-export const LyricsEditor = ({ section, onLyricsUpdate, selectedLanguage = 'en' }: LyricsEditorProps) => {
+export const LyricsEditor = ({ section, onLyricsUpdate, selectedLanguage = 'en', rhymeGroups, setRhymeGroups }: LyricsEditorProps) => {
   const [lyrics, setLyrics] = useState('');
   const [showRhymes, setShowRhymes] = useState(true);
-  const [rhymeGroups, setRhymeGroups] = useState<RhymeGroup[]>([]);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   
   const rhymeDetector = useMemo(() => new RhymeDetector(), []);
