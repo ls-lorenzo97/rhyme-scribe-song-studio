@@ -63,100 +63,51 @@ class AdvancedPhoneticTranscriber implements PhoneticAPI {
 
   private getEnglishIPA(word: string): string {
     try {
-      // Use text-to-ipa library for authentic English IPA conversion if available
+      // Use ONLY text-to-ipa library for authentic English IPA conversion
       if (textToIPA && textToIPA.lookup) {
         const ipaResult = textToIPA.lookup(word.toLowerCase());
         
+        console.log(`🔍 English IPA for "${word}": library result = "${ipaResult}"`);
+        
         if (ipaResult && ipaResult.length > 0) {
           // Extract stress tail from IPA transcription
-          return this.extractStressTail(ipaResult);
+          const stressTail = this.extractStressTail(ipaResult);
+          console.log(`🎵 English stress tail for "${word}": "${stressTail}"`);
+          return stressTail;
         }
       }
       
-      // Fallback for English if library not available
-      return this.getEnglishFallback(word);
+      console.log(`❌ No English IPA found for "${word}" - returning empty`);
+      return ''; // NO FALLBACK - return empty if library doesn't have the word
     } catch (error) {
       console.warn(`English IPA conversion failed for "${word}":`, error);
-      return this.getEnglishFallback(word);
+      return ''; // NO FALLBACK - return empty on error
     }
   }
 
-  private getEnglishFallback(word: string): string {
-    const cleanWord = word.toLowerCase();
-    
-    // Common English rhyme patterns
-    const englishPatterns = [
-      [/ight$/, 'aɪt'],    // light, night, fight
-      [/tion$/, 'ʃən'],    // nation, creation
-      [/sion$/, 'ʒən'],    // decision, collision
-      [/ing$/, 'ɪŋ'],      // sing, ring, bring
-      [/ed$/, 'd'],        // played, stayed
-      [/er$/, 'ər'],       // singer, player
-      [/ly$/, 'li'],       // quickly, slowly
-      [/y$/, 'i'],         // happy, lucky
-      [/ough$/, 'ʌf'],     // tough, rough
-      [/augh$/, 'ɔːf'],    // laugh, cough
-      [/ake$/, 'eɪk'],     // make, take, bake
-      [/ame$/, 'eɪm'],     // name, game, same
-      [/ate$/, 'eɪt'],     // late, fate, gate
-      [/ice$/, 'aɪs'],     // nice, price, dice
-      [/ine$/, 'aɪn'],     // line, mine, fine
-      [/ove$/, 'ʌv'],      // love, above, dove
-      [/eet$/, 'iːt'],     // meet, feet, sweet
-    ];
-
-    for (const [pattern, replacement] of englishPatterns) {
-      if ((pattern as RegExp).test(cleanWord)) {
-        return replacement as string;
-      }
-    }
-
-    return ''; // No valid rhyme pattern found
-  }
 
   private getItalianIPA(word: string): string {
     try {
-      // Use ipa-dict for Italian IPA conversion
-      const ipaResult = ipaDict.lookup(word.toLowerCase(), 'it');
-      
-      if (ipaResult && ipaResult.length > 0) {
-        // Extract stress tail from IPA transcription
-        return this.extractStressTail(ipaResult);
+      // Use ONLY ipa-dict library for authentic Italian IPA conversion
+      if (ipaDict && ipaDict.lookup) {
+        const ipaResult = ipaDict.lookup(word.toLowerCase(), 'it');
+        
+        console.log(`🔍 Italian IPA for "${word}": library result = "${ipaResult}"`);
+        
+        if (ipaResult && ipaResult.length > 0) {
+          // Extract stress tail from IPA transcription
+          const stressTail = this.extractStressTail(ipaResult);
+          console.log(`🎵 Italian stress tail for "${word}": "${stressTail}"`);
+          return stressTail;
+        }
       }
       
-      // Fallback to pattern-based approach for common Italian endings
-      return this.getItalianFallback(word);
+      console.log(`❌ No Italian IPA found for "${word}" - returning empty`);
+      return ''; // NO FALLBACK - return empty if library doesn't have the word
     } catch (error) {
       console.warn(`Italian IPA conversion failed for "${word}":`, error);
-      return this.getItalianFallback(word);
+      return ''; // NO FALLBACK - return empty on error
     }
-  }
-
-  private getItalianFallback(word: string): string {
-    const cleanWord = word.toLowerCase();
-    
-    // Common Italian rhyme patterns - only for well-known endings
-    const italianPatterns = [
-      [/ale$/, 'ale'],     // male, reale, finale
-      [/are$/, 'are'],     // amare, cantare  
-      [/ere$/, 'ere'],     // vedere, credere
-      [/ire$/, 'ire'],     // sentire, partire
-      [/ore$/, 'ore'],     // amore, dolore
-      [/ione$/, 'jone'],   // azione, nazione
-      [/zione$/, 'tsjone'], // protezione, creazione
-      [/anza$/, 'antsa'],  // speranza, danza
-      [/enza$/, 'entsa'],  // presenza, violenza
-      [/ità$/, 'ita'],     // città, verità
-      [/ezza$/, 'ettsa'],  // bellezza, tristezza
-    ];
-
-    for (const [pattern, replacement] of italianPatterns) {
-      if ((pattern as RegExp).test(cleanWord)) {
-        return replacement as string;
-      }
-    }
-
-    return ''; // No valid rhyme pattern found
   }
 
   private getGenericIPA(word: string, language: string): string {
@@ -238,28 +189,26 @@ export class RhymeDetector {
   }
 
   private isValidIpaTranscription(phonetic: string, word: string, language: string): boolean {
-    // Strict validation to eliminate false positives
-    if (!phonetic || phonetic.length === 0) return false;
+    // Strict validation - only accept genuine IPA transcriptions from libraries
+    if (!phonetic || phonetic.length === 0) {
+      console.log(`❌ Invalid IPA for "${word}": empty phonetic`);
+      return false;
+    }
     
     // Reject if phonetic is just the original word
-    if (phonetic === word.toLowerCase()) return false;
-    
-    if (language === 'it') {
-      // For Italian, only accept known rhyme patterns
-      const validItalianEndings = ['ale', 'are', 'ere', 'ire', 'ore', 'jone', 'tsjone', 'antsa', 'entsa', 'ita', 'ettsa'];
-      return validItalianEndings.includes(phonetic);
+    if (phonetic === word.toLowerCase()) {
+      console.log(`❌ Invalid IPA for "${word}": phonetic equals original word`);
+      return false;
     }
     
-    // For English, ensure it's a valid IPA transcription (not just word ending)
-    if (language === 'en') {
-      // IPA should contain actual phonetic symbols or be significantly different from original
-      const hasIpaSymbols = /[æɑɛɪʊʌəɜɔaɪaʊɔɪeɪoʊɪər]/.test(phonetic);
-      const isDifferentFromWord = phonetic !== word.slice(-phonetic.length);
-      return hasIpaSymbols || (isDifferentFromWord && phonetic.length >= 2);
+    // Must be at least 2 characters and different from word ending
+    if (phonetic.length < 2) {
+      console.log(`❌ Invalid IPA for "${word}": too short (${phonetic.length})`);
+      return false;
     }
     
-    // For other languages, ensure it's not just the end of the word
-    return phonetic !== word.slice(-phonetic.length) && phonetic.length >= 2;
+    console.log(`✅ Valid IPA for "${word}": "${phonetic}"`);
+    return true;
   }
 
   async detectRhymes(text: string, language: string = 'en'): Promise<RhymeGroup[]> {
@@ -476,21 +425,12 @@ export class RhymeDetector {
   private isValidRhymeGroup(words: Array<{ word: string; phonetic: string }>, language: string): boolean {
     if (words.length < 2) return false;
     
-    // For Italian, validate that all words in the group have the same known rhyme ending
-    if (language === 'it') {
-      const validItalianEndings = ['ale', 'are', 'ere', 'ire', 'ore', 'jone', 'tsjone', 'antsa', 'entsa', 'ita', 'ettsa'];
-      const phonetic = words[0].phonetic;
-      
-      // Must be a valid Italian rhyme ending
-      if (!validItalianEndings.includes(phonetic)) {
-        return false;
-      }
-      
-      // All words must have the exact same phonetic ending
-      return words.every(w => w.phonetic === phonetic);
-    }
+    // All words in the group must have identical phonetic transcriptions for true rhymes
+    const firstPhonetic = words[0].phonetic;
+    const allMatch = words.every(w => w.phonetic === firstPhonetic);
     
-    // For other languages, use existing logic
-    return true;
+    console.log(`🎵 Validating rhyme group for "${words.map(w => w.word).join(', ')}" with phonetic "${firstPhonetic}": ${allMatch ? 'VALID' : 'INVALID'}`);
+    
+    return allMatch;
   }
 }
