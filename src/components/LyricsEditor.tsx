@@ -125,46 +125,63 @@ export const LyricsEditor = ({ section, onLyricsUpdate, selectedLanguage = 'en',
         </p>
       </div>
       <div className="space-y-2">
-        {lines.map((line, idx) => (
-          <div key={idx} className="flex items-center gap-2 relative">
-            {/* Rhyme Letter & Color */}
-            <div
-              className="min-w-8 min-h-8 w-8 h-8 rounded-full flex items-center justify-center text-base font-bold border flex-shrink-0"
-              style={{
-                backgroundColor: getRhymeColor(idx) + '20',
-                color: getRhymeColor(idx),
-                borderColor: getRhymeColor(idx),
-              }}
-            >
-              {getRhymeLetter(idx)}
+        {lines.map((line, idx) => {
+          // Trova la rima per questa riga
+          const rhymeGroup = rhymeGroups.find(g => g.positions.some(pos => pos.line === idx));
+          const color = rhymeGroup ? rhymeGroup.color : undefined;
+          // Trova l'ultima parola
+          const words = line.split(/(\s+)/);
+          let lastWordIdx = -1;
+          for (let i = words.length - 1; i >= 0; i--) {
+            if (words[i].trim() && !/\s+/.test(words[i])) {
+              lastWordIdx = i;
+              break;
+            }
+          }
+          const lastWord = lastWordIdx !== -1 ? words[lastWordIdx] : '';
+          return (
+            <div key={idx} className="flex flex-col gap-0.5 relative">
+              <div className="flex items-center gap-2">
+                {/* Rhyme Letter & Color */}
+                <div
+                  className="min-w-8 min-h-8 w-8 h-8 rounded-full flex items-center justify-center text-base font-bold border flex-shrink-0"
+                  style={{
+                    backgroundColor: getRhymeColor(idx) + '20',
+                    color: getRhymeColor(idx),
+                    borderColor: getRhymeColor(idx),
+                  }}
+                >
+                  {getRhymeLetter(idx)}
+                </div>
+                {/* Input normale */}
+                <input
+                  type="text"
+                  value={line}
+                  onChange={e => handleLineChange(idx, e.target.value)}
+                  placeholder={`Frase ${idx + 1}`}
+                  className="flex-1 h-10 px-3 py-2 rounded border bg-background text-base focus:ring-2 focus:ring-music-primary outline-none"
+                  autoComplete="off"
+                  spellCheck={false}
+                />
+                {/* Rhyme Suggestion Button */}
+                <button
+                  type="button"
+                  className="ml-1 px-2 py-1 rounded bg-muted/40 border text-xs text-muted-foreground hover:bg-music-primary/10"
+                  onClick={() => handleOpenSuggestions(idx)}
+                  title="Suggerisci rime per l'ultima parola"
+                >
+                  💡
+                </button>
+              </div>
+              {/* Mostra la parola in rima colorata sotto l'input, solo se c'è una rima */}
+              {color && lastWord && (
+                <div className="pl-12 text-sm mt-0.5" style={{ color, fontWeight: 600 }}>
+                  {lastWord}
+                </div>
+              )}
             </div>
-            {/* Overlay for colored text */}
-            <div className="absolute left-12 right-12 top-0 bottom-0 pointer-events-none flex items-center h-10 px-3" style={{zIndex:1, whiteSpace:'pre-wrap', fontSize:'1rem'}}>
-              {renderColoredLine(line, idx)}
-            </div>
-            {/* Transparent input for typing */}
-            <input
-              ref={el => inputRefs.current[idx] = el}
-              type="text"
-              value={line}
-              onChange={e => handleLineChange(idx, e.target.value)}
-              placeholder={`Frase ${idx + 1}`}
-              className="flex-1 h-10 px-3 py-2 rounded border bg-background text-base focus:ring-2 focus:ring-music-primary outline-none relative"
-              autoComplete="off"
-              style={{ minHeight: '2.5rem', maxHeight: '2.5rem', background: 'transparent', color: 'transparent', caretColor: '#222', zIndex:2 }}
-              spellCheck={false}
-            />
-            {/* Rhyme Suggestion Button */}
-            <button
-              type="button"
-              className="ml-1 px-2 py-1 rounded bg-muted/40 border text-xs text-muted-foreground hover:bg-music-primary/10"
-              onClick={() => handleOpenSuggestions(idx)}
-              title="Suggerisci rime per l'ultima parola"
-            >
-              💡
-            </button>
-          </div>
-        ))}
+          );
+        })}
         <button
           type="button"
           onClick={addLine}
