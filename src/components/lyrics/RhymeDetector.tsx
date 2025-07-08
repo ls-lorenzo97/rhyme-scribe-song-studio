@@ -62,9 +62,9 @@ class PhoneticTranscriber implements PhoneticAPI {
       // Cache the result
       this.cacheTranscription(cacheKey, transcription);
       return transcription;
-    } catch (error) {
+      } catch (error) {
       console.warn(`Phonetic transcription error for "${word}" (${language}):`, error);
-      return this.getFallbackPhonetic(word, language);
+      return '';
     }
   }
 
@@ -134,12 +134,12 @@ class PhoneticTranscriber implements PhoneticAPI {
   }
 
   private getGenericIPA(word: string, language: string): string {
-    // Generic IPA approximation for other languages
-    return this.getFallbackPhonetic(word, language);
+    // For non-supported languages, return empty to exclude from rhyme detection
+    return '';
   }
 
   private validateAndClean(transcription: string, word: string, language: string): string {
-    if (!transcription) return this.getFallbackPhonetic(word, language);
+    if (!transcription) return '';
     
     // Clean up common issues in IPA transcription
     let cleaned = transcription
@@ -147,119 +147,9 @@ class PhoneticTranscriber implements PhoneticAPI {
       .replace(/[ˈˌ]/g, '') // Remove stress markers for rhyme comparison
       .toLowerCase();
     
-    return cleaned || this.getFallbackPhonetic(word, language);
+    return cleaned || '';
   }
 
-  private getFallbackPhonetic(word: string, language: string): string {
-    // Enhanced fallback with better phonetic rules
-    switch (language) {
-      case 'en': return this.getEnglishPhoneticFallback(word);
-      case 'it': return this.getItalianPhoneticFallback(word);
-      case 'es': return this.getSpanishPhoneticFallback(word);
-      case 'fr': return this.getFrenchPhoneticFallback(word);
-      case 'de': return this.getGermanPhoneticFallback(word);
-      default: return word.slice(-2);
-    }
-  }
-
-  private getEnglishPhoneticFallback(word: string): string {
-    let phonetic = word.toLowerCase();
-    
-    const rules = [
-      [/tion$/, 'ʃən'],
-      [/sion$/, 'ʒən'],
-      [/ed$/, 't'],
-      [/ing$/, 'ɪŋ'],
-      [/ly$/, 'li'],
-      [/y$/, 'i'],
-      [/er$/, 'ər']
-    ];
-
-    for (const [pattern, replacement] of rules) {
-      phonetic = phonetic.replace(pattern as RegExp, replacement as string);
-    }
-
-    return phonetic.slice(-3);
-  }
-
-  private getItalianPhoneticFallback(word: string): string {
-    let phonetic = word.toLowerCase();
-    
-    const rules = [
-      [/ale$/, 'ale'],
-      [/are$/, 'are'],
-      [/ere$/, 'ere'],
-      [/ire$/, 'ire'],
-      [/ore$/, 'ore'],
-      [/zione$/, 'tsjone'],
-      [/sione$/, 'sjone'],
-      [/mente$/, 'ente'],
-      [/ità$/, 'ita']
-    ];
-
-    for (const [pattern, replacement] of rules) {
-      phonetic = phonetic.replace(pattern as RegExp, replacement as string);
-    }
-
-    return phonetic.slice(-3);
-  }
-
-  private getSpanishPhoneticFallback(word: string): string {
-    let phonetic = word.toLowerCase();
-    
-    const rules = [
-      [/ción$/, 'θjon'],
-      [/sión$/, 'sjon'],
-      [/mente$/, 'ente'],
-      [/ando$/, 'ando'],
-      [/ar$/, 'ar'],
-      [/er$/, 'er'],
-      [/ir$/, 'ir']
-    ];
-
-    for (const [pattern, replacement] of rules) {
-      phonetic = phonetic.replace(pattern as RegExp, replacement as string);
-    }
-
-    return phonetic.slice(-3);
-  }
-
-  private getFrenchPhoneticFallback(word: string): string {
-    let phonetic = word.toLowerCase();
-    
-    const rules = [
-      [/tion$/, 'sjɔ̃'],
-      [/sion$/, 'zjɔ̃'],
-      [/ment$/, 'mɑ̃'],
-      [/ent$/, 'ɑ̃'],
-      [/age$/, 'aʒ'],
-      [/eur$/, 'œr']
-    ];
-
-    for (const [pattern, replacement] of rules) {
-      phonetic = phonetic.replace(pattern as RegExp, replacement as string);
-    }
-
-    return phonetic.slice(-3);
-  }
-
-  private getGermanPhoneticFallback(word: string): string {
-    let phonetic = word.toLowerCase();
-    
-    const rules = [
-      [/ung$/, 'ʊŋ'],
-      [/heit$/, 'aɪt'],
-      [/keit$/, 'aɪt'],
-      [/lich$/, 'ɪç'],
-      [/tion$/, 'oːn']
-    ];
-
-    for (const [pattern, replacement] of rules) {
-      phonetic = phonetic.replace(pattern as RegExp, replacement as string);
-    }
-
-    return phonetic.slice(-3);
-  }
 
   private cacheTranscription(key: string, value: string): void {
     if (Object.keys(this.cache).length >= this.MAX_CACHE_SIZE) {
@@ -288,6 +178,17 @@ export class RhymeDetector {
     this.phoneticAPI = new PhoneticTranscriber();
   }
 
+  private isValidIpaTranscription(phonetic: string, word: string, language: string): boolean {
+    // Ensure the transcription is not just a fallback pattern
+    if (language === 'it') {
+      const validItalianEndings = ['ale', 'are', 'ere', 'ire', 'ore', 'jone', 'tsjone', 'sjone', 'ente', 'antsa', 'entsa', 'ita', 'ettsa'];
+      return validItalianEndings.includes(phonetic);
+    }
+    
+    // For other languages, ensure it's not just the end of the word
+    return phonetic !== word.slice(-phonetic.length);
+  }
+
   async detectRhymes(text: string, language: string = 'en'): Promise<RhymeGroup[]> {
     const lines = text.split('\n').filter(line => line.trim());
     const words: Array<{ 
@@ -310,8 +211,8 @@ export class RhymeDetector {
         if (cleanWord.length > 2) {
           const phonetic = this.phoneticAPI.getTranscription(cleanWord, language);
           
-          // Only add words that have a valid phonetic transcription (not empty)
-          if (phonetic && phonetic.length > 0) {
+          // Only add words that have a valid IPA transcription (not empty and not from fallback)
+          if (phonetic && phonetic.length > 0 && this.isValidIpaTranscription(phonetic, cleanWord, language)) {
             const startChar = globalCharIndex + wordIndex * (word.length + 1);
             const endChar = startChar + word.length;
             
