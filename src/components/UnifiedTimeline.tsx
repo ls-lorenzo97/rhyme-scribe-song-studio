@@ -379,7 +379,7 @@ export const UnifiedTimeline = ({
           ))}
         </div>
         {/* Timeline Bar with Section Pills */}
-        <div className="flex w-full h-20 rounded-xl overflow-x-auto border border-separator bg-secondarySystemBackground gap-5 scrollbar-thin scrollbar-thumb-accent/20 snap-x snap-mandatory py-2 px-2">
+        <div className="flex w-full h-24 rounded-xl overflow-x-auto border border-separator bg-secondarySystemBackground gap-5 scrollbar-thin scrollbar-thumb-accent/20 snap-x snap-mandatory py-2 px-2">
           {sortedSections.map((section, idx) => {
             const isActive = currentSection === section.id;
             return (
@@ -388,7 +388,7 @@ export const UnifiedTimeline = ({
                 tabIndex={0}
                 aria-label={`Section ${section.name}`}
                 className={cn(
-                  "flex flex-col items-center justify-center px-3 py-2 min-w-[110px] max-w-[150px] rounded-lg cursor-pointer border border-separator transition-all duration-200 relative group bg-secondarySystemBackground overflow-hidden focus:ring-2 focus:ring-accent outline-none",
+                  "grid grid-cols-3 grid-rows-2 gap-x-2 gap-y-1 min-w-[120px] max-w-[160px] px-3 py-2 rounded-xl cursor-pointer border border-separator transition-all duration-200 bg-secondarySystemBackground overflow-hidden focus:ring-2 focus:ring-accent outline-none",
                   isActive ? "bg-accentSystemFill shadow-lg scale-105 z-10 border-accent transition-all duration-200" : "hover:bg-tertiarySystemFill hover:scale-105",
                 )}
                 style={{ minWidth: 0 }}
@@ -398,7 +398,7 @@ export const UnifiedTimeline = ({
                 }}
               >
                 {/* Riga 1: Play | Nome | Edit */}
-                <div className="flex items-center w-full justify-between gap-1">
+                <div className="flex justify-center items-center col-span-1 row-span-1">
                   <Tooltip>
                     <TooltipTrigger asChild>
                       <Button
@@ -413,6 +413,8 @@ export const UnifiedTimeline = ({
                     </TooltipTrigger>
                     <TooltipContent>Play {section.name}</TooltipContent>
                   </Tooltip>
+                </div>
+                <div className="flex justify-center items-center col-span-1 row-span-1">
                   <Tooltip>
                     <TooltipTrigger asChild>
                       <span className={cn(
@@ -422,6 +424,8 @@ export const UnifiedTimeline = ({
                     </TooltipTrigger>
                     {section.name.length > 10 && <TooltipContent>{section.name}</TooltipContent>}
                   </Tooltip>
+                </div>
+                <div className="flex justify-center items-center col-span-1 row-span-1">
                   <Tooltip>
                     <TooltipTrigger asChild>
                       <Button
@@ -437,14 +441,17 @@ export const UnifiedTimeline = ({
                     <TooltipContent>Edit section</TooltipContent>
                   </Tooltip>
                 </div>
-                {/* Riga 2: Badge tempo centrato | Delete a destra */}
-                <div className="flex items-center w-full justify-between gap-1 mt-1">
+                {/* Riga 2: (vuoto) | Badge tempo | Delete */}
+                <div></div>
+                <div className="flex justify-center items-center col-span-1 row-span-1">
                   <span className={cn(
                     "px-2 py-0.5 rounded-full text-[13px] font-bold min-w-[60px] max-w-[80px] text-center border border-separator shadow-sm whitespace-nowrap overflow-hidden truncate mx-auto",
                     isActive ? "bg-accentSystemFill text-label border-accent" : "bg-tertiarySystemFill text-secondaryLabel"
                   )}>
                     {formatTime(section.startTime)} - {formatTime(section.endTime)}
                   </span>
+                </div>
+                <div className="flex justify-center items-center col-span-1 row-span-1">
                   <Tooltip>
                     <TooltipTrigger asChild>
                       <Button
