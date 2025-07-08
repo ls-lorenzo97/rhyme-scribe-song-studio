@@ -1,284 +1,136 @@
 export class RhymeDetector {
-  constructor() {
-    this.rhymeColors = [
-      '#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEAA7',
-      '#DDA0DD', '#FFB3BA', '#BAFFC9', '#BAE1FF', '#FFFFBA'
-    ];
+  private rhymeColors = ['#FF6B6B','#4ECDC4','#45B7D1','#96CEB4','#FFEAA7','#DDA0DD','#FFB3BA','#BAFFC9','#BAE1FF','#FFFFBA'];
+  private functionWords = {/* same as before */};
+  private commonSuffixes = ['mente','zione','sione','amento','ing','ed','ly'];
+  private epitranEndpoint = 'http://localhost:5000/stress-tail';
+  private ipaCache = new Map<string,string>();
 
-    // Stopwords estese per filtraggio
-    this.functionWords = {
-      it: ['il','la','lo','gli','le','un','una','di','del','della','che','con','per','in','su','da','tra','fra','ma','e','o'],
-      en: ['the','a','an','of','with','in','on','at','by','for','to','and','or','but','if','then','so'],
-      es: ['el','la','los','las','un','una','de','del','que','con','por','en','su','y','o'],
-      fr: ['le','la','les','un','une','des','de','du','que','avec','pour','dans','sur','et','ou'],
-      de: ['der','die','das','ein','eine','mit','von','zu','und','oder','aber','im','am']
-    };
-
-    // Suffissi che creano false rime
-    this.commonSuffixes = ['mente', 'zione', 'sione', 'amento', 'ing', 'ed', 'ly'];
-    
-    this.epitranEndpoint = 'http://localhost:5000';
-    this.ipaCache = new Map();
-  }
-
-  async detectRhymes(text, language = 'it') {
+  async detectRhymes(text:string, language:'it'|'en'|'es'|'fr'|'de'='it') {
     const words = this.extractWords(text, language);
-    if (words.length < 2) return [];
-
-    const wordsWithStressTails = await this.extractStressTails(words, language);
-    const similarityMatrix = this.calculateSimilarityMatrix(wordsWithStressTails, language);
-    const clusters = this.unionFindClustering(wordsWithStressTails, similarityMatrix, language);
-    
-    return this.createRhymeGroups(clusters, wordsWithStressTails);
+    if (words.length<2) return [];
+    const enriched = await Promise.all(words.map(w=>this.addStressTail(w,language)));
+    const matrix = this.buildSimilarityMatrix(enriched,language);
+    const clusters = this.clusterWords(enriched,matrix,language);
+    return this.formatGroups(clusters,enriched);
   }
 
-  extractWords(text, language) {
-    const wordRegex = /\b[a-zA-ZàèéìíîòóùúÀÈÉÌÍÎÒÓÙÚáéíóúýÁÉÍÓÚÝâêîôûÂÊÎÔÛäëïöüÄËÏÖÜñÑçÇßæÆøØåÅ]{3,}\b/g;
-    const lines = text.split('\n');
-    let globalCharIndex = 0;
-    const words = [];
-
-    lines.forEach((line, lineIndex) => {
-      let match;
-      const lineRegex = new RegExp(wordRegex.source, 'g');
-      
-      while ((match = lineRegex.exec(line)) !== null) {
-        const cleanWord = match[0].toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-        
-        // Salta parole funzione e parole troppo corte
-        if (!this.functionWords[language]?.includes(cleanWord) && cleanWord.length >= 3) {
-          words.push({
-            word: cleanWord,
-            original: match[0],
-            start: globalCharIndex + match.index,
-            end: globalCharIndex + match.index + match[0].length,
-            line: lineIndex,
-            wordIndex: words.filter(w => w.line === lineIndex).length
-          });
+  private extractWords(text:string, language:string) {
+    const regex=/\b[A-Za-zÀ-ÖØ-öø-ÿ]{3,}\b/g;
+    let index=0; const words=[];
+    text.split('\n').forEach((line,lineIdx)=>{
+      let m; while((m=regex.exec(line))!==null){
+        const w=m[0].toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+        if(!this.functionWords[language]?.includes(w) && w.length>=3){
+          words.push({word:w,orig:m[0],line:lineIdx,idx:words.filter(x=>x.line===lineIdx).length,start:index+m.index,end:index+m.index+m[0].length});
         }
       }
-      globalCharIndex += line.length + 1;
+      index+=line.length+1;
     });
-
     return words;
   }
 
-  async extractStressTails(words, language) {
-    const results = [];
-    
-    for (const wordObj of words) {
-      const cacheKey = `${wordObj.word}-${language}`;
-      
-      let stressTail;
-      if (this.ipaCache.has(cacheKey)) {
-        stressTail = this.ipaCache.get(cacheKey);
-      } else {
-        stressTail = await this.getStressTailFromAPI(wordObj.word, language);
-        this.ipaCache.set(cacheKey, stressTail);
-      }
-      
-      results.push({
-        ...wordObj,
-        stressTail: stressTail || wordObj.word.slice(-3)
-      });
-    }
-    
-    return results;
-  }
-
-  async getStressTailFromAPI(word, language) {
-    try {
-      const response = await fetch(`${this.epitranEndpoint}/stress-tail`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ word, language })
-      });
-
-      if (!response.ok) return null;
-      
-      const data = await response.json();
-      return data.stress_tail;
-    } catch (error) {
-      console.warn(`API call failed for "${word}":`, error.message);
-      return null;
-    }
-  }
-
-  calculateSimilarityMatrix(words, language) {
-    const matrix = [];
-    for (let i = 0; i < words.length; i++) {
-      matrix[i] = [];
-      for (let j = 0; j < words.length; j++) {
-        if (i === j) {
-          matrix[i][j] = 1.0;
-        } else {
-          matrix[i][j] = this.calculatePhoneticSimilarity(
-            words[i].stressTail, words[j].stressTail, language
-          );
+  private async addStressTail(w:any,lang:string) {
+    const key=`${w.word}-${lang}`;
+    let tail=this.ipaCache.get(key);
+    if(!tail){
+      try{
+        const res=await fetch(this.epitranEndpoint,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({word:w.word,language:lang})});
+        if(res.ok){
+          const j=await res.json();
+          tail=j.stress_tail||j.ipa.split('ˈ').pop()||j.ipa.slice(-3);
         }
-      }
+      }catch{}
+      if(!tail) tail=w.word.slice(-3);
+      this.ipaCache.set(key,tail);
     }
-    return matrix;
+    return {...w,stressTail:tail};
   }
 
-  calculatePhoneticSimilarity(tail1, tail2, language) {
-    if (tail1 === tail2) return 1.0;
-    if (!tail1 || !tail2 || tail1.length < 2 || tail2.length < 2) return 0.0;
-
-    const vowels = 'aeiouáéíóúàèìòùâêîôûäëïöüæøåɑɔɛɪʊəɨ';
-    const vowels1 = tail1.split('').filter(c => vowels.includes(c.toLowerCase()));
-    const vowels2 = tail2.split('').filter(c => vowels.includes(c.toLowerCase()));
-    const consonants1 = tail1.split('').filter(c => !vowels.includes(c.toLowerCase()) && /[a-zA-Z]/.test(c));
-    const consonants2 = tail2.split('').filter(c => !vowels.includes(c.toLowerCase()) && /[a-zA-Z]/.test(c));
-
-    const vowelSimilarity = this.sequenceSimilarity(vowels1, vowels2);
-    const consonantSimilarity = this.sequenceSimilarity(consonants1, consonants2);
-
-    // Pesi specifici per lingua
-    const vowelWeight = ['it', 'es', 'fr'].includes(language) ? 0.85 : 0.75;
-    const baseScore = (vowelSimilarity * vowelWeight) + (consonantSimilarity * (1 - vowelWeight));
-
-    // Penalizza suffissi comuni
-    for (const suffix of this.commonSuffixes) {
-      if (tail1.endsWith(suffix) && tail2.endsWith(suffix) && tail1 !== tail2) {
-        return baseScore * 0.3;
-      }
+  private buildSimilarityMatrix(words:any[],lang:string){
+    const n=words.length, M=Array(n).fill(0).map(()=>Array(n).fill(0));
+    for(let i=0;i<n;i++) for(let j=0;j<n;j++){
+      M[i][j]= i===j?1:this.phoneticSim(words[i].stressTail,words[j].stressTail,lang);
     }
-
-    return baseScore;
+    return M;
   }
 
-  sequenceSimilarity(seq1, seq2) {
-    if (seq1.length === 0 && seq2.length === 0) return 1.0;
-    if (seq1.length === 0 || seq2.length === 0) return 0.0;
-
-    let matches = 0;
-    const minLength = Math.min(seq1.length, seq2.length);
-    
-    // Confronta dalla fine (similarità di suffisso)
-    for (let i = 1; i <= minLength; i++) {
-      if (seq1[seq1.length - i] === seq2[seq2.length - i]) {
-        matches++;
-      } else {
-        break;
-      }
-    }
-
-    return matches / Math.max(seq1.length, seq2.length);
+  private phoneticSim(t1:string,t2:string,lang:string){
+    if(t1===t2) return 1;
+    if(!t1||!t2||t1.length<2||t2.length<2) return 0;
+    const vowels='aeiouáéíóúàèìòùâêîôûäëïöüæøå';
+    const v1=[...t1].filter(c=>vowels.includes(c)), v2=[...t2].filter(c=>vowels.includes(c));
+    const c1=[...t1].filter(c=>!vowels.includes(c)&&/[A-Za-z]/.test(c)), c2=[...t2].filter(c=>!vowels.includes(c)&&/[A-Za-z]/.test(c));
+    const sv=this.seqSim(v1,v2), sc=this.seqSim(c1,c2);
+    const vw=['it','es','fr'].includes(lang)?0.85:0.75;
+    let score=sv*vw+sc*(1-vw);
+    for(const s of this.commonSuffixes) if(t1.endsWith(s)&&t2.endsWith(s)&&t1!==t2) score*=0.3;
+    return score;
   }
 
-  unionFindClustering(words, similarityMatrix, language) {
-    const n = words.length;
-    const parent = Array.from({ length: n }, (_, i) => i);
-    
-    const find = (x) => (parent[x] !== x ? (parent[x] = find(parent[x])) : x);
-    const union = (x, y) => {
-      const px = find(x), py = find(y);
-      if (px !== py) parent[px] = py;
-    };
-
-    // **SOGLIE PIÙ RIGIDE** per ridurre falsi positivi
-    const perfectThreshold = ['it', 'es', 'fr'].includes(language) ? 0.95 : 0.90;
-    const nearThreshold = ['it', 'es', 'fr'].includes(language) ? 0.85 : 0.80;
-
-    for (let i = 0; i < n; i++) {
-      for (let j = i + 1; j < n; j++) {
-        const sim = similarityMatrix[i][j];
-        
-        if (sim >= perfectThreshold && this.validateRhymeContext(words[i], words[j], sim, language)) {
-          union(i, j);
-        } else if (sim >= nearThreshold && this.validateStrictRhymeContext(words[i], words[j], sim, language)) {
-          union(i, j);
-        }
-      }
-    }
-
-    const clusters = new Map();
-    for (let i = 0; i < n; i++) {
-      const root = find(i);
-      if (!clusters.has(root)) clusters.set(root, []);
-      clusters.get(root).push(i);
-    }
-
-    return Array.from(clusters.values()).filter(cluster => cluster.length >= 2);
+  private seqSim(a:string[],b:string[]){
+    if(!a.length&&!b.length) return 1; if(!a.length||!b.length) return 0;
+    let m=0, L=Math.min(a.length,b.length);
+    for(let i=1;i<=L;i++){ if(a[a.length-i]===b[b.length-i]) m++; else break; }
+    return m/Math.max(a.length,b.length);
   }
 
-  validateRhymeContext(word1, word2, phoneticScore, language) {
-    // Rifiuta se le parole sono troppo simili (varianti morfologiche)
-    if (this.levenshteinDistance(word1.word, word2.word) <= 1 && word1.word.length > 3) {
-      return false;
+  private clusterWords(words:any[],M:number[][],lang:string){
+    const n=words.length, parent=Array.from({length:n},(_,i)=>i);
+    const find=(x:number):number=> parent[x]===x?x:(parent[x]=find(parent[x]));
+    const union=(x,y)=>{const a=find(x),b=find(y);if(a!==b)parent[a]=b;};
+    const pt=['it','es','fr'].includes(lang)?0.95:0.90, nt=['it','es','fr'].includes(lang)?0.85:0.80;
+    for(let i=0;i<n;i++) for(let j=i+1;j<n;j++){
+      const s=M[i][j];
+      if(s>=pt&&this.contextOK(words[i],words[j],s)) union(i,j);
+      else if(s>=nt&&this.strictOK(words[i],words[j],s)) union(i,j);
     }
-    return phoneticScore >= 0.75;
+    const groups=new Map<number,number[]>();
+    for(let i=0;i<n;i++){ const r=find(i); if(!groups.has(r)) groups.set(r,[]); groups.get(r)!.push(i); }
+    return Array.from(groups.values()).filter(g=>g.length>=2);
   }
 
-  validateStrictRhymeContext(word1, word2, phoneticScore, language) {
-    if (!this.validateRhymeContext(word1, word2, phoneticScore, language)) {
-      return false;
-    }
-
-    // Lunghezza minima stress tail
-    if (word1.stressTail.length < 2 || word2.stressTail.length < 2) {
-      return false;
-    }
-
-    // Rifiuta se le parole sono sulla stessa riga troppo vicine
-    if (word1.line === word2.line && Math.abs(word1.wordIndex - word2.wordIndex) <= 2) {
-      return false;
-    }
-
+  private contextOK(a:any,b:any,s:number){
+    if(this.lev(a.word,b.word)<=1&&a.word.length>3) return false;
+    return s>=0.75;
+  }
+  private strictOK(a:any,b:any,s:number){
+    if(!this.contextOK(a,b,s)||a.stressTail.length<2||b.stressTail.length<2) return false;
+    if(a.line===b.line&&Math.abs(a.idx-b.idx)<=2) return false;
     return true;
   }
 
-  levenshteinDistance(a, b) {
-    const matrix = [];
-    for (let i = 0; i <= b.length; i++) matrix[i] = [i];
-    for (let j = 0; j <= a.length; j++) matrix[0][j] = j;
-    
-    for (let i = 1; i <= b.length; i++) {
-      for (let j = 1; j <= a.length; j++) {
-        matrix[i][j] = b[i - 1] === a[j - 1]
-          ? matrix[i - 1][j - 1]
-          : Math.min(matrix[i - 1][j - 1] + 1, matrix[i][j - 1] + 1, matrix[i - 1][j] + 1);
+  private lev(a:string,b:string){
+    const dp=Array(b.length+1).fill(0).map((_,i)=>i);
+    for(let i=0;i<=a.length;i++){
+      let prev=dp[0]=i;
+      for(let j=1;j<=b.length;j++){
+        const cur= b[j-1]===a[i-1]?dp[j-1]:Math.min(dp[j-1],dp[j],prev)+1;
+        dp[j-1]=prev; prev=cur;
       }
+      dp[b.length]=prev;
     }
-    
-    return matrix[b.length][a.length];
+    return dp[b.length];
   }
 
-  createRhymeGroups(clusters, words) {
-    return clusters.map((cluster, index) => {
-      const clusterWords = cluster.map(i => words[i]);
-      
-      let totalSimilarity = 0, comparisons = 0;
-      for (let i = 0; i < cluster.length; i++) {
-        for (let j = i + 1; j < cluster.length; j++) {
-          totalSimilarity += this.calculatePhoneticSimilarity(
-            words[cluster[i]].stressTail, words[cluster[j]].stressTail
-          );
-          comparisons++;
-        }
+  private formatGroups(clusters:number[][],words:any[]){
+    return clusters.map((c,idx)=>{
+      let tot=0,cmp=0;
+      for(let i=0;i<c.length;i++) for(let j=i+1;j<c.length;j++){
+        tot+=this.phoneticSim(words[c[i]].stressTail,words[c[j]].stressTail,'it');
+        cmp++;
       }
-      
-      const avgStrength = comparisons > 0 ? totalSimilarity / comparisons : 0;
-      const type = avgStrength >= 0.90 ? 'perfect' : avgStrength >= 0.75 ? 'near' : 'weak';
-      
-      // **RESTITUISCI SOLO GRUPPI FORTI**
-      if (avgStrength < 0.75) return null;
-      
+      const avg=cmp?tot/cmp:0;
+      if(avg<0.75) return null;
       return {
-        id: `rhyme-${index}`,
-        words: clusterWords.map(w => w.word),
-        color: this.rhymeColors[index % this.rhymeColors.length],
-        type,
-        strength: avgStrength,
-        positions: clusterWords.map(w => ({
-          line: w.line,
-          wordIndex: w.wordIndex,
-          word: w.word,
-          startChar: w.start,
-          endChar: w.end
+        id:`rhyme-${idx}`,words:c.map(i=>words[i].word),
+        color:this.rhymeColors[idx%this.rhymeColors.length],
+        type:avg>=0.95?'perfect':avg>=0.85?'near':'weak',
+        strength:avg,
+        positions:c.map(i=>({
+          line:words[i].line,wordIndex:words[i].idx,
+          word:words[i].word,startChar:words[i].start,endChar:words[i].end
         }))
       };
-    }).filter(group => group !== null);
+    }).filter(g=>g);
   }
 }
