@@ -146,10 +146,23 @@ export class RhymeDetector {
 
     console.log('🎵 Words with stress tails:', words.map(w => ({ word: w.word, stressTail: w.stressTail })));
 
-    // Phase 2: Group words by phonetic similarity
+    // Phase 2: Improved clustering algorithm for precise rhyme grouping
     const rhymeGroups: RhymeGroup[] = [];
     const processedWords = new Set<string>();
     let colorIndex = 0;
+
+    // Helper function to check if a word is compatible with all words in a group
+    const isCompatibleWithGroup = (candidateWord: typeof words[0], group: typeof words): boolean => {
+      const minSimilarity = 0.8; // Increased threshold for stricter matching
+      
+      for (const groupWord of group) {
+        const comparison = comparePhoneticEndings(candidateWord.stressTail, groupWord.stressTail);
+        if (comparison.similarity < minSimilarity || comparison.matchLength < 2) {
+          return false;
+        }
+      }
+      return true;
+    };
 
     for (let i = 0; i < words.length; i++) {
       if (processedWords.has(words[i].word)) continue;
@@ -158,28 +171,44 @@ export class RhymeDetector {
       const rhymeGroup = [currentWord];
       processedWords.add(currentWord.word);
       
-      // Find all words that rhyme with current word
+      console.log(`🔍 Starting new group with: "${currentWord.word}" (tail: "${currentWord.stressTail}")`);
+      
+      // Find all words that are compatible with ALL words in the current group
       for (let j = i + 1; j < words.length; j++) {
         if (processedWords.has(words[j].word)) continue;
         
-        const comparison = comparePhoneticEndings(currentWord.stressTail, words[j].stressTail);
+        const candidateWord = words[j];
         
-        if (comparison.similarity >= 0.6) {  // Minimum threshold
-          rhymeGroup.push(words[j]);
-          processedWords.add(words[j].word);
+        // Check if candidate is compatible with the entire group
+        if (isCompatibleWithGroup(candidateWord, rhymeGroup)) {
+          rhymeGroup.push(candidateWord);
+          processedWords.add(candidateWord.word);
+          console.log(`✅ Added "${candidateWord.word}" to group (tail: "${candidateWord.stressTail}")`);
+        } else {
+          console.log(`❌ Rejected "${candidateWord.word}" - not compatible with group (tail: "${candidateWord.stressTail}")`);
         }
       }
       
-      // Only create groups with 2+ words
+      // Only create groups with 2+ words and verify group coherence
       if (rhymeGroup.length >= 2) {
-        const { type, strength } = analyzeRhymeStrength(
-          Math.max(...rhymeGroup.slice(1).map(w => 
-            comparePhoneticEndings(currentWord.stressTail, w.stressTail).similarity
-          )),
-          Math.max(...rhymeGroup.slice(1).map(w => 
-            comparePhoneticEndings(currentWord.stressTail, w.stressTail).matchLength
-          ))
-        );
+        // Calculate group strength by checking all pairwise similarities
+        let totalSimilarity = 0;
+        let totalMatches = 0;
+        let comparisons = 0;
+        
+        for (let x = 0; x < rhymeGroup.length; x++) {
+          for (let y = x + 1; y < rhymeGroup.length; y++) {
+            const comparison = comparePhoneticEndings(rhymeGroup[x].stressTail, rhymeGroup[y].stressTail);
+            totalSimilarity += comparison.similarity;
+            totalMatches += comparison.matchLength;
+            comparisons++;
+          }
+        }
+        
+        const avgSimilarity = totalSimilarity / comparisons;
+        const avgMatches = totalMatches / comparisons;
+        
+        const { type, strength } = analyzeRhymeStrength(avgSimilarity, avgMatches);
         
         rhymeGroups.push({
           id: `rhyme-${colorIndex}`,
@@ -197,7 +226,9 @@ export class RhymeDetector {
         });
         
         colorIndex++;
-        console.log(`🎵 Created rhyme group: ${rhymeGroup.map(w => w.word).join(', ')} (${type}, ${Math.round(strength * 100)}%)`);
+        console.log(`🎵 Created coherent rhyme group: ${rhymeGroup.map(w => w.word).join(', ')} (${type}, ${Math.round(strength * 100)}%)`);
+      } else {
+        console.log(`🚫 Rejected group with only 1 word: "${currentWord.word}"`);
       }
     }
 
