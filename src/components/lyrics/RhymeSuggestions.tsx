@@ -115,7 +115,7 @@ export const RhymeSuggestions = ({
             className="w-full"
           />
         </div>
-        <Badge variant="outline" className="text-xs">
+        <Badge variant="outline" className="text-[15px] font-semibold px-3 py-1 min-w-[32px] text-center">
           {language.toUpperCase()}
         </Badge>
       </div>
@@ -165,7 +165,7 @@ export const RhymeSuggestions = ({
                           </span>
                           
                           <div className="flex items-center gap-2">
-                            <Badge variant="secondary" className="text-xs">
+                            <Badge variant="secondary" className="text-[15px] font-semibold px-3 py-1 min-w-[32px] text-center">
                               {suggestion.syllables} syl
                             </Badge>
                             

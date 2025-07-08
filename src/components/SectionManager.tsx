@@ -217,9 +217,9 @@ export const SectionManager = ({
           >
             <div className="flex items-center justify-between">
               <div className="flex-1">
-                <div className="flex items-center space-x-3">
-                  <h4 className="font-medium text-foreground">{section.name}</h4>
-                  <Badge variant="secondary" className="text-xs">
+                <div className="flex items-center space-x-4">
+                  <h4 className="font-semibold text-[15px] text-foreground truncate max-w-[100px]">{section.name}</h4>
+                  <Badge variant={section.lyrics ? "default" : "secondary"} className="px-3 py-1 text-[15px] font-bold min-w-[48px] text-center">
                     <div className="w-3 h-3 mr-1 text-xs">⏱</div>
                     {formatTime(section.startTime)} - {formatTime(section.endTime)}
                   </Badge>

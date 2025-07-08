@@ -25,4 +25,7 @@ const TooltipContent = React.forwardRef<
 ))
 TooltipContent.displayName = TooltipPrimitive.Content.displayName
 
+const tooltipClass =
+  "bg-card text-card-foreground border border-input rounded-md px-2 py-2 text-[15px] font-medium shadow-card";
+
 export { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider }

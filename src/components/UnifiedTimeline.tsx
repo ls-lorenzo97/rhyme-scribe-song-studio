@@ -379,7 +379,7 @@ export const UnifiedTimeline = ({
           ))}
         </div>
         {/* Timeline Bar with Section Pills */}
-        <div className="flex w-full h-12 rounded-lg overflow-x-auto border border-border/30 bg-muted/10 gap-2 scrollbar-thin scrollbar-thumb-[color:var(--accent)]/30 snap-x snap-mandatory">
+        <div className="flex w-full h-12 rounded-lg overflow-x-auto border border-border/30 bg-muted/10 gap-4 scrollbar-thin scrollbar-thumb-[color:var(--accent)]/30 snap-x snap-mandatory">
           {sortedSections.map((section, idx) => {
             const hasLyrics = !!section.lyrics && section.lyrics.trim().length > 0;
             const isActive = currentSection === section.id;
@@ -389,16 +389,15 @@ export const UnifiedTimeline = ({
                 tabIndex={0}
                 aria-label={`Section ${section.name}`}
                 className={cn(
-                  "flex items-center gap-2 px-3 h-10 rounded-full cursor-pointer border transition-all duration-200 relative group min-w-[120px] max-w-[180px] snap-center outline-none",
-                  isActive ? "ring-2 ring-[color:var(--accent)] bg-[color:var(--accent)]/10 z-10 scale-105 shadow-lg" : "hover:ring-1 hover:ring-[color:var(--accent)] hover:scale-105",
-                  hasLyrics ? "bg-[color:var(--accent)]/20 border-[color:var(--accent)]/30" : "bg-background/80 border-border/20 hover:bg-muted/20"
+                  "flex items-center gap-2 px-5 py-2 h-10 rounded-full cursor-pointer border transition-all duration-200 relative group min-w-[140px] max-w-[220px] snap-center outline-none text-[15px] font-semibold",
+                  isActive ? "ring-2 ring-accent bg-accent/10 z-10 scale-105 shadow-lg" : "hover:ring-1 hover:ring-accent hover:scale-105",
+                  hasLyrics ? "bg-accent/20 border-accent/30" : "bg-background/80 border-border/20 hover:bg-muted/20"
                 )}
                 style={{ minWidth: 0 }}
                 onClick={() => {
                   setCurrentSection(section.id);
                   onSectionClick(section.id);
                 }}
-                onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { setCurrentSection(section.id); onSectionClick(section.id); } }}
               >
                 {/* Play icon */}
                 <Tooltip>
@@ -407,7 +406,7 @@ export const UnifiedTimeline = ({
                       variant="ghost"
                       size="icon"
                       aria-label={`Play ${section.name}`}
-                      className="w-6 h-6 p-0 hover:bg-[color:var(--accent)]/20 focus:ring-1 focus:ring-[color:var(--accent)]"
+                      className="w-6 h-6 p-0 hover:bg-accent/20 focus:ring-1 focus:ring-accent"
                       onClick={e => { e.stopPropagation(); onSectionClick(section.id); }}
                     >
                       <Play className="w-4 h-4" />
@@ -415,17 +414,17 @@ export const UnifiedTimeline = ({
                   </TooltipTrigger>
                   <TooltipContent>Play {section.name}</TooltipContent>
                 </Tooltip>
-                {/* Section name bold if selected, tooltip for long names */}
+                {/* Section name bold if selected, tooltip solo se troncato */}
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <span className={cn("font-semibold text-sm truncate max-w-[60px]", isActive ? "text-foreground" : "text-muted-foreground")}>{section.name}</span>
+                    <span className={cn("font-semibold text-[15px] truncate max-w-[80px]", isActive ? "text-foreground" : "text-muted-foreground")}>{section.name}</span>
                   </TooltipTrigger>
-                  <TooltipContent>{section.name}</TooltipContent>
+                  {section.name.length > 10 && <TooltipContent>{section.name}</TooltipContent>}
                 </Tooltip>
                 {/* Time badge */}
                 <span className={cn(
-                  "ml-1 px-2 py-0.5 rounded-full text-xs font-medium transition-colors duration-200",
-                  hasLyrics ? "bg-[color:var(--accent)]/30 text-[color:var(--accent)]" : "bg-muted text-muted-foreground"
+                  "ml-1 px-3 py-1 rounded-full text-[15px] font-bold transition-colors duration-200 min-w-[48px] text-center",
+                  hasLyrics ? "bg-accent/30 text-accent-foreground" : "bg-muted text-muted-foreground"
                 )}>
                   {formatTime(section.startTime)} - {formatTime(section.endTime)}
                 </span>
@@ -441,7 +440,7 @@ export const UnifiedTimeline = ({
                         size="icon"
                         aria-label="Edit section"
                         onClick={e => { e.stopPropagation(); handleEditSection(section); }}
-                        className="w-6 h-6 p-0 hover:bg-[color:var(--accent)]/20 focus:ring-1 focus:ring-[color:var(--accent)]"
+                        className="w-6 h-6 p-0 hover:bg-accent/20 focus:ring-1 focus:ring-accent"
                       >
                         <Edit3 className="w-4 h-4" />
                       </Button>

@@ -25,11 +25,11 @@ export const Timeline = ({
 
   const getSectionColors = (index: number) => {
     const colors = [
-      'bg-rhyme-1/20 border-rhyme-1/50 text-rhyme-1',
-      'bg-rhyme-2/20 border-rhyme-2/50 text-rhyme-2',
-      'bg-rhyme-3/20 border-rhyme-3/50 text-rhyme-3',
-      'bg-rhyme-4/20 border-rhyme-4/50 text-rhyme-4',
-      'bg-rhyme-5/20 border-rhyme-5/50 text-rhyme-5',
+      'bg-accent/20 border-accent/50 text-accent-foreground',
+      'bg-muted/20 border-muted/50 text-muted-foreground',
+      'bg-accent/10 border-accent/30 text-accent-foreground',
+      'bg-muted/10 border-muted/30 text-muted-foreground',
+      'bg-accent/30 border-accent/60 text-accent-foreground',
     ];
     return colors[index % colors.length];
   };
@@ -99,7 +99,7 @@ export const Timeline = ({
       </div>
 
       {/* Section Buttons */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {sections.map((section, index) => (
           <Button
             key={section.id}
@@ -107,14 +107,14 @@ export const Timeline = ({
             size="sm"
             onClick={() => onSectionClick(section.id)}
             className={cn(
-              "transition-all duration-200",
+              "transition-all duration-200 text-[15px] font-semibold px-5 py-2 min-w-[120px] max-w-[200px] rounded-full",
               currentSection === section.id ? 
-                "bg-gradient-primary shadow-glow" : 
+                "bg-accent shadow-glow text-accent-foreground" : 
                 getSectionColors(index)
             )}
           >
             <div className="text-center">
-              <div className="font-medium">{section.name}</div>
+              <div className="font-semibold text-[15px] truncate max-w-[80px]">{section.name}</div>
               <div className="text-xs opacity-80">
                 {Math.floor(section.startTime)}s - {Math.floor(section.endTime)}s
               </div>
