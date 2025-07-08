@@ -318,7 +318,7 @@ export const UnifiedTimeline = ({
         <audio ref={audioRef} src={audioUrl} />
         <div className="flex items-center gap-1">
           <Button
-            variant="ghost"
+            variant="outline"
             size="icon"
             aria-label="Previous section"
             onClick={() => navigateToSection('prev')}
@@ -327,7 +327,7 @@ export const UnifiedTimeline = ({
             <SkipBack className="w-4 h-4" />
           </Button>
           <Button
-            variant="default"
+            variant="primary"
             size="icon"
             aria-label={isPlaying ? 'Pause' : 'Play'}
             onClick={handlePlay}
@@ -336,7 +336,7 @@ export const UnifiedTimeline = ({
             {isPlaying ? <Pause className="w-6 h-6" /> : <Play className="w-6 h-6 ml-1" />}
           </Button>
           <Button
-            variant="ghost"
+            variant="outline"
             size="icon"
             aria-label="Next section"
             onClick={() => navigateToSection('next')}
@@ -379,7 +379,7 @@ export const UnifiedTimeline = ({
           ))}
         </div>
         {/* Timeline Bar with Section Pills */}
-        <div className="flex w-full h-12 rounded-lg overflow-x-auto border border-border/30 bg-muted/10 gap-4 scrollbar-thin scrollbar-thumb-[color:var(--accent)]/30 snap-x snap-mandatory">
+        <div className="flex w-full h-14 rounded-lg overflow-x-auto border border-border/30 bg-muted/10 gap-4 scrollbar-thin scrollbar-thumb-[color:var(--accent)]/30 snap-x snap-mandatory">
           {sortedSections.map((section, idx) => {
             const hasLyrics = !!section.lyrics && section.lyrics.trim().length > 0;
             const isActive = currentSection === section.id;
@@ -389,9 +389,9 @@ export const UnifiedTimeline = ({
                 tabIndex={0}
                 aria-label={`Section ${section.name}`}
                 className={cn(
-                  "flex items-center gap-2 px-5 py-2 h-10 rounded-full cursor-pointer border transition-all duration-200 relative group min-w-[140px] max-w-[220px] snap-center outline-none text-[15px] font-semibold",
-                  isActive ? "ring-2 ring-accent bg-accent/10 z-10 scale-105 shadow-lg" : "hover:ring-1 hover:ring-accent hover:scale-105",
-                  hasLyrics ? "bg-accent/20 border-accent/30" : "bg-background/80 border-border/20 hover:bg-muted/20"
+                  "flex flex-col items-center justify-center px-6 py-2 h-12 rounded-full cursor-pointer border transition-all duration-200 relative group min-w-[120px] max-w-[160px] snap-center outline-none text-[15px] font-semibold bg-white/80 overflow-hidden",
+                  isActive ? "ring-2 ring-accent bg-accent/20 z-10 scale-105 shadow-lg" : "hover:ring-1 hover:ring-accent hover:scale-105",
+                  hasLyrics ? "bg-accent/10 border-accent/30" : "bg-background/80 border-border/20 hover:bg-muted/20"
                 )}
                 style={{ minWidth: 0 }}
                 onClick={() => {
@@ -399,69 +399,71 @@ export const UnifiedTimeline = ({
                   onSectionClick(section.id);
                 }}
               >
-                {/* Play icon */}
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      aria-label={`Play ${section.name}`}
-                      className="w-6 h-6 p-0 hover:bg-accent/20 focus:ring-1 focus:ring-accent"
-                      onClick={e => { e.stopPropagation(); onSectionClick(section.id); }}
-                    >
-                      <Play className="w-4 h-4" />
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>Play {section.name}</TooltipContent>
-                </Tooltip>
-                {/* Section name bold if selected, tooltip solo se troncato */}
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <span className={cn("font-semibold text-[15px] truncate max-w-[80px]", isActive ? "text-foreground" : "text-muted-foreground")}>{section.name}</span>
-                  </TooltipTrigger>
-                  {section.name.length > 10 && <TooltipContent>{section.name}</TooltipContent>}
-                </Tooltip>
-                {/* Time badge */}
+                <div className="flex items-center w-full justify-center gap-2">
+                  {/* Play icon */}
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        aria-label={`Play ${section.name}`}
+                        className="w-6 h-6 p-0 hover:bg-accent/20 focus:ring-1 focus:ring-accent"
+                        onClick={e => { e.stopPropagation(); onSectionClick(section.id); }}
+                      >
+                        <Play className="w-4 h-4" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>Play {section.name}</TooltipContent>
+                  </Tooltip>
+                  {/* Section name bold if selected, tooltip solo se troncato */}
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <span className={cn("font-semibold text-[15px] truncate max-w-[70px]", isActive ? "text-foreground" : "text-muted-foreground")}>{section.name}</span>
+                    </TooltipTrigger>
+                    {section.name.length > 10 && <TooltipContent>{section.name}</TooltipContent>}
+                  </Tooltip>
+                  {/* Controls only on hover or active */}
+                  <div className={cn(
+                    "flex gap-1 ml-1 transition-opacity duration-200",
+                    isActive ? "opacity-100" : "opacity-0 group-hover:opacity-100"
+                  )}>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          variant="outline"
+                          size="icon"
+                          aria-label="Edit section"
+                          onClick={e => { e.stopPropagation(); handleEditSection(section); }}
+                          className="w-6 h-6 p-0 hover:bg-accent/20 focus:ring-1 focus:ring-accent"
+                        >
+                          <Edit3 className="w-4 h-4" />
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>Edit section</TooltipContent>
+                    </Tooltip>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          variant="outline"
+                          size="icon"
+                          aria-label="Delete section"
+                          onClick={e => { e.stopPropagation(); handleDeleteSection(section.id); }}
+                          className="w-6 h-6 p-0 text-destructive hover:text-destructive hover:bg-destructive/10 focus:ring-1 focus:ring-destructive"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>Delete section</TooltipContent>
+                    </Tooltip>
+                  </div>
+                </div>
+                {/* Time badge sotto, sempre leggibile */}
                 <span className={cn(
-                  "ml-1 px-3 py-1 rounded-full text-[15px] font-bold transition-colors duration-200 min-w-[48px] text-center",
-                  hasLyrics ? "bg-accent/30 text-accent-foreground" : "bg-muted text-muted-foreground"
+                  "mt-1 px-2 py-0.5 rounded-full text-[13px] font-bold transition-colors duration-200 min-w-[48px] text-center bg-white/80 border border-border/30 text-foreground shadow-sm",
+                  isActive ? "bg-accent/80 text-accent-foreground border-accent/40" : "bg-white/80 border-border/30 text-foreground"
                 )}>
                   {formatTime(section.startTime)} - {formatTime(section.endTime)}
                 </span>
-                {/* Controls only on hover or active */}
-                <div className={cn(
-                  "flex gap-1 ml-1 transition-opacity duration-200",
-                  isActive ? "opacity-100" : "opacity-0 group-hover:opacity-100"
-                )}>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        aria-label="Edit section"
-                        onClick={e => { e.stopPropagation(); handleEditSection(section); }}
-                        className="w-6 h-6 p-0 hover:bg-accent/20 focus:ring-1 focus:ring-accent"
-                      >
-                        <Edit3 className="w-4 h-4" />
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent>Edit section</TooltipContent>
-                  </Tooltip>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        aria-label="Delete section"
-                        onClick={e => { e.stopPropagation(); handleDeleteSection(section.id); }}
-                        className="w-6 h-6 p-0 text-destructive hover:text-destructive hover:bg-destructive/10 focus:ring-1 focus:ring-destructive"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent>Delete section</TooltipContent>
-                  </Tooltip>
-                </div>
               </div>
             );
           })}
