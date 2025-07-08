@@ -310,279 +310,233 @@ export const UnifiedTimeline = ({
   }, [handlePlay]);
 
   return (
-    <div className="space-y-6">
-      <audio ref={audioRef} src={audioUrl} />
-      
-      <div className="flex items-center justify-between">
-        <div>
-          <h3 className="text-xl font-semibold text-foreground">Song Timeline</h3>
-          <p className="text-muted-foreground text-sm">
-            Manage sections and playback - sections automatically adjust to prevent gaps
-          </p>
-        </div>
-        
-        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <DialogTrigger asChild>
-            <Button onClick={handleAddSection} className="bg-music-primary text-white shadow-glow">
-              <Plus className="w-4 h-4 mr-2" />
-              Add Section
-            </Button>
-          </DialogTrigger>
-          
-          <DialogContent className="bg-card/95 backdrop-blur-xl border-border/20">
-            <DialogHeader>
-              <DialogTitle className="text-xl">
-                {editingSection ? 'Edit Section' : 'Add New Section'}
-              </DialogTitle>
-            </DialogHeader>
-            
-            <div className="space-y-4">
-              <div>
-                <Label htmlFor="section-name" className="text-foreground">Section Name</Label>
-                <Input
-                  id="section-name"
-                  value={formData.name}
-                  onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
-                  placeholder="e.g., Verse 1, Chorus, Bridge"
-                  className="bg-background/50 border-border/50"
-                />
-              </div>
-              
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="start-time" className="text-foreground">Start Time (seconds)</Label>
-                  <Input
-                    id="start-time"
-                    type="number"
-                    value={formData.startTime === 0 ? '' : formData.startTime}
-                    onChange={(e) => setFormData(prev => ({ ...prev, startTime: e.target.value === '' ? 0 : Number(e.target.value) }))}
-                    onFocus={(e) => e.target.select()}
-                    className="bg-background/50 border-border/50"
-                    placeholder="0"
-                  />
-                </div>
-                
-                <div>
-                  <Label htmlFor="end-time" className="text-foreground">End Time (seconds)</Label>
-                  <Input
-                    id="end-time"
-                    type="number"
-                    value={formData.endTime === 0 ? '' : formData.endTime}
-                    onChange={(e) => setFormData(prev => ({ ...prev, endTime: e.target.value === '' ? 0 : Number(e.target.value) }))}
-                    onFocus={(e) => e.target.select()}
-                    className="bg-background/50 border-border/50"
-                    placeholder="0"
-                  />
-                </div>
-              </div>
-              
-              <div className="flex justify-end space-x-2 pt-4">
-                <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
-                  Cancel
-                </Button>
-                <Button onClick={handleSaveSection} className="bg-music-primary text-white">
-                  {editingSection ? 'Update' : 'Add'} Section
-                </Button>
-              </div>
-            </div>
-          </DialogContent>
-        </Dialog>
-      </div>
-
-      {/* Integrated Player & Timeline */}
-      <div className="space-y-2">
-        {/* Player Controls integrated with timeline */}
-        <div className="bg-muted/10 rounded-xl p-2 flex items-center justify-between gap-2">
-          {/* Current Section Info & Controls */}
-          <div className="flex items-center gap-2">
-            {currentSectionData && (
-              <div>
-                <h4 className="font-semibold text-sm text-foreground leading-tight">{currentSectionData.name}</h4>
-                <p className="text-xs text-muted-foreground leading-tight">{audioFile?.name || 'Unknown Track'}</p>
-              </div>
-            )}
-          </div>
-          <div className="flex items-center gap-1">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => navigateToSection('prev')}
-              className="w-8 h-8 text-muted-foreground hover:text-foreground rounded-full"
-            >
-              <SkipBack className="w-3 h-3" />
-            </Button>
-            <Button
-              variant="default"
-              size="sm"
-              onClick={handlePlay}
-              className="w-10 h-10 bg-music-primary hover:bg-music-primary/90 text-white rounded-full shadow-medium transition-transform hover:scale-105"
-            >
-              {isPlaying ? (
-                <Pause className="w-4 h-4" />
-              ) : (
-                <Play className="w-4 h-4 ml-0.5" />
-              )}
-            </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => navigateToSection('next')}
-              className="w-8 h-8 text-muted-foreground hover:text-foreground rounded-full"
-            >
-              <SkipForward className="w-3 h-3" />
-            </Button>
-          </div>
-          {/* Progress Bar with Time */}
-          <div className="flex-1 flex flex-col justify-center mx-2">
-            <Slider
-              value={[currentTime]}
-              max={duration || 100}
-              step={0.1}
-              onValueChange={handleSeek}
-              className="w-full h-2"
-            />
-            <div className="flex justify-between text-[10px] text-muted-foreground mt-0.5">
-              <span>{formatTime(currentTime)}</span>
-              <span>{formatTime(duration)}</span>
-            </div>
-          </div>
-        </div>
-        {/* Visual Timeline */}
-        <div className="relative mt-1">
-          <div className="h-6 bg-muted/20 rounded-lg relative overflow-hidden border border-border/30">
-            {/* Progress Bar */}
-            <div
-              className="absolute top-0 left-0 h-full bg-gradient-to-r from-music-primary/30 to-music-primary/50 transition-all duration-200"
-              style={{ width: `${progressPercentage}%` }}
-            />
-            {/* Current Time Indicator */}
-            <div
-              className="absolute top-0 w-0.5 h-full bg-music-primary shadow-glow transition-all duration-200 z-10"
-              style={{ left: `${progressPercentage}%` }}
-            />
-            {/* Section Markers */}
-            {sortedSections.map((section, index) => {
-              const leftPercentage = duration > 0 ? (section.startTime / duration) * 100 : 0;
-              const widthPercentage = duration > 0 ? ((section.endTime - section.startTime) / duration) * 100 : 0;
-              return (
-                <div
-                  key={section.id}
-                  className={cn(
-                    "absolute top-0 h-full border-l border-r border-border/50 cursor-pointer transition-all duration-200 hover:bg-music-primary/20",
-                    currentSection === section.id && "bg-music-primary/30 shadow-inner"
-                  )}
-                  style={{
-                    left: `${leftPercentage}%`,
-                    width: `${widthPercentage}%`
-                  }}
-                  onClick={() => onSectionClick(section.id)}
-                />
-              );
-            })}
-          </div>
-          {/* Section Labels on Timeline */}
-          <div className="relative mt-0.5 h-4">
-            {sortedSections.map((section) => {
-              const leftPercentage = duration > 0 ? (section.startTime / duration) * 100 : 0;
-              return (
-                <div
-                  key={section.id}
-                  className="absolute text-[10px] text-muted-foreground font-medium whitespace-nowrap"
-                  style={{ left: `${leftPercentage}%` }}
-                >
-                  {section.name}
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      </div>
-
-      {/* Section Cards */}
-      <div className="grid gap-3">
-        {sortedSections.map((section, index) => (
-          <Card
-            key={section.id}
-            className={cn(
-              "p-4 border transition-all duration-200 hover:shadow-lg cursor-pointer group",
-              currentSection === section.id
-                ? "border-music-primary bg-music-primary/10 shadow-glow"
-                : "border-border/30 bg-card/50 hover:bg-card/80"
-            )}
-            onClick={() => {
-              setCurrentSection(section.id);
-              onSectionClick(section.id);
-            }}
+    <div className="space-y-4">
+      {/* Player */}
+      <div className="flex flex-col items-center justify-center gap-2">
+        <audio ref={audioRef} src={audioUrl} />
+        <div className="flex items-center gap-3">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => navigateToSection('prev')}
+            className="w-10 h-10 text-muted-foreground hover:text-foreground rounded-full"
           >
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-4 flex-1">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="shrink-0 w-8 h-8 p-0 hover:bg-music-primary/20"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onSectionClick(section.id);
-                  }}
-                >
-                  <Play className="w-3 h-3" />
-                </Button>
-                
-                <div className="flex-1">
-                  <div className="flex items-center space-x-3">
-                    <h4 className="font-semibold text-foreground text-lg">{section.name}</h4>
-                    <Badge 
-                      variant="secondary" 
-                      className={cn(
-                        "text-xs font-medium",
-                        currentSection === section.id ? "bg-music-primary/20 text-music-primary" : ""
-                      )}
-                    >
-                      {formatTime(section.startTime)} - {formatTime(section.endTime)}
-                    </Badge>
-                  </div>
-                  
-                  {section.lyrics && (
-                    <p className="text-sm text-muted-foreground mt-1 line-clamp-1">
-                      {section.lyrics.split('\n')[0] || 'Empty lyrics'}
-                    </p>
-                  )}
-                </div>
-              </div>
-              
-              <div className="flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition-opacity" onClick={(e) => e.stopPropagation()}>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => handleEditSection(section)}
-                  className="w-8 h-8 p-0 hover:bg-music-primary/20"
-                >
-                  <Edit3 className="w-3 h-3" />
-                </Button>
-                
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => handleDeleteSection(section.id)}
-                  className="w-8 h-8 p-0 text-destructive hover:text-destructive hover:bg-destructive/10"
-                >
-                  <Trash2 className="w-3 h-3" />
-                </Button>
-              </div>
-            </div>
-          </Card>
-        ))}
+            <SkipBack className="w-5 h-5" />
+          </Button>
+          <Button
+            variant="default"
+            size="icon"
+            onClick={handlePlay}
+            className="w-16 h-16 bg-music-primary hover:bg-music-primary/90 text-white rounded-full shadow-glow transition-transform hover:scale-105"
+          >
+            {isPlaying ? <Pause className="w-8 h-8" /> : <Play className="w-8 h-8 ml-1" />}
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => navigateToSection('next')}
+            className="w-10 h-10 text-muted-foreground hover:text-foreground rounded-full"
+          >
+            <SkipForward className="w-5 h-5" />
+          </Button>
+        </div>
+        {/* Progress Bar */}
+        <div className="w-full max-w-2xl flex flex-col items-center mt-1">
+          <Slider
+            value={[currentTime]}
+            max={duration || 100}
+            step={0.1}
+            onValueChange={handleSeek}
+            className="w-full h-2"
+          />
+          <div className="flex justify-between w-full text-xs text-muted-foreground mt-0.5">
+            <span>{formatTime(currentTime)}</span>
+            <span>{formatTime(duration)}</span>
+          </div>
+        </div>
+        {/* Current Section Info */}
+        {currentSectionData && (
+          <div className="text-center mt-1">
+            <h4 className="font-semibold text-lg text-foreground leading-tight">{currentSectionData.name}</h4>
+            <p className="text-xs text-muted-foreground leading-tight">{audioFile?.name || 'Unknown Track'}</p>
+          </div>
+        )}
       </div>
 
-      {sections.length === 0 && (
-        <div className="text-center p-12 text-muted-foreground">
-          <div className="w-16 h-16 mx-auto mb-4 bg-muted/20 rounded-full flex items-center justify-center">
-            <div className="text-2xl">♪</div>
-          </div>
-          <p className="text-lg">No sections yet</p>
-          <p className="text-sm mt-1">Add your first section to get started with structuring your song</p>
+      {/* Timeline blocchi sezioni con label sopra */}
+      <div className="relative w-full max-w-4xl mx-auto mt-2">
+        {/* Section Labels */}
+        <div className="flex justify-between px-2 mb-1">
+          {sortedSections.map((section, idx) => {
+            const leftPercentage = duration > 0 ? (section.startTime / duration) * 100 : 0;
+            return (
+              <div
+                key={section.id}
+                className="text-xs text-muted-foreground font-medium text-center flex-1"
+                style={{ minWidth: 0 }}
+              >
+                {section.name}
+              </div>
+            );
+          })}
         </div>
-      )}
+        {/* Timeline Bar */}
+        <div className="flex w-full h-5 rounded-lg overflow-hidden border border-border/30 bg-muted/20">
+          {sortedSections.map((section, idx) => {
+            const widthPercentage = duration > 0 ? ((section.endTime - section.startTime) / duration) * 100 : 0;
+            return (
+              <div
+                key={section.id}
+                className={cn(
+                  "flex-1 h-full cursor-pointer transition-all duration-200",
+                  currentSection === section.id ? "bg-music-primary/40" : "hover:bg-music-primary/10"
+                )}
+                style={{ width: `${widthPercentage}%`, minWidth: 0 }}
+                onClick={() => onSectionClick(section.id)}
+              />
+            );
+          })}
+        </div>
+        {/* Progress Indicator */}
+        <div
+          className="absolute top-0 left-0 h-5 w-1 bg-music-primary shadow-glow transition-all duration-200 z-10"
+          style={{ left: `${progressPercentage}%` }}
+        />
+      </div>
+
+      {/* Section Cards orizzontali */}
+      <div className="w-full max-w-4xl mx-auto mt-2 overflow-x-auto">
+        <div className="flex gap-3 pb-2">
+          {sortedSections.map((section, idx) => (
+            <div
+              key={section.id}
+              className={cn(
+                "flex-shrink-0 rounded-2xl border transition-all duration-200 cursor-pointer group bg-card/80",
+                currentSection === section.id
+                  ? "border-music-primary bg-music-primary/10 shadow-glow scale-105"
+                  : "border-border/30 hover:bg-card/90"
+              )}
+              style={{ minWidth: 220, maxWidth: 260 }}
+              onClick={() => {
+                setCurrentSection(section.id);
+                onSectionClick(section.id);
+              }}
+            >
+              <div className="flex flex-col items-start p-4 gap-2">
+                <div className="flex items-center gap-2 w-full">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="w-7 h-7 p-0 hover:bg-music-primary/20"
+                    onClick={e => { e.stopPropagation(); onSectionClick(section.id); }}
+                  >
+                    <Play className="w-4 h-4" />
+                  </Button>
+                  <h4 className="font-semibold text-base text-foreground truncate flex-1">{section.name}</h4>
+                  <Badge
+                    variant="secondary"
+                    className={cn(
+                      "text-xs font-medium px-2 py-0.5",
+                      currentSection === section.id ? "bg-music-primary/20 text-music-primary" : ""
+                    )}
+                  >
+                    {formatTime(section.startTime)} - {formatTime(section.endTime)}
+                  </Badge>
+                </div>
+                {section.lyrics && (
+                  <p className="text-sm text-muted-foreground mt-1 line-clamp-1 w-full">
+                    {section.lyrics.split('\n')[0] || 'Empty lyrics'}
+                  </p>
+                )}
+                {/* Controls only on selected */}
+                {currentSection === section.id && (
+                  <div className="flex gap-2 mt-2">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={e => { e.stopPropagation(); handleEditSection(section); }}
+                      className="w-8 h-8 p-0 hover:bg-music-primary/20"
+                    >
+                      <Edit3 className="w-4 h-4" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={e => { e.stopPropagation(); handleDeleteSection(section.id); }}
+                      className="w-8 h-8 p-0 text-destructive hover:text-destructive hover:bg-destructive/10"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
+                  </div>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Dialog per edit/add section (come prima) */}
+      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+        <DialogTrigger asChild>
+          <Button onClick={handleAddSection} className="bg-music-primary text-white shadow-glow mt-2">
+            <Plus className="w-4 h-4 mr-2" />
+            Add Section
+          </Button>
+        </DialogTrigger>
+        <DialogContent className="bg-card/95 backdrop-blur-xl border-border/20">
+          <DialogHeader>
+            <DialogTitle className="text-xl">
+              {editingSection ? 'Edit Section' : 'Add New Section'}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="section-name" className="text-foreground">Section Name</Label>
+              <Input
+                id="section-name"
+                value={formData.name}
+                onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
+                placeholder="e.g., Verse 1, Chorus, Bridge"
+                className="bg-background/50 border-border/50"
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="start-time" className="text-foreground">Start Time (seconds)</Label>
+                <Input
+                  id="start-time"
+                  type="number"
+                  value={formData.startTime === 0 ? '' : formData.startTime}
+                  onChange={(e) => setFormData(prev => ({ ...prev, startTime: e.target.value === '' ? 0 : Number(e.target.value) }))}
+                  onFocus={(e) => e.target.select()}
+                  className="bg-background/50 border-border/50"
+                  placeholder="0"
+                />
+              </div>
+              <div>
+                <Label htmlFor="end-time" className="text-foreground">End Time (seconds)</Label>
+                <Input
+                  id="end-time"
+                  type="number"
+                  value={formData.endTime === 0 ? '' : formData.endTime}
+                  onChange={(e) => setFormData(prev => ({ ...prev, endTime: e.target.value === '' ? 0 : Number(e.target.value) }))}
+                  onFocus={(e) => e.target.select()}
+                  className="bg-background/50 border-border/50"
+                  placeholder="0"
+                />
+              </div>
+            </div>
+            <div className="flex justify-end space-x-2 pt-4">
+              <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
+                Cancel
+              </Button>
+              <Button onClick={handleSaveSection} className="bg-music-primary text-white">
+                {editingSection ? 'Update' : 'Add'} Section
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
