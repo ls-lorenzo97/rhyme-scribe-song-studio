@@ -127,18 +127,25 @@ export class RhymeDetector {
   }
 
   private extractStressTailFallback(word: string): string {
-    // Pattern multilingue per identificare la coda fonetica
+    // Per l'italiano, estrae dal penultimo nucleo vocalico (più accurato)
     const vowels = 'aeiouáéíóúàèìòùâêîôûäëïöüæøå';
-    let lastVowelIndex = -1;
     
-    for (let i = word.length - 1; i >= 0; i--) {
+    // Trova tutte le vocali
+    const vowelPositions = [];
+    for (let i = 0; i < word.length; i++) {
       if (vowels.includes(word[i].toLowerCase())) {
-        lastVowelIndex = i;
-        break;
+        vowelPositions.push(i);
       }
     }
     
-    return lastVowelIndex >= 0 ? word.slice(lastVowelIndex) : word.slice(-2);
+    if (vowelPositions.length >= 2) {
+      // Prende dall'ultima vocale per le rime italiane
+      return word.slice(vowelPositions[vowelPositions.length - 1]);
+    } else if (vowelPositions.length === 1) {
+      return word.slice(vowelPositions[0]);
+    }
+    
+    return word.slice(-2);
   }
 
   // Phase 3: Calcolo similarità fonetica pesata
@@ -203,8 +210,8 @@ export class RhymeDetector {
     const n = words.length;
     const { find, union } = this.createUnionFind(n);
 
-    // Soglia scientificamente validata
-    const threshold = 0.7;
+    // Soglia più restrittiva per gruppi precisi
+    const threshold = 0.85;
 
     // Unione di parole con similarità >= threshold
     for (let i = 0; i < n; i++) {
