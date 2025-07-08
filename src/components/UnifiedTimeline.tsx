@@ -309,153 +309,111 @@ export const UnifiedTimeline = ({
     };
   }, [handlePlay]);
 
+  // Apple Music style: single compact horizontal bar
   return (
-    <div className="space-y-4">
-      {/* Player */}
-      <div className="flex flex-col items-center justify-center gap-2">
+    <div className="w-full flex items-center gap-4 bg-background rounded-xl p-2 shadow-sm border border-border/40">
+      {/* Player left-aligned */}
+      <div className="flex flex-col items-center justify-center mr-2">
         <audio ref={audioRef} src={audioUrl} />
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-1">
           <Button
             variant="ghost"
             size="icon"
             onClick={() => navigateToSection('prev')}
-            className="w-10 h-10 text-muted-foreground hover:text-foreground rounded-full"
+            className="w-8 h-8 text-muted-foreground hover:text-foreground rounded-full"
           >
-            <SkipBack className="w-5 h-5" />
+            <SkipBack className="w-4 h-4" />
           </Button>
           <Button
             variant="default"
             size="icon"
             onClick={handlePlay}
-            className="w-16 h-16 bg-music-primary hover:bg-music-primary/90 text-white rounded-full shadow-glow transition-transform hover:scale-105"
+            className="w-12 h-12 bg-[color:var(--accent)] hover:bg-[color:var(--accent)]/90 text-white rounded-full shadow-glow transition-transform hover:scale-105"
           >
-            {isPlaying ? <Pause className="w-8 h-8" /> : <Play className="w-8 h-8 ml-1" />}
+            {isPlaying ? <Pause className="w-6 h-6" /> : <Play className="w-6 h-6 ml-1" />}
           </Button>
           <Button
             variant="ghost"
             size="icon"
             onClick={() => navigateToSection('next')}
-            className="w-10 h-10 text-muted-foreground hover:text-foreground rounded-full"
+            className="w-8 h-8 text-muted-foreground hover:text-foreground rounded-full"
           >
-            <SkipForward className="w-5 h-5" />
+            <SkipForward className="w-4 h-4" />
           </Button>
         </div>
         {/* Progress Bar */}
-        <div className="w-full max-w-2xl flex flex-col items-center mt-1">
+        <div className="w-32 flex flex-col items-center mt-1">
           <Slider
             value={[currentTime]}
             max={duration || 100}
             step={0.1}
             onValueChange={handleSeek}
-            className="w-full h-2"
+            className="w-full h-1"
           />
-          <div className="flex justify-between w-full text-xs text-muted-foreground mt-0.5">
+          <div className="flex justify-between w-full text-[10px] text-muted-foreground mt-0.5">
             <span>{formatTime(currentTime)}</span>
             <span>{formatTime(duration)}</span>
           </div>
         </div>
-        {/* Current Section Info */}
-        {currentSectionData && (
-          <div className="text-center mt-1">
-            <h4 className="font-semibold text-lg text-foreground leading-tight">{currentSectionData.name}</h4>
-            <p className="text-xs text-muted-foreground leading-tight">{audioFile?.name || 'Unknown Track'}</p>
-          </div>
-        )}
       </div>
-
-      {/* Timeline blocchi sezioni con label sopra */}
-      <div className="relative w-full max-w-4xl mx-auto mt-2">
+      {/* Timeline + Section blocks */}
+      <div className="flex-1 flex flex-col gap-1">
         {/* Section Labels */}
-        <div className="flex justify-between px-2 mb-1">
-          {sortedSections.map((section, idx) => {
-            const leftPercentage = duration > 0 ? (section.startTime / duration) * 100 : 0;
-            return (
-              <div
-                key={section.id}
-                className="text-xs text-muted-foreground font-medium text-center flex-1"
-                style={{ minWidth: 0 }}
-              >
-                {section.name}
-              </div>
-            );
-          })}
+        <div className="flex justify-between w-full px-1">
+          {sortedSections.map((section) => (
+            <div
+              key={section.id}
+              className="text-xs text-muted-foreground font-medium text-center flex-1 truncate"
+              style={{ minWidth: 0 }}
+            >
+              {section.name}
+            </div>
+          ))}
         </div>
-        {/* Timeline Bar */}
-        <div className="flex w-full h-5 rounded-lg overflow-hidden border border-border/30 bg-muted/20">
+        {/* Timeline Bar with Section Blocks */}
+        <div className="flex w-full h-10 rounded-lg overflow-hidden border border-border/30 bg-muted/10">
           {sortedSections.map((section, idx) => {
-            const widthPercentage = duration > 0 ? ((section.endTime - section.startTime) / duration) * 100 : 0;
+            const hasLyrics = !!section.lyrics && section.lyrics.trim().length > 0;
             return (
               <div
                 key={section.id}
                 className={cn(
-                  "flex-1 h-full cursor-pointer transition-all duration-200",
-                  currentSection === section.id ? "bg-music-primary/40" : "hover:bg-music-primary/10"
+                  "flex-1 flex items-center gap-2 px-2 h-full cursor-pointer border-r border-border/20 transition-all duration-200 relative group",
+                  currentSection === section.id ? "ring-2 ring-[color:var(--accent)] bg-[color:var(--accent)]/10 z-10" : "",
+                  hasLyrics ? "bg-[color:var(--accent)]/20" : "bg-background/80 hover:bg-muted/20"
                 )}
-                style={{ width: `${widthPercentage}%`, minWidth: 0 }}
-                onClick={() => onSectionClick(section.id)}
-              />
-            );
-          })}
-        </div>
-        {/* Progress Indicator */}
-        <div
-          className="absolute top-0 left-0 h-5 w-1 bg-music-primary shadow-glow transition-all duration-200 z-10"
-          style={{ left: `${progressPercentage}%` }}
-        />
-      </div>
-
-      {/* Section Cards orizzontali */}
-      <div className="w-full max-w-4xl mx-auto mt-2 overflow-x-auto">
-        <div className="flex gap-3 pb-2">
-          {sortedSections.map((section, idx) => (
-            <div
-              key={section.id}
-              className={cn(
-                "flex-shrink-0 rounded-2xl border transition-all duration-200 cursor-pointer group bg-card/80",
-                currentSection === section.id
-                  ? "border-music-primary bg-music-primary/10 shadow-glow scale-105"
-                  : "border-border/30 hover:bg-card/90"
-              )}
-              style={{ minWidth: 220, maxWidth: 260 }}
-              onClick={() => {
-                setCurrentSection(section.id);
-                onSectionClick(section.id);
-              }}
-            >
-              <div className="flex flex-col items-start p-4 gap-2">
-                <div className="flex items-center gap-2 w-full">
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="w-7 h-7 p-0 hover:bg-music-primary/20"
-                    onClick={e => { e.stopPropagation(); onSectionClick(section.id); }}
-                  >
-                    <Play className="w-4 h-4" />
-                  </Button>
-                  <h4 className="font-semibold text-base text-foreground truncate flex-1">{section.name}</h4>
-                  <Badge
-                    variant="secondary"
-                    className={cn(
-                      "text-xs font-medium px-2 py-0.5",
-                      currentSection === section.id ? "bg-music-primary/20 text-music-primary" : ""
-                    )}
-                  >
-                    {formatTime(section.startTime)} - {formatTime(section.endTime)}
-                  </Badge>
-                </div>
-                {section.lyrics && (
-                  <p className="text-sm text-muted-foreground mt-1 line-clamp-1 w-full">
-                    {section.lyrics.split('\n')[0] || 'Empty lyrics'}
-                  </p>
-                )}
+                style={{ minWidth: 0 }}
+                onClick={() => {
+                  setCurrentSection(section.id);
+                  onSectionClick(section.id);
+                }}
+              >
+                {/* Play icon */}
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="w-6 h-6 p-0 hover:bg-[color:var(--accent)]/20"
+                  onClick={e => { e.stopPropagation(); onSectionClick(section.id); }}
+                >
+                  <Play className="w-4 h-4" />
+                </Button>
+                {/* Section name bold if selected */}
+                <span className={cn("font-semibold text-sm truncate", currentSection === section.id ? "text-foreground" : "text-muted-foreground")}>{section.name}</span>
+                {/* Time badge */}
+                <span className={cn(
+                  "ml-1 px-2 py-0.5 rounded-full text-xs font-medium",
+                  hasLyrics ? "bg-[color:var(--accent)]/30 text-[color:var(--accent)]" : "bg-muted text-muted-foreground"
+                )}>
+                  {formatTime(section.startTime)} - {formatTime(section.endTime)}
+                </span>
                 {/* Controls only on selected */}
                 {currentSection === section.id && (
-                  <div className="flex gap-2 mt-2">
+                  <div className="flex gap-1 ml-2">
                     <Button
                       variant="ghost"
                       size="icon"
                       onClick={e => { e.stopPropagation(); handleEditSection(section); }}
-                      className="w-8 h-8 p-0 hover:bg-music-primary/20"
+                      className="w-6 h-6 p-0 hover:bg-[color:var(--accent)]/20"
                     >
                       <Edit3 className="w-4 h-4" />
                     </Button>
@@ -463,26 +421,26 @@ export const UnifiedTimeline = ({
                       variant="ghost"
                       size="icon"
                       onClick={e => { e.stopPropagation(); handleDeleteSection(section.id); }}
-                      className="w-8 h-8 p-0 text-destructive hover:text-destructive hover:bg-destructive/10"
+                      className="w-6 h-6 p-0 text-destructive hover:text-destructive hover:bg-destructive/10"
                     >
                       <Trash2 className="w-4 h-4" />
                     </Button>
                   </div>
                 )}
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </div>
-
+      {/* Add Section Button */}
+      <div className="ml-2 flex items-center">
+        <Button onClick={handleAddSection} className="bg-[color:var(--accent)] text-white font-semibold px-4 py-2 rounded-lg shadow-glow">
+          <Plus className="w-4 h-4 mr-2" />
+          Add Section
+        </Button>
+      </div>
       {/* Dialog per edit/add section (come prima) */}
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogTrigger asChild>
-          <Button onClick={handleAddSection} className="bg-music-primary text-white shadow-glow mt-2">
-            <Plus className="w-4 h-4 mr-2" />
-            Add Section
-          </Button>
-        </DialogTrigger>
         <DialogContent className="bg-card/95 backdrop-blur-xl border-border/20">
           <DialogHeader>
             <DialogTitle className="text-xl">
@@ -530,7 +488,7 @@ export const UnifiedTimeline = ({
               <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
                 Cancel
               </Button>
-              <Button onClick={handleSaveSection} className="bg-music-primary text-white">
+              <Button onClick={handleSaveSection} className="bg-[color:var(--accent)] text-white">
                 {editingSection ? 'Update' : 'Add'} Section
               </Button>
             </div>
