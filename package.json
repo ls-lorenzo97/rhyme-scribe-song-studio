@@ -64,6 +64,9 @@
     "text-to-ipa": "^1.0.0",
     "vaul": "^0.9.3",
     "zod": "^3.23.8"
+    "phonemize": "^1.0.0",
+    "pronouncingjs": "^0.2.0",
+
   },
   "devDependencies": {
     "@eslint/js": "^9.9.0",
