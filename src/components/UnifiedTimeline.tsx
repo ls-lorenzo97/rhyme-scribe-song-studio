@@ -389,7 +389,7 @@ export const UnifiedTimeline = ({
                 tabIndex={0}
                 aria-label={`Section ${section.name}`}
                 className={cn(
-                  "flex flex-col items-center justify-center px-6 py-2 min-w-[100px] max-w-[160px] rounded-full cursor-pointer border border-separator transition-all duration-200 relative group bg-secondarySystemBackground overflow-hidden focus:ring-2 focus:ring-accent outline-none",
+                  "flex flex-col items-center justify-center px-5 py-2 min-w-[100px] max-w-[140px] rounded-full cursor-pointer border border-separator transition-all duration-200 relative group bg-secondarySystemBackground overflow-hidden focus:ring-2 focus:ring-accent outline-none",
                   isActive ? "bg-accentSystemFill shadow-lg scale-105 z-10 border-accent transition-all duration-200" : "hover:bg-tertiarySystemFill hover:scale-105",
                 )}
                 style={{ minWidth: 0 }}
@@ -398,71 +398,74 @@ export const UnifiedTimeline = ({
                   onSectionClick(section.id);
                 }}
               >
-                <div className="flex items-center w-full justify-center gap-2">
-                  {/* Play icon solo su hover/attivo */}
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button
-                        variant="outline"
-                        size="icon"
-                        aria-label={`Play ${section.name}`}
-                        className={cn("w-7 h-7 p-0 transition-all duration-200 focus:ring-2 focus:ring-accent", isActive ? "opacity-100" : "opacity-0 group-hover:opacity-100")}
-                        onClick={e => { e.stopPropagation(); onSectionClick(section.id); }}
-                      >
-                        <Play className="w-5 h-5" />
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent>Play {section.name}</TooltipContent>
-                  </Tooltip>
-                  {/* Section name centrato, ellissi, tooltip se lungo */}
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <span className={cn("font-semibold text-[15px] text-label truncate max-w-[80px] text-center", isActive ? "text-label" : "text-secondaryLabel")}>{section.name}</span>
-                    </TooltipTrigger>
-                    {section.name.length > 10 && <TooltipContent>{section.name}</TooltipContent>}
-                  </Tooltip>
-                  {/* Controlli solo su hover/attivo */}
-                  <div className={cn(
-                    "flex gap-1 ml-1 transition-opacity duration-200",
-                    isActive ? "opacity-100" : "opacity-0 group-hover:opacity-100"
-                  )}>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Button
-                          variant="outline"
-                          size="icon"
-                          aria-label="Edit section"
-                          onClick={e => { e.stopPropagation(); handleEditSection(section); }}
-                          className="w-7 h-7 p-0 focus:ring-2 focus:ring-accent"
-                        >
-                          <Edit3 className="w-4 h-4" />
-                        </Button>
-                      </TooltipTrigger>
-                      <TooltipContent>Edit section</TooltipContent>
-                    </Tooltip>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Button
-                          variant="outline"
-                          size="icon"
-                          aria-label="Delete section"
-                          onClick={e => { e.stopPropagation(); handleDeleteSection(section.id); }}
-                          className="w-7 h-7 p-0 text-destructive hover:text-destructive hover:bg-destructive/10 focus:ring-2 focus:ring-destructive"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
-                      </TooltipTrigger>
-                      <TooltipContent>Delete section</TooltipContent>
-                    </Tooltip>
-                  </div>
-                </div>
-                {/* Time badge Apple-style sotto, sempre leggibile */}
+                {/* Nome sezione sempre centrato, ellissi, tooltip se lungo */}
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <span className={cn("font-semibold text-[15px] text-label truncate max-w-[90px] text-center block", isActive ? "text-label" : "text-secondaryLabel")}>{section.name}</span>
+                  </TooltipTrigger>
+                  {section.name.length > 10 && <TooltipContent>{section.name}</TooltipContent>}
+                </Tooltip>
+                {/* Badge tempo Apple-style sotto, sempre leggibile */}
                 <span className={cn(
                   "mt-1 px-2 py-0.5 rounded-full text-[13px] font-bold min-w-[60px] text-center bg-tertiarySystemFill border border-separator text-secondaryLabel shadow-sm",
                   isActive ? "bg-accentSystemFill text-label border-accent" : ""
                 )}>
                   {formatTime(section.startTime)} - {formatTime(section.endTime)}
                 </span>
+                {/* Colonna icone a destra, solo su hover/attivo, MA mai sopra testo */}
+                <div className={cn(
+                  "absolute right-2 top-1 flex flex-col gap-1 transition-opacity duration-200 z-20",
+                  isActive ? "opacity-100" : "opacity-0 group-hover:opacity-100"
+                )}>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        aria-label="Edit section"
+                        onClick={e => { e.stopPropagation(); handleEditSection(section); }}
+                        className="w-6 h-6 p-0 focus:ring-2 focus:ring-accent"
+                      >
+                        <Edit3 className="w-4 h-4" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>Edit section</TooltipContent>
+                  </Tooltip>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        aria-label="Delete section"
+                        onClick={e => { e.stopPropagation(); handleDeleteSection(section.id); }}
+                        className="w-6 h-6 p-0 text-destructive hover:text-destructive hover:bg-destructive/10 focus:ring-2 focus:ring-destructive"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>Delete section</TooltipContent>
+                  </Tooltip>
+                </div>
+                {/* Play icon solo su hover/attivo, MA mai sopra testo */}
+                <div className={cn(
+                  "absolute left-2 top-1 transition-opacity duration-200 z-20",
+                  isActive ? "opacity-100" : "opacity-0 group-hover:opacity-100"
+                )}>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        aria-label={`Play ${section.name}`}
+                        className="w-6 h-6 p-0 focus:ring-2 focus:ring-accent"
+                        onClick={e => { e.stopPropagation(); onSectionClick(section.id); }}
+                      >
+                        <Play className="w-4 h-4" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>Play {section.name}</TooltipContent>
+                  </Tooltip>
+                </div>
               </div>
             );
           })}
