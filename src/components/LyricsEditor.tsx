@@ -37,8 +37,10 @@ export const LyricsEditor = ({ section, onLyricsUpdate, selectedLanguage = 'en' 
       if (value.trim()) {
         setIsAnalyzing(true);
         try {
-          const detectedRhymes = await rhymeDetector.detectRhymes(value, selectedLanguage);
-          setRhymeGroups(detectedRhymes);
+          // Fix: cast selectedLanguage to the expected type
+          const detectedRhymes = await rhymeDetector.detectRhymes(value, selectedLanguage as 'it'|'en'|'es'|'fr'|'de');
+          // Fix: cast detectedRhymes to RhymeGroup[]
+          setRhymeGroups(detectedRhymes as RhymeGroup[]);
         } catch (error) {
           console.error('Error detecting rhymes:', error);
           setRhymeGroups([]);
@@ -82,7 +84,7 @@ export const LyricsEditor = ({ section, onLyricsUpdate, selectedLanguage = 'en' 
               const cleanWord = word.toLowerCase().replace(/[^a-z]/g, '');
               const rhymeGroup = rhymeGroups.find(group => 
                 group.positions.some(pos => 
-                  pos.line === lineIndex && pos.word === cleanWord
+                  pos.line === lineIndex && pos.word === cleanWord && pos.wordIndex === wordIndex
                 )
               );
 

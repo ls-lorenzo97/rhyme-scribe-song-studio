@@ -123,9 +123,10 @@ export class RhymeDetector {
       const avg=cmp?tot/cmp:0;
       if(avg<0.75) return null;
       return {
-        id:`rhyme-${idx}`,words:c.map(i=>words[i].word),
+        id:`rhyme-${idx}`,
+        words:c.map(i=>words[i].word),
         color:this.rhymeColors[idx%this.rhymeColors.length],
-        type:avg>=0.95?'perfect':avg>=0.85?'near':'weak',
+        type: avg>=0.95 ? 'perfect' : avg>=0.85 ? 'near' : 'slant',
         strength:avg,
         positions:c.map(i=>({
           line:words[i].line,wordIndex:words[i].idx,
