@@ -7,6 +7,7 @@ import { SongSection } from './SongwriterTool';
 import { ArrowUp, ArrowDown } from 'lucide-react';
 import { RhymeDetector } from './lyrics/RhymeDetector';
 import { RhymeGroup } from './lyrics/AILyricsAssistant';
+import { RhymeSuggestions } from './lyrics/RhymeSuggestions';
 
 interface LyricsEditorProps {
   section: SongSection | undefined;
@@ -19,6 +20,8 @@ interface LyricsEditorProps {
 export const LyricsEditor = ({ section, onLyricsUpdate, selectedLanguage = 'en', rhymeGroups, setRhymeGroups }: LyricsEditorProps) => {
   const [lines, setLines] = useState<string[]>([]);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [suggestIdx, setSuggestIdx] = useState<number|null>(null);
+  const [suggestWord, setSuggestWord] = useState<string>('');
 
   const rhymeDetector = useMemo(() => new RhymeDetector(), []);
 
@@ -54,6 +57,23 @@ export const LyricsEditor = ({ section, onLyricsUpdate, selectedLanguage = 'en',
 
   const addLine = () => {
     setLines([...lines, '']);
+  };
+
+  const handleOpenSuggestions = (idx: number) => {
+    const words = lines[idx].trim().split(/\s+/);
+    const lastWord = words[words.length-1] || '';
+    setSuggestIdx(idx);
+    setSuggestWord(lastWord);
+  };
+  const handleSuggestionSelect = (word: string) => {
+    if (suggestIdx === null) return;
+    const newLines = [...lines];
+    newLines[suggestIdx] = newLines[suggestIdx] + (newLines[suggestIdx].endsWith(' ') ? '' : ' ') + word;
+    setLines(newLines);
+    setSuggestIdx(null);
+    setSuggestWord('');
+    // Optionally trigger rhyme analysis
+    handleLineChange(suggestIdx, newLines[suggestIdx]);
   };
 
   // Get rhyme letter for each line
@@ -102,6 +122,15 @@ export const LyricsEditor = ({ section, onLyricsUpdate, selectedLanguage = 'en',
               className="flex-1 px-3 py-2 rounded border bg-background text-base focus:ring-2 focus:ring-music-primary outline-none"
               autoComplete="off"
             />
+            {/* Rhyme Suggestion Button */}
+            <button
+              type="button"
+              className="ml-1 px-2 py-1 rounded bg-muted/40 border text-xs text-muted-foreground hover:bg-music-primary/10"
+              onClick={() => handleOpenSuggestions(idx)}
+              title="Suggerisci rime per l'ultima parola"
+            >
+              💡
+            </button>
           </div>
         ))}
         <button
@@ -112,6 +141,24 @@ export const LyricsEditor = ({ section, onLyricsUpdate, selectedLanguage = 'en',
           + Aggiungi Frase
         </button>
       </div>
+      {/* Rhyme Suggestions Dropdown/Modal */}
+      {suggestIdx !== null && (
+        <div className="fixed inset-0 bg-black/30 flex items-center justify-center z-50">
+          <div className="bg-background rounded-lg shadow-lg p-6 w-full max-w-md relative">
+            <button
+              className="absolute top-2 right-2 text-lg text-muted-foreground hover:text-foreground"
+              onClick={() => setSuggestIdx(null)}
+            >
+              ×
+            </button>
+            <RhymeSuggestions
+              selectedWord={suggestWord}
+              language={selectedLanguage}
+              onSuggestionSelect={handleSuggestionSelect}
+            />
+          </div>
+        </div>
+      )}
       {/* Live Preview */}
       <div className="mt-6">
         <h4 className="font-medium text-foreground mb-2">Anteprima con rime</h4>

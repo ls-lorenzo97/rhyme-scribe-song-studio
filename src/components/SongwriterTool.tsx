@@ -200,12 +200,6 @@ export const SongwriterTool = () => {
                     rhymeGroups={rhymeGroups}
                     setRhymeGroups={setRhymeGroups}
                   />
-                  <AILyricsAssistant
-                    section={currentSectionData}
-                    onLyricsUpdate={handleLyricsUpdate}
-                    selectedLanguage={selectedLanguage}
-                    rhymeGroups={rhymeGroups}
-                  />
                 </div>
               </Card>
             </div>
