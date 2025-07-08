@@ -104,7 +104,7 @@ export const LyricsEditor = ({ section, onLyricsUpdate, selectedLanguage = 'en',
           <div key={idx} className="flex items-center gap-2">
             {/* Rhyme Letter & Color */}
             <div
-              className="w-8 h-8 rounded-full flex items-center justify-center text-base font-bold border"
+              className="min-w-8 min-h-8 w-8 h-8 rounded-full flex items-center justify-center text-base font-bold border flex-shrink-0"
               style={{
                 backgroundColor: getRhymeColor(idx) + '20',
                 color: getRhymeColor(idx),
@@ -113,14 +113,15 @@ export const LyricsEditor = ({ section, onLyricsUpdate, selectedLanguage = 'en',
             >
               {getRhymeLetter(idx)}
             </div>
-            {/* Single-line input */}
+            {/* Single-line input, fixed height, full width */}
             <input
               type="text"
               value={line}
               onChange={e => handleLineChange(idx, e.target.value)}
               placeholder={`Frase ${idx + 1}`}
-              className="flex-1 px-3 py-2 rounded border bg-background text-base focus:ring-2 focus:ring-music-primary outline-none"
+              className="flex-1 h-10 px-3 py-2 rounded border bg-background text-base focus:ring-2 focus:ring-music-primary outline-none"
               autoComplete="off"
+              style={{ minHeight: '2.5rem', maxHeight: '2.5rem' }}
             />
             {/* Rhyme Suggestion Button */}
             <button
@@ -163,23 +164,28 @@ export const LyricsEditor = ({ section, onLyricsUpdate, selectedLanguage = 'en',
       <div className="mt-6">
         <h4 className="font-medium text-foreground mb-2">Anteprima con rime</h4>
         <div className="space-y-1 bg-muted/30 border border-border rounded-md px-3 py-3">
-          {lines.map((line, idx) => (
-            <div key={idx} className="flex items-center gap-2">
-              <span
-                className="w-8 h-8 rounded-full flex items-center justify-center text-base font-bold border"
-                style={{
-                  backgroundColor: getRhymeColor(idx) + '20',
-                  color: getRhymeColor(idx),
-                  borderColor: getRhymeColor(idx),
-                }}
-              >
-                {getRhymeLetter(idx)}
-              </span>
-              <span style={{ color: getRhymeColor(idx) }}>
-                {line}
-              </span>
-            </div>
-          ))}
+          {lines.map((line, idx) => {
+            const letter = getRhymeLetter(idx);
+            const color = getRhymeColor(idx);
+            const isRhyme = !!letter;
+            return (
+              <div key={idx} className="flex items-center gap-2">
+                <span
+                  className="min-w-8 min-h-8 w-8 h-8 rounded-full flex items-center justify-center text-base font-bold border flex-shrink-0"
+                  style={{
+                    backgroundColor: isRhyme ? color + '20' : 'transparent',
+                    color: isRhyme ? color : 'inherit',
+                    borderColor: isRhyme ? color : 'var(--border)',
+                  }}
+                >
+                  {isRhyme ? letter : ''}
+                </span>
+                <span style={{ color: isRhyme ? color : undefined }}>
+                  {line}
+                </span>
+              </div>
+            );
+          })}
         </div>
       </div>
       {isAnalyzing && (
