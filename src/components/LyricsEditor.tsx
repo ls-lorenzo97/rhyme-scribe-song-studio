@@ -78,37 +78,40 @@ export const LyricsEditor = ({ section, onLyricsUpdate, selectedLanguage = 'en' 
           </Button>
         </div>
         
-        {lines.map((line, lineIndex) => (
-          <div key={lineIndex} className="text-sm leading-relaxed">
-            {line.split(/\s+/).map((word, wordIndex) => {
-              const cleanWord = word.toLowerCase().replace(/[^a-z]/g, '');
-              const rhymeGroup = rhymeGroups.find(group => 
-                group.positions.some(pos => 
-                  pos.line === lineIndex && pos.word === cleanWord && pos.wordIndex === wordIndex
-                )
-              );
-
-              if (rhymeGroup && rhymeGroup.words.length >= 2 && cleanWord.length > 2) {
-                return (
-                  <span
-                    key={wordIndex}
-                    className="px-1 py-0.5 rounded text-foreground font-medium"
-                    style={{
-                      backgroundColor: `${rhymeGroup.color}20`,
-                      borderBottom: `2px solid ${rhymeGroup.color}`,
-                    }}
-                  >
-                    {word}
-                  </span>
+        {lines.map((line, lineIndex) => {
+          const words = line.split(/\s+/);
+          const lastWordIndex = words.length - 1;
+          return (
+            <div key={lineIndex} className="text-sm leading-relaxed">
+              {words.map((word, wordIndex) => {
+                const cleanWord = word.toLowerCase().replace(/[^a-z]/g, '');
+                const rhymeGroup = rhymeGroups.find(group => 
+                  group.positions.some(pos => 
+                    pos.line === lineIndex && pos.word === cleanWord && pos.wordIndex === wordIndex
+                  )
                 );
-              }
-              
-              return <span key={wordIndex}>{word}</span>;
-            }).reduce((prev, curr, index) => 
-              index === 0 ? [curr] : [...prev, ' ', curr], [] as React.ReactNode[]
-            )}
-          </div>
-        ))}
+                const isLastWord = wordIndex === lastWordIndex;
+                if (isLastWord && rhymeGroup && rhymeGroup.words.length >= 2 && cleanWord.length > 2) {
+                  return (
+                    <span
+                      key={wordIndex}
+                      className="px-1 py-0.5 rounded text-foreground font-medium"
+                      style={{
+                        backgroundColor: `${rhymeGroup.color}20`,
+                        borderBottom: `2px solid ${rhymeGroup.color}`,
+                      }}
+                    >
+                      {word}
+                    </span>
+                  );
+                }
+                return <span key={wordIndex}>{word}</span>;
+              }).reduce((prev, curr, index) => 
+                index === 0 ? [curr] : [...prev, ' ', curr], [] as React.ReactNode[]
+              )}
+            </div>
+          );
+        })}
       </div>
     );
   };
