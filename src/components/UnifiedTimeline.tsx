@@ -388,7 +388,7 @@ export const UnifiedTimeline = ({
                 tabIndex={0}
                 aria-label={`Section ${section.name}`}
                 className={cn(
-                  "grid grid-cols-3 grid-rows-2 gap-x-2 gap-y-1 min-w-[120px] max-w-[160px] px-3 py-2 rounded-xl cursor-pointer border border-separator transition-all duration-200 bg-secondarySystemBackground overflow-hidden focus:ring-2 focus:ring-accent outline-none",
+                  "grid grid-cols-3 grid-rows-2 gap-x-2 gap-y-1 min-w-[140px] max-w-[200px] px-4 py-3 rounded-xl cursor-pointer border border-separator transition-all duration-200 bg-secondarySystemBackground overflow-hidden focus:ring-2 focus:ring-accent outline-none",
                   isActive ? "bg-accentSystemFill shadow-lg scale-105 z-10 border-accent transition-all duration-200" : "hover:bg-tertiarySystemFill hover:scale-105",
                 )}
                 style={{ minWidth: 0 }}
@@ -397,7 +397,7 @@ export const UnifiedTimeline = ({
                   onSectionClick(section.id);
                 }}
               >
-                {/* Riga 1: Play | Nome | Edit */}
+                {/* Riga 1: Play | Nome | (vuoto) */}
                 <div className="flex justify-center items-center col-span-1 row-span-1">
                   <Tooltip>
                     <TooltipTrigger asChild>
@@ -405,10 +405,10 @@ export const UnifiedTimeline = ({
                         variant="outline"
                         size="icon"
                         aria-label={`Play ${section.name}`}
-                        className="w-5 h-5 p-0 focus:ring-2 focus:ring-accent text-label opacity-80"
+                        className="w-6 h-6 p-0 focus:ring-2 focus:ring-accent text-label opacity-80"
                         onClick={e => { e.stopPropagation(); onSectionClick(section.id); }}
                       >
-                        <Play className="w-4 h-4" />
+                        <Play className="w-5 h-5" />
                       </Button>
                     </TooltipTrigger>
                     <TooltipContent>Play {section.name}</TooltipContent>
@@ -418,40 +418,23 @@ export const UnifiedTimeline = ({
                   <Tooltip>
                     <TooltipTrigger asChild>
                       <span className={cn(
-                        "font-semibold text-[15px] truncate max-w-[70px] text-center block whitespace-nowrap mx-auto",
+                        "font-semibold text-[17px] truncate max-w-[100px] text-center block whitespace-nowrap mx-auto",
                         isActive ? "text-label" : "text-secondaryLabel"
                       )}>{section.name}</span>
                     </TooltipTrigger>
                     {section.name.length > 10 && <TooltipContent>{section.name}</TooltipContent>}
                   </Tooltip>
                 </div>
-                <div className="flex justify-center items-center col-span-1 row-span-1">
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button
-                        variant="outline"
-                        size="icon"
-                        aria-label="Edit section"
-                        onClick={e => { e.stopPropagation(); handleEditSection(section); }}
-                        className="w-5 h-5 p-0 focus:ring-2 focus:ring-accent text-label opacity-80"
-                      >
-                        <Edit3 className="w-4 h-4" />
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent>Edit section</TooltipContent>
-                  </Tooltip>
-                </div>
-                {/* Riga 2: (vuoto) | Badge tempo | Delete */}
                 <div></div>
-                <div className="flex justify-center items-center col-span-1 row-span-1">
+                {/* Riga 2: (vuoto) | Badge tempo grande + Delete | (vuoto) */}
+                <div></div>
+                <div className="flex justify-center items-center col-span-1 row-span-1 gap-2">
                   <span className={cn(
-                    "px-2 py-0.5 rounded-full text-[13px] font-bold min-w-[60px] max-w-[80px] text-center border border-separator shadow-sm whitespace-nowrap overflow-hidden truncate mx-auto",
+                    "px-4 py-1 rounded-full text-[16px] font-bold min-w-[90px] max-w-[120px] text-center border border-separator shadow-sm whitespace-nowrap overflow-hidden truncate mx-auto",
                     isActive ? "bg-accentSystemFill text-label border-accent" : "bg-tertiarySystemFill text-secondaryLabel"
                   )}>
                     {formatTime(section.startTime)} - {formatTime(section.endTime)}
                   </span>
-                </div>
-                <div className="flex justify-center items-center col-span-1 row-span-1">
                   <Tooltip>
                     <TooltipTrigger asChild>
                       <Button
@@ -459,14 +442,15 @@ export const UnifiedTimeline = ({
                         size="icon"
                         aria-label="Delete section"
                         onClick={e => { e.stopPropagation(); handleDeleteSection(section.id); }}
-                        className="w-5 h-5 p-0 text-destructive hover:text-destructive hover:bg-destructive/10 focus:ring-2 focus:ring-destructive opacity-80"
+                        className="w-6 h-6 p-0 text-destructive hover:text-destructive hover:bg-destructive/10 focus:ring-2 focus:ring-destructive opacity-80"
                       >
-                        <Trash2 className="w-4 h-4" />
+                        <Trash2 className="w-5 h-5" />
                       </Button>
                     </TooltipTrigger>
                     <TooltipContent>Delete section</TooltipContent>
                   </Tooltip>
                 </div>
+                <div></div>
               </div>
             );
           })}
