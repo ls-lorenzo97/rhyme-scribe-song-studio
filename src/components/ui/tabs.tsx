@@ -50,4 +50,7 @@ const TabsContent = React.forwardRef<
 ))
 TabsContent.displayName = TabsPrimitive.Content.displayName
 
+const tabsClass =
+  "bg-card text-card-foreground border border-input rounded-xl p-2 text-[15px] font-medium";
+
 export { Tabs, TabsList, TabsTrigger, TabsContent }

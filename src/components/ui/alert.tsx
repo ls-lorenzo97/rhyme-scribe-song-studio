@@ -19,6 +19,9 @@ const alertVariants = cva(
   }
 )
 
+const alertClass =
+  "bg-card text-card-foreground border border-input rounded-xl p-4 text-[15px] font-medium";
+
 const Alert = React.forwardRef<
   HTMLDivElement,
   React.HTMLAttributes<HTMLDivElement> & VariantProps<typeof alertVariants>

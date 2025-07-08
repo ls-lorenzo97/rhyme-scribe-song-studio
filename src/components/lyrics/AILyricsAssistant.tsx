@@ -446,7 +446,7 @@ export const AILyricsAssistant = ({ section, onLyricsUpdate, selectedLanguage, r
               
               {/* Syllable Count */}
               <div className="w-16 text-center mt-1 flex-shrink-0">
-                <Badge variant="outline" className="text-xs">
+                <Badge variant="outline" className="text-[15px] font-semibold px-3 py-1 min-w-[32px] text-center">
                   {line.syllableCount}
                 </Badge>
               </div>

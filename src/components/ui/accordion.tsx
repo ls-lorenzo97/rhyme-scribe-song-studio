@@ -4,6 +4,9 @@ import { ChevronDown } from "lucide-react"
 
 import { cn } from "@/lib/utils"
 
+const accordionClass =
+  "bg-card text-card-foreground border border-input rounded-xl p-4 text-[15px] font-medium";
+
 const Accordion = AccordionPrimitive.Root
 
 const AccordionItem = React.forwardRef<
