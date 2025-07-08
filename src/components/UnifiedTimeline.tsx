@@ -401,14 +401,17 @@ export const UnifiedTimeline = ({
                 {/* Nome sezione sempre centrato, ellissi, tooltip se lungo */}
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <span className={cn("font-semibold text-[15px] text-label truncate max-w-[90px] text-center block", isActive ? "text-label" : "text-secondaryLabel")}>{section.name}</span>
+                    <span className={cn(
+                      "font-semibold text-[15px] truncate max-w-[90px] text-center block",
+                      isActive ? "text-label" : "text-secondaryLabel"
+                    )}>{section.name}</span>
                   </TooltipTrigger>
                   {section.name.length > 10 && <TooltipContent>{section.name}</TooltipContent>}
                 </Tooltip>
                 {/* Badge tempo Apple-style sotto, sempre leggibile */}
                 <span className={cn(
-                  "mt-1 px-2 py-0.5 rounded-full text-[13px] font-bold min-w-[60px] text-center bg-tertiarySystemFill border border-separator text-secondaryLabel shadow-sm",
-                  isActive ? "bg-accentSystemFill text-label border-accent" : ""
+                  "mt-1 px-2 py-0.5 rounded-full text-[13px] font-bold min-w-[60px] text-center border border-separator shadow-sm",
+                  isActive ? "bg-accentSystemFill text-label border-accent" : "bg-tertiarySystemFill text-secondaryLabel"
                 )}>
                   {formatTime(section.startTime)} - {formatTime(section.endTime)}
                 </span>
@@ -424,7 +427,7 @@ export const UnifiedTimeline = ({
                         size="icon"
                         aria-label="Edit section"
                         onClick={e => { e.stopPropagation(); handleEditSection(section); }}
-                        className="w-6 h-6 p-0 focus:ring-2 focus:ring-accent"
+                        className="w-6 h-6 p-0 focus:ring-2 focus:ring-accent text-label"
                       >
                         <Edit3 className="w-4 h-4" />
                       </Button>
@@ -457,7 +460,7 @@ export const UnifiedTimeline = ({
                         variant="outline"
                         size="icon"
                         aria-label={`Play ${section.name}`}
-                        className="w-6 h-6 p-0 focus:ring-2 focus:ring-accent"
+                        className="w-6 h-6 p-0 focus:ring-2 focus:ring-accent text-label"
                         onClick={e => { e.stopPropagation(); onSectionClick(section.id); }}
                       >
                         <Play className="w-4 h-4" />
