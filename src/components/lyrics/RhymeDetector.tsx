@@ -2,7 +2,8 @@ export class RhymeDetector {
   private rhymeColors = ['#FF6B6B','#4ECDC4','#45B7D1','#96CEB4','#FFEAA7','#DDA0DD','#FFB3BA','#BAFFC9','#BAE1FF','#FFFFBA'];
   private functionWords = {/* same as before */};
   private commonSuffixes = ['mente','zione','sione','amento','ing','ed','ly'];
-  private epitranEndpoint = 'http://localhost:5000/stress-tail';
+  // Update this endpoint if the backend URL changes
+  private epitranEndpoint = 'https://rhyme-scribe-song-studio-eumx.onrender.com/stress-tail';
   private ipaCache = new Map<string,string>();
 
   async detectRhymes(text:string, language:'it'|'en'|'es'|'fr'|'de'='it') {
