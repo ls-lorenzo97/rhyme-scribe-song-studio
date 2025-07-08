@@ -390,90 +390,80 @@ export const UnifiedTimeline = ({
       </div>
 
       {/* Integrated Player & Timeline */}
-      <div className="space-y-4">
+      <div className="space-y-2">
         {/* Player Controls integrated with timeline */}
-        <div className="bg-muted/10 rounded-2xl p-6 space-y-4">
+        <div className="bg-muted/10 rounded-xl p-2 flex items-center justify-between gap-2">
           {/* Current Section Info & Controls */}
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-4">
-              {currentSectionData && (
-                <div>
-                  <h4 className="font-semibold text-foreground">{currentSectionData.name}</h4>
-                  <p className="text-sm text-muted-foreground">{audioFile?.name || 'Unknown Track'}</p>
-                </div>
-              )}
-            </div>
-            
-            <div className="flex items-center space-x-3">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => navigateToSection('prev')}
-                className="w-10 h-10 text-muted-foreground hover:text-foreground rounded-full"
-              >
-                <SkipBack className="w-4 h-4" />
-              </Button>
-              
-              <Button
-                variant="default"
-                size="sm"
-                onClick={handlePlay}
-                className="w-12 h-12 bg-music-primary hover:bg-music-primary/90 text-white rounded-full shadow-medium transition-transform hover:scale-105"
-              >
-                {isPlaying ? (
-                  <Pause className="w-5 h-5" />
-                ) : (
-                  <Play className="w-5 h-5 ml-0.5" />
-                )}
-              </Button>
-
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => navigateToSection('next')}
-                className="w-10 h-10 text-muted-foreground hover:text-foreground rounded-full"
-              >
-                <SkipForward className="w-4 h-4" />
-              </Button>
-            </div>
+          <div className="flex items-center gap-2">
+            {currentSectionData && (
+              <div>
+                <h4 className="font-semibold text-sm text-foreground leading-tight">{currentSectionData.name}</h4>
+                <p className="text-xs text-muted-foreground leading-tight">{audioFile?.name || 'Unknown Track'}</p>
+              </div>
+            )}
           </div>
-
+          <div className="flex items-center gap-1">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => navigateToSection('prev')}
+              className="w-8 h-8 text-muted-foreground hover:text-foreground rounded-full"
+            >
+              <SkipBack className="w-3 h-3" />
+            </Button>
+            <Button
+              variant="default"
+              size="sm"
+              onClick={handlePlay}
+              className="w-10 h-10 bg-music-primary hover:bg-music-primary/90 text-white rounded-full shadow-medium transition-transform hover:scale-105"
+            >
+              {isPlaying ? (
+                <Pause className="w-4 h-4" />
+              ) : (
+                <Play className="w-4 h-4 ml-0.5" />
+              )}
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => navigateToSection('next')}
+              className="w-8 h-8 text-muted-foreground hover:text-foreground rounded-full"
+            >
+              <SkipForward className="w-3 h-3" />
+            </Button>
+          </div>
           {/* Progress Bar with Time */}
-          <div className="space-y-2">
+          <div className="flex-1 flex flex-col justify-center mx-2">
             <Slider
               value={[currentTime]}
               max={duration || 100}
               step={0.1}
               onValueChange={handleSeek}
-              className="w-full"
+              className="w-full h-2"
             />
-            <div className="flex justify-between text-xs text-muted-foreground">
+            <div className="flex justify-between text-[10px] text-muted-foreground mt-0.5">
               <span>{formatTime(currentTime)}</span>
               <span>{formatTime(duration)}</span>
             </div>
           </div>
         </div>
-        
         {/* Visual Timeline */}
-        <div className="relative">
-          <div className="h-20 bg-muted/20 rounded-xl relative overflow-hidden border border-border/30">
+        <div className="relative mt-1">
+          <div className="h-6 bg-muted/20 rounded-lg relative overflow-hidden border border-border/30">
             {/* Progress Bar */}
             <div
               className="absolute top-0 left-0 h-full bg-gradient-to-r from-music-primary/30 to-music-primary/50 transition-all duration-200"
               style={{ width: `${progressPercentage}%` }}
             />
-            
             {/* Current Time Indicator */}
             <div
-              className="absolute top-0 w-1 h-full bg-music-primary shadow-glow transition-all duration-200 z-10"
+              className="absolute top-0 w-0.5 h-full bg-music-primary shadow-glow transition-all duration-200 z-10"
               style={{ left: `${progressPercentage}%` }}
             />
-
             {/* Section Markers */}
             {sortedSections.map((section, index) => {
               const leftPercentage = duration > 0 ? (section.startTime / duration) * 100 : 0;
               const widthPercentage = duration > 0 ? ((section.endTime - section.startTime) / duration) * 100 : 0;
-              
               return (
                 <div
                   key={section.id}
@@ -490,16 +480,14 @@ export const UnifiedTimeline = ({
               );
             })}
           </div>
-
           {/* Section Labels on Timeline */}
-          <div className="relative mt-2 h-6">
+          <div className="relative mt-0.5 h-4">
             {sortedSections.map((section) => {
               const leftPercentage = duration > 0 ? (section.startTime / duration) * 100 : 0;
-              
               return (
                 <div
                   key={section.id}
-                  className="absolute text-xs text-muted-foreground font-medium"
+                  className="absolute text-[10px] text-muted-foreground font-medium whitespace-nowrap"
                   style={{ left: `${leftPercentage}%` }}
                 >
                   {section.name}

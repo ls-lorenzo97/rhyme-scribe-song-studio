@@ -38,6 +38,7 @@ export const SongwriterTool = () => {
   const [duration, setDuration] = useState(0);
   const audioRef = useRef<HTMLAudioElement>(null);
   const [rhymeGroups, setRhymeGroups] = useState<RhymeGroup[]>([]);
+  const [lyricsPreview, setLyricsPreview] = useState<{ lines: string[]; rhymeGroups: RhymeGroup[] }>({ lines: [], rhymeGroups: [] });
 
   // Persistent data using localStorage
   const [songData, setSongData] = useLocalStorage<SongData>('songwriter-data', {
@@ -162,50 +163,96 @@ export const SongwriterTool = () => {
           />
         )}
 
-        {/* Main Interface */}
+        {/* Timeline compatta sotto i metadata */}
+        {audioFile && (
+          <div className="mt-4 mb-6">
+            <Card className="bg-card/80 backdrop-blur-xl border-0 shadow-card p-2">
+              <UnifiedTimeline
+                sections={sections}
+                currentTime={currentTime}
+                duration={duration}
+                currentSection={currentSection}
+                onSectionClick={jumpToSection}
+                onSectionsUpdate={handleSectionUpdate}
+                setCurrentSection={handleCurrentSectionChange}
+                audioRef={audioRef}
+                audioUrl={audioUrl}
+                isPlaying={isPlaying}
+                setIsPlaying={setIsPlaying}
+                setCurrentTime={setCurrentTime}
+                setDuration={setDuration}
+                audioFile={audioFile}
+              />
+            </Card>
+          </div>
+        )}
+
+        {/* Main Interface: input frasi a sinistra, testo completo a destra */}
         {audioFile && (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Left Column - Unified Timeline with Player */}
+            {/* Left Column - LyricsEditor */}
             <div>
               <Card className="bg-card/80 backdrop-blur-xl border-0 shadow-card">
-                <div className="p-6">
-                  <UnifiedTimeline
-                    sections={sections}
-                    currentTime={currentTime}
-                    duration={duration}
-                    currentSection={currentSection}
-                    onSectionClick={jumpToSection}
-                    onSectionsUpdate={handleSectionUpdate}
-                    setCurrentSection={handleCurrentSectionChange}
-                    audioRef={audioRef}
-                    audioUrl={audioUrl}
-                    isPlaying={isPlaying}
-                    setIsPlaying={setIsPlaying}
-                    setCurrentTime={setCurrentTime}
-                    setDuration={setDuration}
-                    audioFile={audioFile}
-                  />
-                </div>
-              </Card>
-            </div>
-
-            {/* Right Column - Lyrics Editor */}
-            <div>
-              <Card className="bg-card/80 backdrop-blur-xl border-0 shadow-card sticky top-24">
-                <div className="p-6">
+                <div className="p-4">
                   <LyricsEditor
                     section={currentSectionData}
                     onLyricsUpdate={handleLyricsUpdate}
                     selectedLanguage={selectedLanguage}
                     rhymeGroups={rhymeGroups}
                     setRhymeGroups={setRhymeGroups}
+                    onLyricsChange={(lines, rhymeGroups) => setLyricsPreview({ lines, rhymeGroups })}
                   />
+                </div>
+              </Card>
+            </div>
+
+            {/* Right Column - Testo completo con rime evidenziate */}
+            <div>
+              <Card className="bg-card/80 backdrop-blur-xl border-0 shadow-card">
+                <div className="p-4">
+                  <LyricsPreview lines={lyricsPreview.lines} rhymeGroups={lyricsPreview.rhymeGroups} />
                 </div>
               </Card>
             </div>
           </div>
         )}
       </div>
+    </div>
+  );
+};
+
+// Componente LyricsPreview
+const LyricsPreview = ({ lines, rhymeGroups }: { lines: string[]; rhymeGroups: RhymeGroup[] }) => {
+  // Funzione per trovare colore e lettera della rima per una riga
+  const getRhymeColor = (lineIdx: number) => {
+    const group = rhymeGroups.find(g => g.positions.some(pos => pos.line === lineIdx));
+    return group ? group.color : undefined;
+  };
+  return (
+    <div className="space-y-1">
+      {lines.map((line, idx) => {
+        if (!line) return <div key={idx}>&nbsp;</div>;
+        const words = line.split(/(\s+)/);
+        // Trova l'ultima parola
+        let lastWordIdx = -1;
+        for (let i = words.length - 1; i >= 0; i--) {
+          if (words[i].trim() && !/\s+/.test(words[i])) {
+            lastWordIdx = i;
+            break;
+          }
+        }
+        const color = getRhymeColor(idx);
+        return (
+          <div key={idx} className="text-base">
+            {words.map((w, i) => {
+              if (i === lastWordIdx && color) {
+                return <span key={i} style={{ color, fontWeight: 600 }}>{w}</span>;
+              }
+              return <span key={i}>{w}</span>;
+            })}
+          </div>
+        );
+      })}
     </div>
   );
 };
