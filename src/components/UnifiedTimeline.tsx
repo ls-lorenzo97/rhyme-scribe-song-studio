@@ -488,19 +488,19 @@ export const UnifiedTimeline = ({
     setDragOverSectionId(null);
   };
 
-  return (
-    <div className="w-full flex items-center gap-2 bg-background rounded-xl p-2 shadow-sm border border-border/40 overflow-x-auto">
-      {/* Player left-aligned, compact, centered */}
-      <div className="flex flex-col items-center justify-center mr-2 min-w-[80px]">
+  // Show empty state if no sections
+  if (sections.length === 0) {
+    return (
+      <div className="space-y-6">
         <audio ref={audioRef} src={audioUrl} />
         
-        {/* Header with Add Section */}
+        {/* Header */}
         <div className="flex items-center justify-between">
           <div>
-            <h3 className="text-2xl font-bold text-foreground">Song Timeline</h3>
-            <p className="text-muted-foreground">Create sections to organize your song structure</p>
+            <h3 className="text-xl font-semibold text-foreground mb-2">{t(selectedLanguage, 'songSections')}</h3>
+            <p className="text-sm text-muted-foreground">Create sections to organize your song structure</p>
           </div>
-          <Button onClick={handleAddSection} className="bg-primary text-primary-foreground hover:bg-primary/90">
+          <Button onClick={handleAddSection} variant="primary">
             <Plus className="w-4 h-4 mr-2" />
             {t(selectedLanguage, 'addSection')}
           </Button>
@@ -510,97 +510,194 @@ export const UnifiedTimeline = ({
         <div className="text-center py-16 bg-card/50 rounded-xl border border-border">
           <Music className="w-16 h-16 mx-auto mb-4 text-muted-foreground/50" />
           <h4 className="text-lg font-medium text-foreground mb-2">No sections defined</h4>
-          <p className="text-muted-foreground mb-4">Add sections to see your song timeline</p>
+          <p className="text-muted-foreground mb-6">Add sections to see your song timeline</p>
           <Button onClick={handleAddSection} variant="outline">
             <Plus className="w-4 h-4 mr-2" />
             Create First Section
           </Button>
         </div>
       </div>
-      {/* Modern Pill-Style Timeline Section */}
-      <div className="mb-4">
-        <div className="flex items-center justify-between mb-3">
-          <h4 className="text-sm font-medium text-gray-700">{t(selectedLanguage, 'songSections') || 'Song Sections'}</h4>
-          <Button onClick={handleAddSection} size="sm" variant="outline" className="h-7 text-xs bg-transparent">
-            <Plus className="h-3 w-3 mr-1" />
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+      <audio ref={audioRef} src={audioUrl} />
+      
+      {/* Header with controls */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h3 className="text-xl font-semibold text-foreground mb-2">{t(selectedLanguage, 'songSections')}</h3>
+          <p className="text-sm text-muted-foreground">
+            Navigate through your song • {formatTime(currentTime)} / {formatTime(duration)}
+          </p>
+        </div>
+        
+        <div className="flex items-center gap-3">
+          {/* Navigation controls */}
+          <div className="flex items-center gap-1">
+            <Button 
+              variant="outline" 
+              size="sm"
+              onClick={() => navigateToSection('prev')}
+              disabled={!currentSection || sortedSections.findIndex(s => s.id === currentSection) === 0}
+            >
+              <SkipBack className="w-4 h-4" />
+            </Button>
+            
+            <Button 
+              variant={isPlaying ? "secondary" : "primary"}
+              size="sm"
+              onClick={handlePlay}
+            >
+              {isPlaying ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
+            </Button>
+            
+            <Button 
+              variant="outline" 
+              size="sm"
+              onClick={() => navigateToSection('next')}
+              disabled={!currentSection || sortedSections.findIndex(s => s.id === currentSection) === sortedSections.length - 1}
+            >
+              <SkipForward className="w-4 h-4" />
+            </Button>
+          </div>
+
+          <Button onClick={handleAddSection} variant="primary">
+            <Plus className="w-4 h-4 mr-2" />
             {t(selectedLanguage, 'addSection')}
           </Button>
         </div>
+      </div>
 
-        <div className="flex gap-2 overflow-x-auto pb-2 px-1" onDragLeave={handleDragLeave}>
-          {sortedSections.map((section, index) => {
-            const duration = section.endTime - section.startTime;
-            const minWidth = 140;
-            const maxWidth = 220;
-            const proportionalWidth = Math.max(minWidth, Math.min(maxWidth, (duration / 30) * 140));
-            const isActive = currentSection === section.id;
-            const colorClass = getSectionColors(index); // your color function
-
-            return (
-              <div key={section.id} className="flex items-center flex-shrink-0">
-                <div
-                  draggable
-                  onDragStart={e => handleDragStart(e, section.id)}
-                  onDragEnd={handleDragEnd}
-                  onDragOver={e => handleDragOver(e, index)}
-                  onDrop={e => handleDrop(e, index)}
-                  className={`relative rounded-xl border-2 transition-all duration-200 cursor-pointer
-                    ${isActive ? `${colorClass} text-white border-white/30 shadow-lg` : `bg-gray-50 text-gray-700 border-gray-200 hover:border-gray-300 hover:shadow-sm`}
-                  `}
-                  style={{ width: `${proportionalWidth}px` }}
-                >
-                  {/* Drag handle */}
-                  <div className={`absolute left-2 top-1/2 transform -translate-y-1/2 opacity-60 hover:opacity-100 transition-opacity ${isActive ? "text-white/70" : "text-gray-400"}`}>
-                    <GripVertical className="h-4 w-4" />
-                  </div>
-
-                  {/* Actions menu */}
-                  <div className="absolute top-2 right-2 z-10">
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button
-                          variant="outline"
-                          size="icon"
-                          className={`h-6 w-6 ${isActive ? "text-white/70 hover:text-white hover:bg-white/20" : "text-gray-400 hover:text-gray-600 hover:bg-gray-200"}`}
-                        >
-                          <MoreHorizontal className="h-3 w-3" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end" className="w-40">
-                        <DropdownMenuItem onClick={() => handleEditSection(section)} className="cursor-pointer">
-                          <Edit3 className="h-4 w-4 mr-2" />
-                          {t(selectedLanguage, 'editSection')}
-                        </DropdownMenuItem>
-                        <DropdownMenuItem
-                          onClick={() => handleDeleteSection(section.id)}
-                          className="cursor-pointer text-red-600 focus:text-red-600"
-                        >
-                          <Trash2 className="h-4 w-4 mr-2" />
-                          {t(selectedLanguage, 'deleteSection')}
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </div>
-
-                  {/* Section content */}
-                  <div className="p-3 pl-8 pr-10">
-                    <button onClick={() => { setCurrentSection(section.id); onSectionClick(section.id); }} className="w-full text-left">
-                      <div className="font-medium text-sm mb-1 truncate" title={section.name}>
-                        {section.name}
-                      </div>
-                      <div className={`text-xs ${isActive ? "text-white/80" : "text-gray-500"}`}>
-                        {formatTime(section.startTime)} - {formatTime(section.endTime)}
-                      </div>
-                    </button>
-                  </div>
-
-                  {/* Color indicator strip */}
-                  <div className={`absolute bottom-0 left-0 right-0 h-1 ${colorClass} rounded-b-xl`} />
-                </div>
-              </div>
-            );
-          })}
+      {/* Overall Progress Bar */}
+      <div className="relative bg-card/50 rounded-xl p-4 border border-border">
+        <div className="h-3 bg-muted/30 rounded-full relative overflow-hidden mb-2">
+          <div
+            className="absolute top-0 left-0 h-full bg-gradient-to-r from-primary/60 to-primary rounded-full transition-all duration-500 ease-out"
+            style={{ width: `${progressPercentage}%` }}
+          />
+          <div
+            className="absolute top-0 w-1 h-full bg-primary shadow-lg transition-all duration-200"
+            style={{ left: `${progressPercentage}%` }}
+          />
         </div>
+        <div className="flex justify-between text-xs text-muted-foreground">
+          <span>0:00</span>
+          <span>{formatTime(duration)}</span>
+        </div>
+      </div>
+
+      {/* Sections List */}
+      <div className="grid gap-3">
+        {sortedSections.map((section, index) => {
+          const isActive = currentSection === section.id;
+          const sectionProgress = duration > 0 ? 
+            Math.max(0, Math.min(100, ((currentTime - section.startTime) / (section.endTime - section.startTime)) * 100)) : 0;
+          const isPlaying = currentTime >= section.startTime && currentTime <= section.endTime;
+          const colorClass = getSectionColors(index);
+
+          return (
+            <Card 
+              key={section.id}
+              className={cn(
+                "relative overflow-hidden cursor-pointer transition-all duration-300 hover:shadow-lg group border-2",
+                isActive ? "ring-2 ring-primary shadow-lg scale-[1.02] border-primary" : "hover:scale-[1.01] border-border"
+              )}
+              onClick={() => { setCurrentSection(section.id); onSectionClick(section.id); }}
+            >
+              {/* Section Progress Background */}
+              {isPlaying && (
+                <div
+                  className="absolute inset-0 bg-primary/10 transition-all duration-200"
+                  style={{ width: `${sectionProgress}%` }}
+                />
+              )}
+
+              <div className="p-4 relative">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-4 flex-1">
+                    {/* Color indicator */}
+                    <div className={cn("w-4 h-4 rounded-full flex-shrink-0", colorClass)} />
+                    
+                    {/* Section Info */}
+                    <div className="flex-1 min-w-0">
+                      <h4 className={cn(
+                        "font-semibold text-lg truncate mb-1",
+                        isActive ? "text-primary" : "text-foreground"
+                      )}>
+                        {section.name}
+                      </h4>
+                      <div className="flex items-center space-x-3 text-sm text-muted-foreground">
+                        <span>{formatTime(section.startTime)} - {formatTime(section.endTime)}</span>
+                        <span>•</span>
+                        <span>{formatTime(section.endTime - section.startTime)} duration</span>
+                        {section.lyrics && (
+                          <>
+                            <span>•</span>
+                            <span className="truncate max-w-[200px]">
+                              {section.lyrics.split('\n')[0] || 'No lyrics'}
+                            </span>
+                          </>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Actions */}
+                    <div className="flex items-center space-x-2" onClick={(e) => e.stopPropagation()}>
+                      <Button
+                        variant={isActive ? "primary" : "outline"}
+                        size="sm"
+                        className="opacity-0 group-hover:opacity-100 transition-opacity duration-200"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setCurrentSection(section.id);
+                          onSectionClick(section.id);
+                        }}
+                      >
+                        <Play className="w-4 h-4 mr-1" />
+                        {t(selectedLanguage, 'play')}
+                      </Button>
+
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="sm" className="opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                            <MoreHorizontal className="w-4 h-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="w-40 bg-card border-border">
+                          <DropdownMenuItem onClick={() => handleEditSection(section)} className="cursor-pointer">
+                            <Edit3 className="h-4 w-4 mr-2" />
+                            {t(selectedLanguage, 'editSection')}
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onClick={() => handleDeleteSection(section.id)}
+                            className="cursor-pointer text-destructive focus:text-destructive"
+                          >
+                            <Trash2 className="h-4 w-4 mr-2" />
+                            {t(selectedLanguage, 'deleteSection')}
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Section Progress Bar (when playing) */}
+                {isPlaying && (
+                  <div className="mt-3">
+                    <div className="h-1 bg-muted/50 rounded-full overflow-hidden">
+                      <div
+                        className="h-full bg-primary rounded-full transition-all duration-200"
+                        style={{ width: `${sectionProgress}%` }}
+                      />
+                    </div>
+                  </div>
+                )}
+              </div>
+            </Card>
+          );
+        })}
       </div>
       {/* Dialog per edit/add section (come prima) */}
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
