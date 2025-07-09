@@ -488,44 +488,26 @@ export const UnifiedTimeline = ({
 
   return (
     <div className="w-full">
-      {/* Player left-aligned, compact, centered */}
-      <div className="flex flex-col items-center justify-center mr-2 min-w-[80px]">
-        <audio ref={audioRef} src={audioUrl} />
-        
-        {/* Header with Add Section */}
-        <div className="flex items-center justify-between">
-          <div>
-            <h3 className="text-2xl font-bold text-foreground">Song Timeline</h3>
-            <p className="text-muted-foreground">Create sections to organize your song structure</p>
-          </div>
-          <Button onClick={handleAddSection} className="bg-primary text-primary-foreground hover:bg-primary/90">
-            <Plus className="w-4 h-4 mr-2" />
-            {t(selectedLanguage, 'addSection')}
-          </Button>
-        </div>
-
-        {/* Empty state */}
-        <div className="text-center py-16 bg-card/50 rounded-xl border border-border">
-          <Music className="w-16 h-16 mx-auto mb-4 text-muted-foreground/50" />
-          <h4 className="text-lg font-medium text-foreground mb-2">No sections defined</h4>
-          <p className="text-muted-foreground mb-4">Add sections to see your song timeline</p>
-          <Button onClick={handleAddSection} variant="outline">
-            <Plus className="w-4 h-4 mr-2" />
-            Create First Section
-          </Button>
-        </div>
+      <div className="flex items-center justify-between mb-2">
+        <h4 className="text-base font-semibold text-foreground">Song Sections</h4>
+        <Button onClick={handleAddSection} size="sm" variant="outline" className="h-8 text-xs">
+          <Plus className="h-4 w-4 mr-1" />
+          Add Section
+        </Button>
       </div>
-      {/* Modern Pill-Style Timeline Section */}
-      <div className="mb-4">
-        <div className="flex items-center justify-between mb-2">
-          <h4 className="text-base font-semibold text-foreground">Song Sections</h4>
-          <Button onClick={handleAddSection} size="sm" variant="outline" className="h-8 text-xs">
-            <Plus className="h-4 w-4 mr-1" />
-            Add Section
-          </Button>
-        </div>
-        <div className="flex gap-3 overflow-x-auto pb-2 px-1">
-          {sortedSections.map((section, idx) => {
+      <div className="flex gap-3 overflow-x-auto pb-2 px-1">
+        {sortedSections.length === 0 ? (
+          <div className="flex flex-col items-center justify-center min-w-[170px] max-w-[220px] rounded-xl border-2 border-dashed bg-white shadow-sm px-4 py-8 text-muted-foreground">
+            <Music className="w-10 h-10 mb-2 opacity-40" />
+            <div className="font-semibold text-sm mb-1">No sections defined</div>
+            <div className="text-xs mb-2">Add sections to see your song timeline</div>
+            <Button onClick={handleAddSection} size="sm" variant="outline">
+              <Plus className="h-4 w-4 mr-1" />
+              Create First Section
+            </Button>
+          </div>
+        ) : (
+          sortedSections.map((section, idx) => {
             const isActive = currentSection === section.id;
             const colorClass = getSectionColors(idx);
             const linesCount = section.lyrics ? section.lyrics.split('\n').filter(l => l.trim()).length : 0;
@@ -574,65 +556,13 @@ export const UnifiedTimeline = ({
                 <div className={`absolute bottom-0 left-0 right-0 h-1 rounded-b-xl ${colorClass} opacity-60`} />
               </div>
             );
-          })}
-        </div>
+          })
+        )}
       </div>
-      {/* Dialog per edit/add section (come prima) */}
-      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="bg-card/95 backdrop-blur-xl border-border/20">
-          <DialogHeader>
-            <DialogTitle className="text-xl">
-              {editingSection ? t(selectedLanguage, 'editSectionTitle') : t(selectedLanguage, 'addNewSectionTitle')}
-            </DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4">
-            <div>
-              <Label htmlFor="section-name" className="text-foreground">{t(selectedLanguage, 'sectionName')}</Label>
-              <Input
-                id="section-name"
-                value={formData.name}
-                onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
-                placeholder={t(selectedLanguage, 'sectionNamePlaceholder')}
-                className="bg-background/50 border-border/50"
-              />
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="start-time" className="text-foreground">{t(selectedLanguage, 'startTime')}</Label>
-                <Input
-                  id="start-time"
-                  type="number"
-                  value={formData.startTime === 0 ? '' : formData.startTime}
-                  onChange={(e) => setFormData(prev => ({ ...prev, startTime: e.target.value === '' ? 0 : Number(e.target.value) }))}
-                  onFocus={(e) => e.target.select()}
-                  className="bg-background/50 border-border/50"
-                  placeholder="0"
-                />
-              </div>
-              <div>
-                <Label htmlFor="end-time" className="text-foreground">{t(selectedLanguage, 'endTime')}</Label>
-                <Input
-                  id="end-time"
-                  type="number"
-                  value={formData.endTime === 0 ? '' : formData.endTime}
-                  onChange={(e) => setFormData(prev => ({ ...prev, endTime: e.target.value === '' ? 0 : Number(e.target.value) }))}
-                  onFocus={(e) => e.target.select()}
-                  className="bg-background/50 border-border/50"
-                  placeholder="0"
-                />
-              </div>
-            </div>
-            <div className="flex justify-end space-x-2 pt-4">
-              <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
-                {t(selectedLanguage, 'cancel')}
-              </Button>
-              <Button onClick={handleSaveSection} className="bg-[color:var(--accent)] text-white">
-                {editingSection ? t(selectedLanguage, 'update') : t(selectedLanguage, 'add')} {t(selectedLanguage, 'sectionName').toLowerCase()}
-              </Button>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
+      <div className="flex justify-between text-xs text-muted-foreground">
+        <span>0:00</span>
+        <span>{formatTime(duration)}</span>
+      </div>
     </div>
   );
 };
