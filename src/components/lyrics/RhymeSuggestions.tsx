@@ -14,6 +14,84 @@ interface RhymeSuggestionsProps {
   mood?: string;
 }
 
+// Translation dictionary for RhymeSuggestions
+const translations: Record<string, Record<string, string>> = {
+  en: {
+    findRhymes: 'Find Rhymes',
+    selectWordOrSearch: 'Select a word in your lyrics or search for rhymes below',
+    enterWordToFindRhymes: 'Enter a word to find rhymes...',
+    searchForRhymes: 'Search for rhymes...',
+    findingRhymesFor: 'Finding rhymes for:',
+    findingRhymes: 'Finding rhymes...',
+    perfect: 'Perfect',
+    near: 'Near',
+    slant: 'Slant',
+    eye: 'Eye',
+    syllables: 'syl',
+    oftenUsedWith: 'Often used with:'
+  },
+  it: {
+    findRhymes: 'Trova Rime',
+    selectWordOrSearch: 'Seleziona una parola nel testo o cerca rime qui sotto',
+    enterWordToFindRhymes: 'Inserisci una parola per trovare rime...',
+    searchForRhymes: 'Cerca rime...',
+    findingRhymesFor: 'Cercando rime per:',
+    findingRhymes: 'Cercando rime...',
+    perfect: 'Perfette',
+    near: 'Vicine',
+    slant: 'Assonanti',
+    eye: 'Occhio',
+    syllables: 'sill',
+    oftenUsedWith: 'Spesso usato con:'
+  },
+  es: {
+    findRhymes: 'Encontrar Rimas',
+    selectWordOrSearch: 'Selecciona una palabra en tu letra o busca rimas abajo',
+    enterWordToFindRhymes: 'Ingresa una palabra para encontrar rimas...',
+    searchForRhymes: 'Buscar rimas...',
+    findingRhymesFor: 'Buscando rimas para:',
+    findingRhymes: 'Buscando rimas...',
+    perfect: 'Perfectas',
+    near: 'Cercanas',
+    slant: 'Asonantes',
+    eye: 'Ojo',
+    syllables: 'síl',
+    oftenUsedWith: 'A menudo usado con:'
+  },
+  fr: {
+    findRhymes: 'Trouver des Rimes',
+    selectWordOrSearch: 'Sélectionnez un mot dans vos paroles ou recherchez des rimes ci-dessous',
+    enterWordToFindRhymes: 'Entrez un mot pour trouver des rimes...',
+    searchForRhymes: 'Rechercher des rimes...',
+    findingRhymesFor: 'Recherche de rimes pour:',
+    findingRhymes: 'Recherche de rimes...',
+    perfect: 'Parfaites',
+    near: 'Proches',
+    slant: 'Assonances',
+    eye: 'Œil',
+    syllables: 'syll',
+    oftenUsedWith: 'Souvent utilisé avec:'
+  },
+  de: {
+    findRhymes: 'Reime Finden',
+    selectWordOrSearch: 'Wählen Sie ein Wort in Ihrem Text oder suchen Sie unten nach Reimen',
+    enterWordToFindRhymes: 'Geben Sie ein Wort ein, um Reime zu finden...',
+    searchForRhymes: 'Nach Reimen suchen...',
+    findingRhymesFor: 'Suche nach Reimen für:',
+    findingRhymes: 'Suche nach Reimen...',
+    perfect: 'Perfekt',
+    near: 'Nah',
+    slant: 'Assonanz',
+    eye: 'Auge',
+    syllables: 'Silb',
+    oftenUsedWith: 'Oft verwendet mit:'
+  }
+};
+
+function t(lang: string, key: string): string {
+  return translations[lang]?.[key] || translations['en'][key] || key;
+}
+
 interface RhymeSuggestion {
   word: string;
   type: 'perfect' | 'near' | 'slant' | 'eye';
@@ -90,12 +168,12 @@ export const RhymeSuggestions = ({
         <div className="w-12 h-12 mx-auto mb-4 bg-music-primary/10 rounded-full flex items-center justify-center">
           <Search className="w-6 h-6 text-music-primary" />
         </div>
-        <h3 className="font-medium text-foreground mb-2">Find Rhymes</h3>
+        <h3 className="font-medium text-foreground mb-2">{t(language, 'findRhymes')}</h3>
         <p className="text-sm text-muted-foreground mb-4">
-          Select a word in your lyrics or search for rhymes below
+          {t(language, 'selectWordOrSearch')}
         </p>
         <Input
-          placeholder="Enter a word to find rhymes..."
+          placeholder={t(language, 'enterWordToFindRhymes')}
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
           className="max-w-xs mx-auto"
@@ -109,7 +187,7 @@ export const RhymeSuggestions = ({
       <div className="flex items-center gap-4">
         <div className="flex-1">
           <Input
-            placeholder="Search for rhymes..."
+            placeholder={t(language, 'searchForRhymes')}
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="w-full"
@@ -122,29 +200,29 @@ export const RhymeSuggestions = ({
 
       {targetWord && (
         <div className="text-sm text-muted-foreground">
-          Finding rhymes for: <span className="font-medium text-foreground">"{targetWord}"</span>
+          {t(language, 'findingRhymesFor')} <span className="font-medium text-foreground">"{targetWord}"</span>
         </div>
       )}
 
       {isLoading ? (
         <Card className="p-6 text-center">
           <div className="animate-spin w-6 h-6 mx-auto mb-2 border-2 border-music-primary border-t-transparent rounded-full" />
-          <div className="text-sm text-muted-foreground">Finding rhymes...</div>
+          <div className="text-sm text-muted-foreground">{t(language, 'findingRhymes')}</div>
         </Card>
       ) : (
         <Tabs defaultValue="perfect" className="w-full">
           <TabsList className="grid w-full grid-cols-4">
             <TabsTrigger value="perfect" className="text-xs">
-              Perfect ({groupedSuggestions.perfect.length})
+              {t(language, 'perfect')} ({groupedSuggestions.perfect.length})
             </TabsTrigger>
             <TabsTrigger value="near" className="text-xs">
-              Near ({groupedSuggestions.near.length})
+              {t(language, 'near')} ({groupedSuggestions.near.length})
             </TabsTrigger>
             <TabsTrigger value="slant" className="text-xs">
-              Slant ({groupedSuggestions.slant.length})
+              {t(language, 'slant')} ({groupedSuggestions.slant.length})
             </TabsTrigger>
             <TabsTrigger value="eye" className="text-xs">
-              Eye ({groupedSuggestions.eye.length})
+              {t(language, 'eye')} ({groupedSuggestions.eye.length})
             </TabsTrigger>
           </TabsList>
 
@@ -166,7 +244,7 @@ export const RhymeSuggestions = ({
                           
                           <div className="flex items-center gap-2">
                             <Badge variant="secondary" className="text-[15px] font-semibold px-3 py-1 min-w-[32px] text-center">
-                              {suggestion.syllables} syl
+                              {suggestion.syllables} {t(language, 'syllables')}
                             </Badge>
                             
                             <div className="flex">
@@ -193,7 +271,7 @@ export const RhymeSuggestions = ({
                       
                       {suggestion.context.length > 0 && (
                         <div className="mt-2 text-xs text-muted-foreground">
-                          Often used with: {suggestion.context.slice(0, 3).join(', ')}
+                          {t(language, 'oftenUsedWith')} {suggestion.context.slice(0, 3).join(', ')}
                         </div>
                       )}
                     </Card>

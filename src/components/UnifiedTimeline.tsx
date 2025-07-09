@@ -26,6 +26,121 @@ interface UnifiedTimelineProps {
   setCurrentTime: (time: number) => void;
   setDuration: (duration: number) => void;
   audioFile?: File;
+  selectedLanguage?: string;
+}
+
+// Translation dictionary for UnifiedTimeline
+const translations: Record<string, Record<string, string>> = {
+  en: {
+    previousSection: 'Previous section',
+    pause: 'Pause',
+    play: 'Play',
+    nextSection: 'Next section',
+    playSection: 'Play {section}',
+    editSection: 'Edit section',
+    deleteSection: 'Delete section',
+    addSection: 'Add Section',
+    editSectionTitle: 'Edit Section',
+    addNewSectionTitle: 'Add New Section',
+    sectionName: 'Section Name',
+    sectionNamePlaceholder: 'e.g., Verse 1, Chorus, Bridge',
+    startTime: 'Start Time (seconds)',
+    endTime: 'End Time (seconds)',
+    cancel: 'Cancel',
+    update: 'Update',
+    add: 'Add',
+    startTimeBeforeEndTime: 'Start time must be before end time'
+  },
+  it: {
+    previousSection: 'Sezione precedente',
+    pause: 'Pausa',
+    play: 'Riproduci',
+    nextSection: 'Sezione successiva',
+    playSection: 'Riproduci {section}',
+    editSection: 'Modifica sezione',
+    deleteSection: 'Elimina sezione',
+    addSection: 'Aggiungi Sezione',
+    editSectionTitle: 'Modifica Sezione',
+    addNewSectionTitle: 'Aggiungi Nuova Sezione',
+    sectionName: 'Nome Sezione',
+    sectionNamePlaceholder: 'es. Strofa 1, Ritornello, Ponte',
+    startTime: 'Tempo Inizio (secondi)',
+    endTime: 'Tempo Fine (secondi)',
+    cancel: 'Annulla',
+    update: 'Aggiorna',
+    add: 'Aggiungi',
+    startTimeBeforeEndTime: 'Il tempo di inizio deve essere prima del tempo di fine'
+  },
+  es: {
+    previousSection: 'Sección anterior',
+    pause: 'Pausa',
+    play: 'Reproducir',
+    nextSection: 'Siguiente sección',
+    playSection: 'Reproducir {section}',
+    editSection: 'Editar sección',
+    deleteSection: 'Eliminar sección',
+    addSection: 'Agregar Sección',
+    editSectionTitle: 'Editar Sección',
+    addNewSectionTitle: 'Agregar Nueva Sección',
+    sectionName: 'Nombre de Sección',
+    sectionNamePlaceholder: 'ej. Verso 1, Coro, Puente',
+    startTime: 'Tiempo de Inicio (segundos)',
+    endTime: 'Tiempo de Fin (segundos)',
+    cancel: 'Cancelar',
+    update: 'Actualizar',
+    add: 'Agregar',
+    startTimeBeforeEndTime: 'El tiempo de inicio debe ser antes del tiempo de fin'
+  },
+  fr: {
+    previousSection: 'Section précédente',
+    pause: 'Pause',
+    play: 'Lecture',
+    nextSection: 'Section suivante',
+    playSection: 'Lecture {section}',
+    editSection: 'Modifier la section',
+    deleteSection: 'Supprimer la section',
+    addSection: 'Ajouter une Section',
+    editSectionTitle: 'Modifier la Section',
+    addNewSectionTitle: 'Ajouter une Nouvelle Section',
+    sectionName: 'Nom de la Section',
+    sectionNamePlaceholder: 'ex. Couplet 1, Refrain, Pont',
+    startTime: 'Temps de Début (secondes)',
+    endTime: 'Temps de Fin (secondes)',
+    cancel: 'Annuler',
+    update: 'Mettre à jour',
+    add: 'Ajouter',
+    startTimeBeforeEndTime: 'Le temps de début doit être avant le temps de fin'
+  },
+  de: {
+    previousSection: 'Vorheriger Abschnitt',
+    pause: 'Pause',
+    play: 'Abspielen',
+    nextSection: 'Nächster Abschnitt',
+    playSection: '{section} abspielen',
+    editSection: 'Abschnitt bearbeiten',
+    deleteSection: 'Abschnitt löschen',
+    addSection: 'Abschnitt Hinzufügen',
+    editSectionTitle: 'Abschnitt Bearbeiten',
+    addNewSectionTitle: 'Neuen Abschnitt Hinzufügen',
+    sectionName: 'Abschnittsname',
+    sectionNamePlaceholder: 'z.B. Strophe 1, Refrain, Bridge',
+    startTime: 'Startzeit (Sekunden)',
+    endTime: 'Endzeit (Sekunden)',
+    cancel: 'Abbrechen',
+    update: 'Aktualisieren',
+    add: 'Hinzufügen',
+    startTimeBeforeEndTime: 'Startzeit muss vor Endzeit liegen'
+  }
+};
+
+function t(lang: string, key: string, params?: Record<string, string>): string {
+  let text = translations[lang]?.[key] || translations['en'][key] || key;
+  if (params) {
+    Object.entries(params).forEach(([param, value]) => {
+      text = text.replace(`{${param}}`, value);
+    });
+  }
+  return text;
 }
 
 export const UnifiedTimeline = ({
@@ -42,7 +157,8 @@ export const UnifiedTimeline = ({
   setIsPlaying,
   setCurrentTime,
   setDuration,
-  audioFile
+  audioFile,
+  selectedLanguage = 'en'
 }: UnifiedTimelineProps) => {
   const [editingSection, setEditingSection] = useState<SongSection | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -131,7 +247,7 @@ export const UnifiedTimeline = ({
     
     // Validate that start time is before end time
     if (formData.startTime >= formData.endTime) {
-      alert('Start time must be before end time');
+      alert(t(selectedLanguage, 'startTimeBeforeEndTime'));
       return;
     }
 
@@ -221,24 +337,28 @@ export const UnifiedTimeline = ({
 
   const getSectionColors = (index: number) => {
     const colors = [
-      'bg-rhyme-1/20 border-rhyme-1/50 text-rhyme-1',
-      'bg-rhyme-2/20 border-rhyme-2/50 text-rhyme-2',
-      'bg-rhyme-3/20 border-rhyme-3/50 text-rhyme-3',
-      'bg-rhyme-4/20 border-rhyme-4/50 text-rhyme-4',
-      'bg-rhyme-5/20 border-rhyme-5/50 text-rhyme-5',
+      'bg-blue-500/20 border-blue-500/30 text-blue-700',
+      'bg-green-500/20 border-green-500/30 text-green-700',
+      'bg-yellow-500/20 border-yellow-500/30 text-yellow-700',
+      'bg-red-500/20 border-red-500/30 text-red-700',
+      'bg-purple-500/20 border-purple-500/30 text-purple-700',
+      'bg-pink-500/20 border-pink-500/30 text-pink-700',
+      'bg-indigo-500/20 border-indigo-500/30 text-indigo-700',
+      'bg-orange-500/20 border-orange-500/30 text-orange-700'
     ];
     return colors[index % colors.length];
   };
 
-  // Audio control functions
+  // Audio controls
   const handlePlay = useCallback(() => {
     if (audioRef.current) {
       if (isPlaying) {
         audioRef.current.pause();
+        setIsPlaying(false);
       } else {
         audioRef.current.play();
+        setIsPlaying(true);
       }
-      setIsPlaying(!isPlaying);
     }
   }, [audioRef, isPlaying, setIsPlaying]);
 
@@ -249,20 +369,22 @@ export const UnifiedTimeline = ({
     }
   }, [audioRef, setCurrentTime]);
 
-  const sortedSections = [...sections].sort((a, b) => a.startTime - b.startTime);
-  const currentSectionData = sections.find(s => s.id === currentSection);
-
   const navigateToSection = useCallback((direction: 'prev' | 'next') => {
+    const sortedSections = [...sections].sort((a, b) => a.startTime - b.startTime);
     const currentIndex = sortedSections.findIndex(s => s.id === currentSection);
-    if (currentIndex === -1) return;
     
-    const targetIndex = direction === 'prev' ? currentIndex - 1 : currentIndex + 1;
-    if (targetIndex >= 0 && targetIndex < sortedSections.length) {
-      const targetSection = sortedSections[targetIndex];
-      onSectionClick(targetSection.id);
+    if (direction === 'prev' && currentIndex > 0) {
+      const prevSection = sortedSections[currentIndex - 1];
+      setCurrentSection(prevSection.id);
+      onSectionClick(prevSection.id);
+    } else if (direction === 'next' && currentIndex < sortedSections.length - 1) {
+      const nextSection = sortedSections[currentIndex + 1];
+      setCurrentSection(nextSection.id);
+      onSectionClick(nextSection.id);
     }
-  }, [sortedSections, currentSection, onSectionClick]);
+  }, [sections, currentSection, setCurrentSection, onSectionClick]);
 
+  // Audio event listeners
   useEffect(() => {
     const audio = audioRef.current;
     if (!audio) return;
@@ -282,24 +404,12 @@ export const UnifiedTimeline = ({
     };
   }, [audioRef, setCurrentTime, setDuration, setIsPlaying]);
 
-  // Spacebar play/pause functionality
+  // Keyboard shortcuts
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
-      // Only handle spacebar
       if (event.code === 'Space') {
-        // Check if any text input is focused
-        const activeElement = document.activeElement;
-        const isTextInputFocused = activeElement && (
-          activeElement.tagName === 'INPUT' ||
-          activeElement.tagName === 'TEXTAREA' ||
-          (activeElement as HTMLElement).contentEditable === 'true'
-        );
-
-        // If no text input is focused, handle play/pause
-        if (!isTextInputFocused) {
-          event.preventDefault(); // Prevent page scroll
-          handlePlay();
-        }
+        event.preventDefault(); // Prevent page scroll
+        handlePlay();
       }
     };
 
@@ -309,6 +419,10 @@ export const UnifiedTimeline = ({
       document.removeEventListener('keydown', handleKeyDown);
     };
   }, [handlePlay]);
+
+  const sortedSections = useMemo(() => {
+    return [...sections].sort((a, b) => a.startTime - b.startTime);
+  }, [sections]);
 
   // Apple Music style: single compact horizontal bar
   return (
@@ -320,7 +434,7 @@ export const UnifiedTimeline = ({
           <Button
             variant="outline"
             size="icon"
-            aria-label="Previous section"
+            aria-label={t(selectedLanguage, 'previousSection')}
             onClick={() => navigateToSection('prev')}
             className="w-8 h-8 text-muted-foreground hover:text-foreground rounded-full focus:ring-2 focus:ring-[color:var(--accent)]"
           >
@@ -329,7 +443,7 @@ export const UnifiedTimeline = ({
           <Button
             variant="primary"
             size="icon"
-            aria-label={isPlaying ? 'Pause' : 'Play'}
+            aria-label={isPlaying ? t(selectedLanguage, 'pause') : t(selectedLanguage, 'play')}
             onClick={handlePlay}
             className="w-12 h-12 bg-[color:var(--accent)] hover:bg-[color:var(--accent)]/90 text-white rounded-full shadow-glow transition-transform duration-200 hover:scale-110 focus:ring-2 focus:ring-[color:var(--accent)]"
           >
@@ -338,7 +452,7 @@ export const UnifiedTimeline = ({
           <Button
             variant="outline"
             size="icon"
-            aria-label="Next section"
+            aria-label={t(selectedLanguage, 'nextSection')}
             onClick={() => navigateToSection('next')}
             className="w-8 h-8 text-muted-foreground hover:text-foreground rounded-full focus:ring-2 focus:ring-[color:var(--accent)]"
           >
@@ -404,14 +518,14 @@ export const UnifiedTimeline = ({
                       <Button
                         variant="outline"
                         size="icon"
-                        aria-label={`Play ${section.name}`}
+                        aria-label={t(selectedLanguage, 'playSection', { section: section.name })}
                         className="w-6 h-6 p-0 focus:ring-2 focus:ring-accent text-label opacity-80"
                         onClick={e => { e.stopPropagation(); onSectionClick(section.id); }}
                       >
                         <Play className="w-5 h-5" />
                       </Button>
                     </TooltipTrigger>
-                    <TooltipContent>Play {section.name}</TooltipContent>
+                    <TooltipContent>{t(selectedLanguage, 'playSection', { section: section.name })}</TooltipContent>
                   </Tooltip>
                 </div>
                 <div className="flex justify-center items-center col-span-1 row-span-1">
@@ -420,14 +534,14 @@ export const UnifiedTimeline = ({
                       <Button
                         variant="outline"
                         size="icon"
-                        aria-label="Edit section"
+                        aria-label={t(selectedLanguage, 'editSection')}
                         onClick={e => { e.stopPropagation(); handleEditSection(section); }}
                         className="w-6 h-6 p-0 focus:ring-2 focus:ring-accent text-label opacity-80"
                       >
                         <Edit3 className="w-5 h-5" />
                       </Button>
                     </TooltipTrigger>
-                    <TooltipContent>Edit section</TooltipContent>
+                    <TooltipContent>{t(selectedLanguage, 'editSection')}</TooltipContent>
                   </Tooltip>
                 </div>
                 <div className="flex justify-end items-center col-span-1 row-span-1">
@@ -436,14 +550,14 @@ export const UnifiedTimeline = ({
                       <Button
                         variant="outline"
                         size="icon"
-                        aria-label="Delete section"
+                        aria-label={t(selectedLanguage, 'deleteSection')}
                         onClick={e => { e.stopPropagation(); handleDeleteSection(section.id); }}
                         className="w-6 h-6 p-0 text-destructive hover:text-destructive hover:bg-destructive/10 focus:ring-2 focus:ring-destructive opacity-80"
                       >
                         <Trash2 className="w-5 h-5" />
                       </Button>
                     </TooltipTrigger>
-                    <TooltipContent>Delete section</TooltipContent>
+                    <TooltipContent>{t(selectedLanguage, 'deleteSection')}</TooltipContent>
                   </Tooltip>
                 </div>
                 {/* Bottom row: Time badge centered */}
@@ -466,7 +580,7 @@ export const UnifiedTimeline = ({
       <div className="ml-2 flex items-center">
         <Button onClick={handleAddSection} className="bg-[color:var(--accent)] text-white font-semibold px-4 py-2 rounded-lg shadow-glow focus:ring-2 focus:ring-[color:var(--accent)]">
           <Plus className="w-4 h-4 mr-2" />
-          Add Section
+          {t(selectedLanguage, 'addSection')}
         </Button>
       </div>
       {/* Dialog per edit/add section (come prima) */}
@@ -474,23 +588,23 @@ export const UnifiedTimeline = ({
         <DialogContent className="bg-card/95 backdrop-blur-xl border-border/20">
           <DialogHeader>
             <DialogTitle className="text-xl">
-              {editingSection ? 'Edit Section' : 'Add New Section'}
+              {editingSection ? t(selectedLanguage, 'editSectionTitle') : t(selectedLanguage, 'addNewSectionTitle')}
             </DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
             <div>
-              <Label htmlFor="section-name" className="text-foreground">Section Name</Label>
+              <Label htmlFor="section-name" className="text-foreground">{t(selectedLanguage, 'sectionName')}</Label>
               <Input
                 id="section-name"
                 value={formData.name}
                 onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
-                placeholder="e.g., Verse 1, Chorus, Bridge"
+                placeholder={t(selectedLanguage, 'sectionNamePlaceholder')}
                 className="bg-background/50 border-border/50"
               />
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <Label htmlFor="start-time" className="text-foreground">Start Time (seconds)</Label>
+                <Label htmlFor="start-time" className="text-foreground">{t(selectedLanguage, 'startTime')}</Label>
                 <Input
                   id="start-time"
                   type="number"
@@ -502,7 +616,7 @@ export const UnifiedTimeline = ({
                 />
               </div>
               <div>
-                <Label htmlFor="end-time" className="text-foreground">End Time (seconds)</Label>
+                <Label htmlFor="end-time" className="text-foreground">{t(selectedLanguage, 'endTime')}</Label>
                 <Input
                   id="end-time"
                   type="number"
@@ -516,10 +630,10 @@ export const UnifiedTimeline = ({
             </div>
             <div className="flex justify-end space-x-2 pt-4">
               <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
-                Cancel
+                {t(selectedLanguage, 'cancel')}
               </Button>
               <Button onClick={handleSaveSection} className="bg-[color:var(--accent)] text-white">
-                {editingSection ? 'Update' : 'Add'} Section
+                {editingSection ? t(selectedLanguage, 'update') : t(selectedLanguage, 'add')} {t(selectedLanguage, 'sectionName').toLowerCase()}
               </Button>
             </div>
           </div>

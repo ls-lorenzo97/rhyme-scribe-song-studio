@@ -46,7 +46,8 @@ const translations: Record<string, Record<string, string>> = {
     error: 'Error',
     errorRestore: 'Could not restore the last session.',
     sessionRestoredAudioMissing: 'Session restored, but audio file needs to be re-uploaded.',
-    sessionRestoredAudioMissingDesc: 'Please upload the same audio file to continue working.'
+    sessionRestoredAudioMissingDesc: 'Please upload the same audio file to continue working.',
+    suggestedFileName: 'Suggested File Name'
   },
   it: {
     music: 'Musica',
@@ -69,7 +70,8 @@ const translations: Record<string, Record<string, string>> = {
     error: 'Errore',
     errorRestore: 'Impossibile ripristinare la sessione.',
     sessionRestoredAudioMissing: 'Sessione ripristinata, ma il file audio deve essere ricaricato.',
-    sessionRestoredAudioMissingDesc: 'Carica lo stesso file audio per continuare a lavorare.'
+    sessionRestoredAudioMissingDesc: 'Carica lo stesso file audio per continuare a lavorare.',
+    suggestedFileName: 'Nome File Suggerito'
   },
   es: {
     music: 'Música',
@@ -92,7 +94,8 @@ const translations: Record<string, Record<string, string>> = {
     error: 'Error',
     errorRestore: 'No se pudo restaurar la sesión.',
     sessionRestoredAudioMissing: 'Sesión restaurada, pero el archivo de audio debe ser subido de nuevo.',
-    sessionRestoredAudioMissingDesc: 'Sube el mismo archivo de audio para continuar trabajando.'
+    sessionRestoredAudioMissingDesc: 'Sube el mismo archivo de audio para continuar trabajando.',
+    suggestedFileName: 'Nombre de Archivo Sugerido'
   },
   fr: {
     music: 'Musique',
@@ -115,7 +118,8 @@ const translations: Record<string, Record<string, string>> = {
     error: 'Erreur',
     errorRestore: 'Impossible de restaurer la session.',
     sessionRestoredAudioMissing: 'Session restaurée, mais le fichier audio doit être retéléchargé.',
-    sessionRestoredAudioMissingDesc: 'Téléchargez le même fichier audio pour continuer à travailler.'
+    sessionRestoredAudioMissingDesc: 'Téléchargez le même fichier audio pour continuer à travailler.',
+    suggestedFileName: 'Nom de Fichier Suggeré'
   },
   de: {
     music: 'Musik',
@@ -138,7 +142,8 @@ const translations: Record<string, Record<string, string>> = {
     error: 'Fehler',
     errorRestore: 'Sitzung konnte nicht wiederhergestellt werden.',
     sessionRestoredAudioMissing: 'Sitzung wiederhergestellt, aber Audiodatei muss erneut hochgeladen werden.',
-    sessionRestoredAudioMissingDesc: 'Laden Sie dieselbe Audiodatei hoch, um weiterzuarbeiten.'
+    sessionRestoredAudioMissingDesc: 'Laden Sie dieselbe Audiodatei hoch, um weiterzuarbeiten.',
+    suggestedFileName: 'Vorgeschlagener Dateiname'
   }
 };
 
@@ -294,7 +299,7 @@ export const SongwriterTool = () => {
         if (sessionData.audioFileName && !audioFile) {
           toast({
             title: t(selectedLanguage, 'sessionRestoredAudioMissing'),
-            description: t(selectedLanguage, 'sessionRestoredAudioMissingDesc'),
+            description: `${t(selectedLanguage, 'sessionRestoredAudioMissingDesc')} ${t(selectedLanguage, 'suggestedFileName')}: "${sessionData.audioFileName}"`,
           });
         } else {
           toast({
@@ -314,6 +319,20 @@ export const SongwriterTool = () => {
         description: t(selectedLanguage, 'errorRestore'),
       });
     }
+  };
+
+  // Handle file change - open file picker directly
+  const handleFileChange = () => {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.mp3,.aac,.wav,.flac,.ogg,audio/mp3,audio/mpeg,audio/aac,audio/wav,audio/flac,audio/ogg';
+    input.onchange = (e) => {
+      const file = (e.target as HTMLInputElement).files?.[0];
+      if (file) {
+        handleFileUpload(file);
+      }
+    };
+    input.click();
   };
 
   return (
@@ -381,11 +400,7 @@ export const SongwriterTool = () => {
                     </div>
                   </div>
                   <button
-                    onClick={() => {
-                      setAudioFile(null);
-                      setAudioUrl('');
-                      setSongData(prev => ({ ...prev, sections: [], currentSection: null }));
-                    }}
+                    onClick={handleFileChange}
                     className="text-sm text-muted-foreground hover:text-foreground transition-colors"
                   >
                     {t(selectedLanguage, 'changeFile')}
@@ -459,6 +474,7 @@ export const SongwriterTool = () => {
                   setCurrentTime={setCurrentTime}
                   setDuration={setDuration}
                   audioFile={audioFile}
+                  selectedLanguage={selectedLanguage}
                 />
               ) : (
                 <div className="text-center py-8">
