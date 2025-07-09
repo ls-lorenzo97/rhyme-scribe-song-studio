@@ -511,6 +511,15 @@ export const UnifiedTimeline = ({
             const isActive = currentSection === section.id;
             const colorClass = getSectionColors(idx);
             const linesCount = section.lyrics ? section.lyrics.split('\n').filter(l => l.trim()).length : 0;
+
+            // Section progress calculation
+            const sectionProgress =
+              currentTime >= section.startTime && currentTime <= section.endTime
+                ? ((currentTime - section.startTime) / (section.endTime - section.startTime)) * 100
+                : currentTime > section.endTime
+                ? 100
+                : 0;
+
             return (
               <div
                 key={section.id}
@@ -522,9 +531,30 @@ export const UnifiedTimeline = ({
                 onDragEnd={handleDragEnd}
                 onDragOver={e => handleDragOver(e, idx)}
                 onDrop={e => handleDrop(e, idx)}
+                onClick={() => {
+                  // Jump audio to section start and set as current
+                  if (audioRef.current) {
+                    audioRef.current.currentTime = section.startTime;
+                  }
+                  setCurrentSection(section.id);
+                  onSectionClick(section.id);
+                }}
+                style={{ cursor: 'pointer' }}
               >
+                {/* Section progress bar (background fill) */}
+                {sectionProgress > 0 && sectionProgress < 100 && (
+                  <div
+                    className="absolute left-0 top-0 h-full rounded-xl bg-primary/20 z-0"
+                    style={{
+                      width: `${sectionProgress}%`,
+                      pointerEvents: 'none',
+                      transition: 'width 0.2s linear',
+                    }}
+                  />
+                )}
+
                 {/* Drag handle + menu */}
-                <div className="flex items-center justify-between mb-1">
+                <div className="flex items-center justify-between mb-1 z-10 relative">
                   <span className="flex items-center gap-1 text-xs text-gray-400">
                     <GripVertical className="h-4 w-4" />
                   </span>
@@ -545,15 +575,15 @@ export const UnifiedTimeline = ({
                   </DropdownMenu>
                 </div>
                 {/* Section name */}
-                <div className="font-semibold text-sm truncate mb-1">{section.name}</div>
+                <div className="font-semibold text-sm truncate mb-1 z-10 relative">{section.name}</div>
                 {/* Time */}
-                <div className="text-xs text-gray-500 mb-1">
+                <div className="text-xs text-gray-500 mb-1 z-10 relative">
                   {formatTime(section.startTime)} - {formatTime(section.endTime)}
                 </div>
                 {/* Lines */}
-                <div className="text-xs text-gray-400">{linesCount} lines</div>
+                <div className="text-xs text-gray-400 z-10 relative">{linesCount} lines</div>
                 {/* Color bar */}
-                <div className={`absolute bottom-0 left-0 right-0 h-1 rounded-b-xl ${colorClass} opacity-60`} />
+                <div className={`absolute bottom-0 left-0 right-0 h-1 rounded-b-xl ${colorClass} opacity-60 z-10`} />
               </div>
             );
           })
