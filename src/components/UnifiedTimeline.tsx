@@ -5,11 +5,9 @@ import { Label } from '@/components/ui/label';
 import { Card } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
-import { Slider } from '@/components/ui/slider';
 import { cn } from '@/lib/utils';
 import { SongSection } from './SongwriterTool';
-import { Play, Pause, Plus, Edit3, Trash2, SkipBack, SkipForward } from 'lucide-react';
-import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
+import { Play, Pause, Plus, Edit3, Trash2, Clock, Music, SkipBack, SkipForward } from 'lucide-react';
 
 interface UnifiedTimelineProps {
   sections: SongSection[];
@@ -424,164 +422,219 @@ export const UnifiedTimeline = ({
     return [...sections].sort((a, b) => a.startTime - b.startTime);
   }, [sections]);
 
-  // Apple Music style: single compact horizontal bar
-  return (
-    <div className="w-full flex items-center gap-2 bg-background rounded-xl p-2 shadow-sm border border-border/40 overflow-x-auto">
-      {/* Player left-aligned, compact, centered */}
-      <div className="flex flex-col items-center justify-center mr-2 min-w-[80px]">
+  // New vertical timeline design
+  if (sections.length === 0) {
+    return (
+      <div className="space-y-6">
         <audio ref={audioRef} src={audioUrl} />
-        <div className="flex items-center gap-1">
-          <Button
-            variant="outline"
-            size="icon"
-            aria-label={t(selectedLanguage, 'previousSection')}
-            onClick={() => navigateToSection('prev')}
-            className="w-8 h-8 text-muted-foreground hover:text-foreground rounded-full focus:ring-2 focus:ring-[color:var(--accent)]"
-          >
-            <SkipBack className="w-4 h-4" />
-          </Button>
-          <Button
-            variant="primary"
-            size="icon"
-            aria-label={isPlaying ? t(selectedLanguage, 'pause') : t(selectedLanguage, 'play')}
-            onClick={handlePlay}
-            className="w-12 h-12 bg-[color:var(--accent)] hover:bg-[color:var(--accent)]/90 text-white rounded-full shadow-glow transition-transform duration-200 hover:scale-110 focus:ring-2 focus:ring-[color:var(--accent)]"
-          >
-            {isPlaying ? <Pause className="w-6 h-6" /> : <Play className="w-6 h-6 ml-1" />}
-          </Button>
-          <Button
-            variant="outline"
-            size="icon"
-            aria-label={t(selectedLanguage, 'nextSection')}
-            onClick={() => navigateToSection('next')}
-            className="w-8 h-8 text-muted-foreground hover:text-foreground rounded-full focus:ring-2 focus:ring-[color:var(--accent)]"
-          >
-            <SkipForward className="w-4 h-4" />
-          </Button>
-        </div>
-        {/* Progress Bar */}
-        <div className="w-28 flex flex-col items-center mt-1">
-          <Slider
-            value={[currentTime]}
-            max={duration || 100}
-            step={0.1}
-            onValueChange={handleSeek}
-            className="w-full h-1"
-          />
-          <div className="flex justify-between w-full text-[10px] text-muted-foreground mt-0.5">
-            <span>{formatTime(currentTime)}</span>
-            <span>{formatTime(duration)}</span>
+        
+        {/* Header with Add Section */}
+        <div className="flex items-center justify-between">
+          <div>
+            <h3 className="text-2xl font-bold text-foreground">Song Timeline</h3>
+            <p className="text-muted-foreground">Create sections to organize your song structure</p>
           </div>
+          <Button onClick={handleAddSection} className="bg-primary text-primary-foreground hover:bg-primary/90">
+            <Plus className="w-4 h-4 mr-2" />
+            {t(selectedLanguage, 'addSection')}
+          </Button>
+        </div>
+
+        {/* Empty state */}
+        <div className="text-center py-16 bg-card/50 rounded-xl border border-border">
+          <Music className="w-16 h-16 mx-auto mb-4 text-muted-foreground/50" />
+          <h4 className="text-lg font-medium text-foreground mb-2">No sections defined</h4>
+          <p className="text-muted-foreground mb-4">Add sections to see your song timeline</p>
+          <Button onClick={handleAddSection} variant="outline">
+            <Plus className="w-4 h-4 mr-2" />
+            Create First Section
+          </Button>
         </div>
       </div>
-      {/* Timeline + Section pills, horizontally scrollable */}
-      <div className="flex-1 flex flex-col gap-1 min-w-0">
-        {/* Section Labels */}
-        <div className="flex justify-between w-full px-1 min-w-0">
-          {sortedSections.map((section) => (
-            <Tooltip key={section.id}>
-              <TooltipTrigger asChild>
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+      <audio ref={audioRef} src={audioUrl} />
+      
+      {/* Header with Controls */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h3 className="text-2xl font-bold text-foreground">Song Timeline</h3>
+          <p className="text-muted-foreground">
+            Navigate through your song structure • Current: {formatTime(currentTime)} / {formatTime(duration)}
+          </p>
+        </div>
+        <div className="flex items-center gap-3">
+          {/* Audio Controls */}
+          <div className="flex items-center gap-2 bg-card/50 rounded-lg p-2">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => navigateToSection('prev')}
+              className="h-8 w-8 p-0"
+            >
+              <SkipBack className="w-4 h-4" />
+            </Button>
+            <Button
+              variant={isPlaying ? "secondary" : "primary"}
+              size="sm"
+              onClick={handlePlay}
+              className="h-8 w-8 p-0"
+            >
+              {isPlaying ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => navigateToSection('next')}
+              className="h-8 w-8 p-0"
+            >
+              <SkipForward className="w-4 h-4" />
+            </Button>
+          </div>
+          <Button onClick={handleAddSection} className="bg-primary text-primary-foreground hover:bg-primary/90">
+            <Plus className="w-4 h-4 mr-2" />
+            {t(selectedLanguage, 'addSection')}
+          </Button>
+        </div>
+      </div>
+
+      {/* Progress Bar */}
+      <div className="bg-card/30 rounded-lg p-4 border border-border/30">
+        <div className="h-2 bg-muted/30 rounded-full relative overflow-hidden mb-2">
+          <div
+            className="absolute top-0 left-0 h-full bg-gradient-to-r from-primary/60 to-primary rounded-full transition-all duration-300"
+            style={{ width: `${progressPercentage}%` }}
+          />
+          <div
+            className="absolute top-0 w-1 h-full bg-primary shadow-lg transition-all duration-100"
+            style={{ left: `${progressPercentage}%` }}
+          />
+        </div>
+        <div className="flex justify-between text-xs text-muted-foreground">
+          <span>0:00</span>
+          <span>{formatTime(duration)}</span>
+        </div>
+      </div>
+
+      {/* Vertical Section Timeline */}
+      <div className="space-y-3">
+        {sortedSections.map((section, index) => {
+          const isActive = currentSection === section.id;
+          const sectionProgress = duration > 0 ? 
+            Math.max(0, Math.min(100, ((currentTime - section.startTime) / (section.endTime - section.startTime)) * 100)) : 0;
+          const isPlaying = currentTime >= section.startTime && currentTime <= section.endTime;
+
+          return (
+            <Card 
+              key={section.id}
+              className={cn(
+                "relative overflow-hidden cursor-pointer transition-all duration-200 hover:shadow-md group border-l-4",
+                isActive ? "ring-1 ring-primary/30 shadow-lg border-l-primary" : "border-l-muted hover:border-l-primary/50"
+              )}
+              onClick={() => onSectionClick(section.id)}
+            >
+              {/* Progress overlay */}
+              {isPlaying && (
                 <div
-                  className="text-xs text-muted-foreground font-medium text-center flex-1 truncate cursor-default"
-                  style={{ minWidth: 0 }}
-                >
-                  {section.name}
+                  className="absolute inset-0 bg-primary/5 transition-all duration-200"
+                  style={{ width: `${sectionProgress}%` }}
+                />
+              )}
+
+              <div className="p-4 relative">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-4 flex-1">
+                    {/* Section indicator */}
+                    <div className={cn(
+                      "w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold",
+                      isActive ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"
+                    )}>
+                      {index + 1}
+                    </div>
+                    
+                    {/* Section info */}
+                    <div className="flex-1 min-w-0">
+                      <h4 className={cn(
+                        "font-semibold text-lg truncate",
+                        isActive ? "text-primary" : "text-foreground"
+                      )}>
+                        {section.name}
+                      </h4>
+                      <div className="flex items-center space-x-3 text-sm text-muted-foreground">
+                        <div className="flex items-center space-x-1">
+                          <Clock className="w-3 h-3" />
+                          <span>{formatTime(section.startTime)} - {formatTime(section.endTime)}</span>
+                        </div>
+                        <span>•</span>
+                        <span>{formatTime(section.endTime - section.startTime)} duration</span>
+                        {section.lyrics && (
+                          <>
+                            <span>•</span>
+                            <span className="truncate max-w-[200px]">
+                              {section.lyrics.split('\n')[0] || 'No lyrics'}
+                            </span>
+                          </>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Action buttons */}
+                    <div className="flex items-center space-x-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onSectionClick(section.id);
+                        }}
+                        className="h-8 w-8 p-0"
+                      >
+                        <Play className="w-4 h-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleEditSection(section);
+                        }}
+                        className="h-8 w-8 p-0"
+                      >
+                        <Edit3 className="w-4 h-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDeleteSection(section.id);
+                        }}
+                        className="h-8 w-8 p-0 text-destructive hover:text-destructive"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  </div>
                 </div>
-              </TooltipTrigger>
-              <TooltipContent>{section.name}</TooltipContent>
-            </Tooltip>
-          ))}
-        </div>
-        {/* Timeline Bar with Section Pills */}
-        <div className="flex w-full h-24 rounded-xl overflow-x-auto border border-separator bg-secondarySystemBackground gap-5 scrollbar-thin scrollbar-thumb-accent/20 snap-x snap-mandatory py-2 px-2">
-          {sortedSections.map((section, idx) => {
-            const isActive = currentSection === section.id;
-            return (
-              <div
-                key={section.id}
-                tabIndex={0}
-                aria-label={`Section ${section.name}`}
-                className={cn(
-                  "grid grid-rows-2 grid-cols-3 gap-x-2 gap-y-1 min-w-[140px] max-w-[200px] px-4 py-3 rounded-xl cursor-pointer border border-separator transition-all duration-200 bg-secondarySystemBackground overflow-hidden focus:ring-2 focus:ring-accent outline-none",
-                  isActive ? "bg-accentSystemFill shadow-lg scale-105 z-10 border-accent transition-all duration-200" : "hover:bg-tertiarySystemFill hover:scale-105",
+
+                {/* Section progress bar */}
+                {isPlaying && (
+                  <div className="mt-3">
+                    <div className="h-1 bg-muted/50 rounded-full overflow-hidden">
+                      <div
+                        className="h-full bg-primary rounded-full transition-all duration-200"
+                        style={{ width: `${sectionProgress}%` }}
+                      />
+                    </div>
+                  </div>
                 )}
-                style={{ minWidth: 0 }}
-                onClick={() => {
-                  setCurrentSection(section.id);
-                  onSectionClick(section.id);
-                }}
-              >
-                {/* Top row: Play (left), Edit (center), Delete (right) */}
-                <div className="flex justify-start items-center col-span-1 row-span-1">
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button
-                        variant="outline"
-                        size="icon"
-                        aria-label={t(selectedLanguage, 'playSection', { section: section.name })}
-                        className="w-6 h-6 p-0 focus:ring-2 focus:ring-accent text-label opacity-80"
-                        onClick={e => { e.stopPropagation(); onSectionClick(section.id); }}
-                      >
-                        <Play className="w-5 h-5" />
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent>{t(selectedLanguage, 'playSection', { section: section.name })}</TooltipContent>
-                  </Tooltip>
-                </div>
-                <div className="flex justify-center items-center col-span-1 row-span-1">
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button
-                        variant="outline"
-                        size="icon"
-                        aria-label={t(selectedLanguage, 'editSection')}
-                        onClick={e => { e.stopPropagation(); handleEditSection(section); }}
-                        className="w-6 h-6 p-0 focus:ring-2 focus:ring-accent text-label opacity-80"
-                      >
-                        <Edit3 className="w-5 h-5" />
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent>{t(selectedLanguage, 'editSection')}</TooltipContent>
-                  </Tooltip>
-                </div>
-                <div className="flex justify-end items-center col-span-1 row-span-1">
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button
-                        variant="outline"
-                        size="icon"
-                        aria-label={t(selectedLanguage, 'deleteSection')}
-                        onClick={e => { e.stopPropagation(); handleDeleteSection(section.id); }}
-                        className="w-6 h-6 p-0 text-destructive hover:text-destructive hover:bg-destructive/10 focus:ring-2 focus:ring-destructive opacity-80"
-                      >
-                        <Trash2 className="w-5 h-5" />
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent>{t(selectedLanguage, 'deleteSection')}</TooltipContent>
-                  </Tooltip>
-                </div>
-                {/* Bottom row: Time badge centered */}
-                <div></div>
-                <div className="flex justify-center items-center col-span-1 row-span-1">
-                  <span className={cn(
-                    "px-4 py-1 rounded-full text-[16px] font-bold min-w-[90px] max-w-[120px] text-center border border-separator shadow-sm whitespace-nowrap overflow-hidden truncate mx-auto",
-                    isActive ? "bg-accentSystemFill text-label border-accent" : "bg-tertiarySystemFill text-secondaryLabel"
-                  )}>
-                    {formatTime(section.startTime)} - {formatTime(section.endTime)}
-                  </span>
-                </div>
-                <div></div>
               </div>
-            );
-          })}
-        </div>
-      </div>
-      {/* Add Section Button */}
-      <div className="ml-2 flex items-center">
-        <Button onClick={handleAddSection} className="bg-[color:var(--accent)] text-white font-semibold px-4 py-2 rounded-lg shadow-glow focus:ring-2 focus:ring-[color:var(--accent)]">
-          <Plus className="w-4 h-4 mr-2" />
-          {t(selectedLanguage, 'addSection')}
-        </Button>
+            </Card>
+          );
+        })}
       </div>
       {/* Dialog per edit/add section (come prima) */}
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
