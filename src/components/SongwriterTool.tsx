@@ -335,6 +335,23 @@ export const SongwriterTool = () => {
     input.click();
   };
 
+  // --- Automatic section sync with audio playback ---
+  useEffect(() => {
+    if (!sections.length) return;
+    // Find the section that contains the current time
+    const activeSection = sections.find(
+      (section) =>
+        currentTime >= section.startTime && currentTime < section.endTime
+    );
+    if (activeSection && currentSection !== activeSection.id) {
+      setSongData((prev) => ({ ...prev, currentSection: activeSection.id }));
+    }
+    // If audio is before the first section, clear selection
+    if (!activeSection && currentSection !== null) {
+      setSongData((prev) => ({ ...prev, currentSection: null }));
+    }
+  }, [currentTime, sections, currentSection, setSongData]);
+
   return (
     <div className="min-h-screen bg-gradient-primary">
       {/* Apple Music-style Header */}
