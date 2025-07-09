@@ -343,14 +343,12 @@ export const UnifiedTimeline = ({
 
   const getSectionColors = (index: number) => {
     const colors = [
-      'bg-blue-500/20 border-blue-500/30 text-blue-700',
-      'bg-green-500/20 border-green-500/30 text-green-700',
-      'bg-yellow-500/20 border-yellow-500/30 text-yellow-700',
-      'bg-red-500/20 border-red-500/30 text-red-700',
-      'bg-purple-500/20 border-purple-500/30 text-purple-700',
-      'bg-pink-500/20 border-pink-500/30 text-pink-700',
-      'bg-indigo-500/20 border-indigo-500/30 text-indigo-700',
-      'bg-orange-500/20 border-orange-500/30 text-orange-700'
+      'border-blue-400 text-blue-700',
+      'border-green-400 text-green-700',
+      'border-orange-400 text-orange-700',
+      'border-purple-400 text-purple-700',
+      'border-pink-400 text-pink-700',
+      'border-indigo-400 text-indigo-700',
     ];
     return colors[index % colors.length];
   };
@@ -489,7 +487,7 @@ export const UnifiedTimeline = ({
   };
 
   return (
-    <div className="w-full flex items-center gap-2 bg-background rounded-xl p-2 shadow-sm border border-border/40 overflow-x-auto">
+    <div className="w-full">
       {/* Player left-aligned, compact, centered */}
       <div className="flex flex-col items-center justify-center mr-2 min-w-[80px]">
         <audio ref={audioRef} src={audioUrl} />
@@ -519,84 +517,61 @@ export const UnifiedTimeline = ({
       </div>
       {/* Modern Pill-Style Timeline Section */}
       <div className="mb-4">
-        <div className="flex items-center justify-between mb-3">
-          <h4 className="text-sm font-medium text-gray-700">{t(selectedLanguage, 'songSections') || 'Song Sections'}</h4>
-          <Button onClick={handleAddSection} size="sm" variant="outline" className="h-7 text-xs bg-transparent">
-            <Plus className="h-3 w-3 mr-1" />
-            {t(selectedLanguage, 'addSection')}
+        <div className="flex items-center justify-between mb-2">
+          <h4 className="text-base font-semibold text-foreground">Song Sections</h4>
+          <Button onClick={handleAddSection} size="sm" variant="outline" className="h-8 text-xs">
+            <Plus className="h-4 w-4 mr-1" />
+            Add Section
           </Button>
         </div>
-
-        <div className="flex gap-2 overflow-x-auto pb-2 px-1" onDragLeave={handleDragLeave}>
-          {sortedSections.map((section, index) => {
-            const duration = section.endTime - section.startTime;
-            const minWidth = 140;
-            const maxWidth = 220;
-            const proportionalWidth = Math.max(minWidth, Math.min(maxWidth, (duration / 30) * 140));
+        <div className="flex gap-3 overflow-x-auto pb-2 px-1">
+          {sortedSections.map((section, idx) => {
             const isActive = currentSection === section.id;
-            const colorClass = getSectionColors(index); // your color function
-
+            const colorClass = getSectionColors(idx);
+            const linesCount = section.lyrics ? section.lyrics.split('\n').filter(l => l.trim()).length : 0;
             return (
-              <div key={section.id} className="flex items-center flex-shrink-0">
-                <div
-                  draggable
-                  onDragStart={e => handleDragStart(e, section.id)}
-                  onDragEnd={handleDragEnd}
-                  onDragOver={e => handleDragOver(e, index)}
-                  onDrop={e => handleDrop(e, index)}
-                  className={`relative rounded-xl border-2 transition-all duration-200 cursor-pointer
-                    ${isActive ? `${colorClass} text-white border-white/30 shadow-lg` : `bg-gray-50 text-gray-700 border-gray-200 hover:border-gray-300 hover:shadow-sm`}
-                  `}
-                  style={{ width: `${proportionalWidth}px` }}
-                >
-                  {/* Drag handle */}
-                  <div className={`absolute left-2 top-1/2 transform -translate-y-1/2 opacity-60 hover:opacity-100 transition-opacity ${isActive ? "text-white/70" : "text-gray-400"}`}>
+              <div
+                key={section.id}
+                className={`relative flex flex-col min-w-[170px] max-w-[220px] rounded-xl border-2 bg-white shadow-sm px-4 py-3 transition-all duration-200
+                  ${colorClass} ${isActive ? 'ring-2 ring-primary/60 border-primary bg-primary/10' : 'hover:border-gray-300'}
+                `}
+                draggable
+                onDragStart={e => handleDragStart(e, section.id)}
+                onDragEnd={handleDragEnd}
+                onDragOver={e => handleDragOver(e, idx)}
+                onDrop={e => handleDrop(e, idx)}
+              >
+                {/* Drag handle + menu */}
+                <div className="flex items-center justify-between mb-1">
+                  <span className="flex items-center gap-1 text-xs text-gray-400">
                     <GripVertical className="h-4 w-4" />
-                  </div>
-
-                  {/* Actions menu */}
-                  <div className="absolute top-2 right-2 z-10">
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button
-                          variant="outline"
-                          size="icon"
-                          className={`h-6 w-6 ${isActive ? "text-white/70 hover:text-white hover:bg-white/20" : "text-gray-400 hover:text-gray-600 hover:bg-gray-200"}`}
-                        >
-                          <MoreHorizontal className="h-3 w-3" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end" className="w-40">
-                        <DropdownMenuItem onClick={() => handleEditSection(section)} className="cursor-pointer">
-                          <Edit3 className="h-4 w-4 mr-2" />
-                          {t(selectedLanguage, 'editSection')}
-                        </DropdownMenuItem>
-                        <DropdownMenuItem
-                          onClick={() => handleDeleteSection(section.id)}
-                          className="cursor-pointer text-red-600 focus:text-red-600"
-                        >
-                          <Trash2 className="h-4 w-4 mr-2" />
-                          {t(selectedLanguage, 'deleteSection')}
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </div>
-
-                  {/* Section content */}
-                  <div className="p-3 pl-8 pr-10">
-                    <button onClick={() => { setCurrentSection(section.id); onSectionClick(section.id); }} className="w-full text-left">
-                      <div className="font-medium text-sm mb-1 truncate" title={section.name}>
-                        {section.name}
-                      </div>
-                      <div className={`text-xs ${isActive ? "text-white/80" : "text-gray-500"}`}>
-                        {formatTime(section.startTime)} - {formatTime(section.endTime)}
-                      </div>
-                    </button>
-                  </div>
-
-                  {/* Color indicator strip */}
-                  <div className={`absolute bottom-0 left-0 right-0 h-1 ${colorClass} rounded-b-xl`} />
+                  </span>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" size="icon" className="h-6 w-6 text-gray-400 hover:text-gray-700">
+                        <MoreHorizontal className="h-4 w-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" className="w-36">
+                      <DropdownMenuItem onClick={() => handleEditSection(section)}>
+                        <Edit3 className="h-4 w-4 mr-2" /> Edit
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => handleDeleteSection(section.id)} className="text-red-600">
+                        <Trash2 className="h-4 w-4 mr-2" /> Delete
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
                 </div>
+                {/* Section name */}
+                <div className="font-semibold text-sm truncate mb-1">{section.name}</div>
+                {/* Time */}
+                <div className="text-xs text-gray-500 mb-1">
+                  {formatTime(section.startTime)} - {formatTime(section.endTime)}
+                </div>
+                {/* Lines */}
+                <div className="text-xs text-gray-400">{linesCount} lines</div>
+                {/* Color bar */}
+                <div className={`absolute bottom-0 left-0 right-0 h-1 rounded-b-xl ${colorClass} opacity-60`} />
               </div>
             );
           })}
