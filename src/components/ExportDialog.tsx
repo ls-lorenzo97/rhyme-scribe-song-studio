@@ -225,19 +225,19 @@ export const ExportDialog = ({ sections, audioFile, selectedLanguage = 'en' }: E
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <DialogTrigger asChild>
-        <Button variant="outline" className="flex items-center gap-2">
+    <Dialog open={isOpen} onOpenChange={setIsOpen} data-name="export-dialog-root">
+      <DialogTrigger asChild data-name="export-dialog-trigger-btn">
+        <Button variant="outline" className="flex items-center gap-2" data-name="export-dialog-trigger-btn">
           <Download className="w-4 h-4" />
           {t(selectedLanguage, 'exportLyrics')}
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-md">
-        <DialogHeader>
+      <DialogContent className="sm:max-w-md" data-name="export-dialog-content">
+        <DialogHeader data-name="export-dialog-header">
           <DialogTitle>{t(selectedLanguage, 'exportOptions')}</DialogTitle>
         </DialogHeader>
-        <div className="space-y-4">
-          <div className="flex items-center space-x-2">
+        <div className="space-y-4" data-name="export-dialog-body">
+          <div className="flex items-center space-x-2" data-name="export-dialog-timestamps">
             <Checkbox
               id="timestamps"
               checked={exportOptions.includeTimestamps}
@@ -247,7 +247,7 @@ export const ExportDialog = ({ sections, audioFile, selectedLanguage = 'en' }: E
             />
             <Label htmlFor="timestamps">{t(selectedLanguage, 'includeTimestamps')}</Label>
           </div>
-          <div className="flex items-center space-x-2">
+          <div className="flex items-center space-x-2" data-name="export-dialog-rhymes">
             <Checkbox
               id="rhymes"
               checked={exportOptions.includeRhymes}
@@ -257,7 +257,7 @@ export const ExportDialog = ({ sections, audioFile, selectedLanguage = 'en' }: E
             />
             <Label htmlFor="rhymes">{t(selectedLanguage, 'includeRhymes')}</Label>
           </div>
-          <div className="flex items-center space-x-2">
+          <div className="flex items-center space-x-2" data-name="export-dialog-separate">
             <Checkbox
               id="separate"
               checked={exportOptions.separateFiles}
@@ -267,7 +267,7 @@ export const ExportDialog = ({ sections, audioFile, selectedLanguage = 'en' }: E
             />
             <Label htmlFor="separate">{t(selectedLanguage, 'separateFiles')}</Label>
           </div>
-          <Button onClick={handleExport} className="w-full">
+          <Button onClick={handleExport} className="w-full" data-name="export-dialog-export-btn">
             {t(selectedLanguage, 'export')}
           </Button>
         </div>

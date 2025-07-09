@@ -87,19 +87,19 @@ export const AudioControls = ({
   const currentSectionData = sections.find(s => s.id === currentSection);
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-8" data-name="audio-controls-root">
       <audio ref={audioRef} src={audioUrl} />
       
       {/* Album Art Placeholder */}
-      <div className="flex justify-center">
-        <div className="w-80 h-80 bg-gradient-music rounded-3xl shadow-large flex items-center justify-center">
+      <div className="flex justify-center" data-name="audio-album-art-row">
+        <div className="w-80 h-80 bg-gradient-music rounded-3xl shadow-large flex items-center justify-center" data-name="audio-album-art">
           <div className="text-8xl text-white/80 font-light">♪</div>
         </div>
       </div>
 
       {/* Song Info */}
       {currentSectionData && (
-        <div className="text-center">
+        <div className="text-center" data-name="audio-song-info">
           <h2 className="text-2xl font-semibold text-foreground mb-1">
             {currentSectionData.name}
           </h2>
@@ -110,12 +110,13 @@ export const AudioControls = ({
       )}
 
       {/* Control Buttons */}
-      <div className="flex items-center justify-center space-x-6">
+      <div className="flex items-center justify-center space-x-6" data-name="audio-control-buttons">
         <Button
           variant="ghost"
           size="icon"
           onClick={handleStop}
           className="w-12 h-12 text-muted-foreground hover:text-foreground rounded-full"
+          data-name="audio-stop-btn"
         >
           <div className="w-4 h-4 bg-current rounded-sm" />
         </Button>
@@ -125,6 +126,7 @@ export const AudioControls = ({
           size="icon"
           onClick={handlePlay}
           className="w-20 h-20 bg-music-primary hover:bg-music-primary/90 text-white rounded-full shadow-large transition-transform hover:scale-105"
+          data-name="audio-play-btn"
         >
           {isPlaying ? (
             <Pause className="w-8 h-8" />
@@ -135,15 +137,16 @@ export const AudioControls = ({
       </div>
 
       {/* Progress Bar */}
-      <div className="space-y-2">
+      <div className="space-y-2" data-name="audio-progress-bar">
         <Slider
           value={[currentTime]}
           max={duration || 100}
           step={0.1}
           onValueChange={handleSeek}
           className="w-full"
+          data-name="audio-slider"
         />
-        <div className="flex justify-between text-sm text-muted-foreground">
+        <div className="flex justify-between text-sm text-muted-foreground" data-name="audio-progress-labels">
           <span>{formatTime(currentTime)}</span>
           <span>{formatTime(duration)}</span>
         </div>

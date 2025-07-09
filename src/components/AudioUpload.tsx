@@ -87,10 +87,10 @@ export const AudioUpload = ({ onFileUpload, selectedLanguage = 'en' }: AudioUplo
   }, [onFileUpload]);
 
   return (
-    <div className="text-center space-y-6">
-      <div className="flex justify-center">
-        <div className="w-16 h-16 bg-gradient-music rounded-2xl flex items-center justify-center shadow-card">
-          <Music className="w-8 h-8 text-white" />
+    <div className="text-center space-y-6" data-name="audio-upload-root">
+      <div className="flex justify-center" data-name="audio-upload-icon-row">
+        <div className="w-16 h-16 bg-card rounded-2xl flex items-center justify-center shadow-card border" data-name="audio-upload-icon">
+          <Music className="w-8 h-8 text-primary" />
         </div>
       </div>
       
@@ -113,6 +113,7 @@ export const AudioUpload = ({ onFileUpload, selectedLanguage = 'en' }: AudioUplo
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
         onClick={() => document.getElementById('audio-upload')?.click()}
+        data-name="audio-upload-dropzone"
       >
         <div className="space-y-4">
           <ArrowUp className="w-10 h-10 text-muted-foreground mx-auto" />
@@ -128,6 +129,7 @@ export const AudioUpload = ({ onFileUpload, selectedLanguage = 'en' }: AudioUplo
             variant="default" 
             size="sm" 
             className="bg-music-primary hover:bg-music-primary/90 text-white rounded-lg px-6 py-2 font-medium"
+            data-name="audio-upload-btn"
           >
             {t(selectedLanguage, 'browseFiles')}
           </Button>
@@ -140,6 +142,7 @@ export const AudioUpload = ({ onFileUpload, selectedLanguage = 'en' }: AudioUplo
         accept=".mp3,.aac,.wav,.flac,.ogg,audio/mp3,audio/mpeg,audio/aac,audio/wav,audio/flac,audio/ogg"
         onChange={handleFileSelect}
         className="hidden"
+        data-name="audio-upload-input"
       />
     </div>
   );

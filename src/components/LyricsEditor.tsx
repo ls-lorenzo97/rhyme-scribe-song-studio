@@ -150,70 +150,41 @@ export const LyricsEditor = ({ section, onLyricsUpdate, selectedLanguage = 'en',
   }
 
   return (
-    <div className="space-y-3">
-      <div>
-        <h3 className="text-base font-semibold text-foreground mb-1">
-          {section?.name} {t(selectedLanguage, 'lyrics')}
-        </h3>
-        <p className="text-xs text-muted-foreground mb-2">
-          {t(selectedLanguage, 'writeOnePhrasePerLine')}
-        </p>
+    <div className="flex flex-col gap-6" data-name="lyrics-editor-root">
+      <div className="flex items-center gap-3" data-name="lyrics-editor-header">
+        <h2 className="text-xl font-semibold text-foreground">{t(selectedLanguage, 'lyricsEditor')}</h2>
+        <span className="text-muted-foreground text-sm">{t(selectedLanguage, 'editYourLyrics')}</span>
       </div>
-      <div className="space-y-1">
-        {lines.map((line, idx) => {
-          return (
-            <div key={idx} className="flex items-center gap-1 relative">
-              <div
-                className="min-w-7 min-h-7 w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold border flex-shrink-0"
-                style={{
-                  backgroundColor: getRhymeColor(idx) + '20',
-                  color: getRhymeColor(idx),
-                  borderColor: getRhymeColor(idx),
-                }}
-              >
-                {getRhymeLetter(idx)}
-              </div>
-              <input
-                type="text"
-                value={line}
-                onChange={e => handleLineChange(idx, e.target.value)}
-                placeholder={`${t(selectedLanguage, 'phrase')} ${idx + 1}`}
-                className="flex-1 h-8 px-2 py-1 rounded border bg-background text-sm focus:ring-2 focus:ring-music-primary outline-none"
-                autoComplete="off"
-                spellCheck={false}
-              />
-              <button
-                type="button"
-                className="ml-1 px-1 py-0.5 rounded bg-muted/40 border text-xs text-muted-foreground hover:bg-music-primary/10"
-                onClick={() => handleOpenSuggestions(idx)}
-                title={t(selectedLanguage, 'suggestRhymes')}
-              >
-                💡
-              </button>
-              {lines.length > 1 && (
-                <button
-                  type="button"
-                  className="ml-1 px-1 py-0.5 rounded bg-destructive/10 border border-destructive/20 text-xs text-destructive hover:bg-destructive/20"
-                  onClick={() => removeLine(idx)}
-                  title={t(selectedLanguage, 'removeLine')}
-                >
-                  ×
-                </button>
-              )}
-            </div>
-          );
-        })}
+      <div className="flex flex-col gap-2" data-name="lyrics-editor-lines-list">
+        {lines.map((line, idx) => (
+          <div key={idx} className="flex items-center gap-2" data-name={`lyrics-editor-line-row-${idx}`}>
+            <input
+              type="text"
+              value={line}
+              onChange={e => handleLineChange(idx, e.target.value)}
+              placeholder={`${t(selectedLanguage, 'phrase')} ${idx + 1}`}
+              className="flex-1 h-8 px-2 py-1 rounded border bg-background text-sm focus:ring-2 focus:ring-music-primary outline-none"
+              autoComplete="off"
+              spellCheck={false}
+              data-name={`lyrics-editor-line-input-${idx}`}
+            />
+            <button
+              onClick={() => removeLine(idx)}
+              className="text-destructive hover:text-red-600 text-xs px-2 py-1 rounded"
+              data-name={`lyrics-editor-remove-btn-${idx}`}
+            >
+              {t(selectedLanguage, 'remove')}
+            </button>
+          </div>
+        ))}
       </div>
-      
-      <Button
-        type="button"
-        variant="outline"
-        size="sm"
+      <button
         onClick={addLine}
-        className="w-full"
+        className="bg-primary text-white px-4 py-2 rounded hover:bg-primary/90 transition-colors text-sm font-medium"
+        data-name="lyrics-editor-add-btn"
       >
-        + {t(selectedLanguage, 'addLine')}
-      </Button>
+        {t(selectedLanguage, 'addLine')}
+      </button>
 
       {suggestIdx !== null && (
         <div className="fixed inset-0 bg-black/30 flex items-center justify-center z-50">

@@ -413,7 +413,7 @@ export default function Component() {
   const selectedSection = selectedSectionForLyrics ? sections.find((s) => s.id === selectedSectionForLyrics) : null
 
   return (
-    <div className="w-full min-h-[600px] bg-white rounded-2xl shadow-sm border border-gray-100 p-6 flex flex-col">
+    <div className="w-full min-h-[600px] bg-white rounded-2xl shadow-sm border border-gray-100 p-6 flex flex-col" data-name="apple-music-root">
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">
@@ -456,15 +456,17 @@ export default function Component() {
       </div>
 
       {/* Timeline */}
-      <div className="mb-6">
+      <div className="mb-6" data-name="timeline-header">
         <div
           ref={progressBarRef}
           className="w-full bg-gray-100 rounded-full h-3 cursor-pointer relative"
           onClick={handleTimelineClick}
+          data-name="timeline-progress-bar"
         >
           <div
             className="bg-blue-500 h-3 rounded-full transition-all duration-200 ease-out"
             style={{ width: `${(currentTime / totalDuration) * 100}%` }}
+            data-name="timeline-progress-fill"
           />
 
           <div
@@ -473,10 +475,11 @@ export default function Component() {
             }`}
             style={{ left: `${(currentTime / totalDuration) * 100}%`, marginLeft: "-10px" }}
             onMouseDown={handleSliderMouseDown}
+            data-name="timeline-slider-thumb"
           />
         </div>
 
-        <div className="flex justify-between text-xs text-gray-500 mt-1 px-1">
+        <div className="flex justify-between text-xs text-gray-500 mt-1 px-1" data-name="timeline-labels">
           <span>0:00</span>
           <span>{formatTime(Math.floor(totalDuration / 2))}</span>
           <span>{formatTime(totalDuration)}</span>
@@ -484,18 +487,18 @@ export default function Component() {
       </div>
 
       {/* Main Content */}
-      <div className="flex-1 flex flex-col space-y-6 min-h-0">
+      <div className="flex-1 flex flex-col space-y-6 min-h-0" data-name="main-content">
         {/* Song Sections */}
-        <div className="flex-shrink-0">
-          <div className="flex items-center justify-between mb-4">
+        <div className="flex-shrink-0" data-name="song-sections-bar">
+          <div className="flex items-center justify-between mb-4" data-name="song-sections-bar-header">
             <h4 className="text-sm font-medium text-gray-700">Song Sections</h4>
-            <Button onClick={addSection} size="sm" variant="outline" className="h-7 text-xs bg-transparent">
+            <Button onClick={addSection} size="sm" variant="outline" className="h-7 text-xs bg-transparent" data-name="add-section-btn">
               <Plus className="h-3 w-3 mr-1" />
               Add Section
             </Button>
           </div>
 
-          <div className="flex gap-2 overflow-x-auto pb-2 px-1 scrollbar-hide h-20">
+          <div className="flex gap-2 overflow-x-auto pb-2 px-1 scrollbar-hide h-20" data-name="song-sections-list">
             {sections.map((section, index) => {
               const duration = section.endTime - section.startTime
               const minWidth = 140
@@ -505,9 +508,9 @@ export default function Component() {
               const isDropTarget = dragOverIndex === index
 
               return (
-                <div key={section.id} className="flex items-center flex-shrink-0">
+                <div key={section.id} className="flex items-center flex-shrink-0" data-name={`song-section-pill-wrap-${section.id}`}>
                   {isDropTarget && (
-                    <div className="w-1 bg-blue-400 rounded-full h-16 mx-1 animate-pulse shadow-md flex-shrink-0" />
+                    <div className="w-1 bg-blue-400 rounded-full h-16 mx-1 animate-pulse shadow-md flex-shrink-0" data-name="song-section-drop-target" />
                   )}
 
                   <div
@@ -524,6 +527,7 @@ export default function Component() {
                           : `bg-gray-50 text-gray-700 border-gray-200 hover:border-gray-300 hover:shadow-sm`
                     } ${isDraggedItem ? "opacity-40 scale-95 rotate-2" : ""}`}
                     style={{ width: `${proportionalWidth}px` }}
+                    data-name={`song-section-pill-${section.id}`}
                   >
                     <div
                       className={`absolute left-2 top-1/2 transform -translate-y-1/2 opacity-60 hover:opacity-100 transition-opacity ${
@@ -533,6 +537,7 @@ export default function Component() {
                             ? "text-blue-600"
                             : "text-gray-400"
                       }`}
+                      data-name="song-section-pill-grip"
                     >
                       <GripVertical className="h-4 w-4" />
                     </div>
@@ -609,28 +614,29 @@ export default function Component() {
             })}
 
             {dragOverIndex === sections.length && (
-              <div className="w-1 bg-blue-400 rounded-full h-16 mx-1 animate-pulse shadow-md flex-shrink-0" />
+              <div className="w-1 bg-blue-400 rounded-full h-16 mx-1 animate-pulse shadow-md flex-shrink-0" data-name="song-section-drop-target-end" />
             )}
           </div>
         </div>
 
         {/* Lyrics Section */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4" style={{ height: "30vh" }}>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4" style={{ height: "30vh" }} data-name="lyrics-section-grid">
           {/* Lyrics Editor */}
-          <div className="lg:col-span-2 flex flex-col min-h-0">
-            <Card className="flex-1 flex flex-col min-h-0">
-              <CardHeader className="pb-3 flex-shrink-0">
-                <div className="flex items-center justify-between">
-                  <CardTitle className="text-sm">
+          <div className="lg:col-span-2 flex flex-col min-h-0" data-name="lyrics-editor-col">
+            <Card className="flex-1 flex flex-col min-h-0" data-name="lyrics-editor-card">
+              <CardHeader className="pb-3 flex-shrink-0" data-name="lyrics-editor-card-header">
+                <div className="flex items-center justify-between" data-name="lyrics-editor-card-header-row">
+                  <CardTitle className="text-sm" data-name="lyrics-editor-card-title">
                     {selectedSection ? `Lyrics - ${selectedSection.name}` : "Select a section"}
                   </CardTitle>
                   {selectedSection && (
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2" data-name="lyrics-editor-card-header-actions">
                       <Button
                         onClick={() => addLyricSentence(selectedSection.id)}
                         size="sm"
                         variant="outline"
                         className="h-7 text-xs"
+                        data-name="add-lyric-line-btn"
                       >
                         <PlusCircle className="h-3 w-3 mr-1" />
                         Add Line
@@ -640,6 +646,7 @@ export default function Component() {
                         size="sm"
                         variant={lyricsPreviewMode ? "default" : "outline"}
                         className="h-7 text-xs"
+                        data-name="toggle-lyrics-preview-btn"
                       >
                         {lyricsPreviewMode ? "Exit Preview" : "Preview"}
                       </Button>
@@ -650,7 +657,7 @@ export default function Component() {
               <CardContent
                 className="flex-1 flex flex-col min-h-0 h-full p-4"
                 style={{ height: undefined }}
-                data-name="lyrics-card-content"
+                data-name="lyrics-editor-card-content"
               >
                 {lyricsPreviewMode ? (
                   <div
@@ -658,7 +665,7 @@ export default function Component() {
                     style={{ minHeight: "320px" }}
                     data-name="lyrics-preview-mode-container"
                   >
-                    <div className="space-y-6">
+                    <div className="space-y-6" data-name="lyrics-preview-mode-list">
                       {sections.map((section) => (
                         <div
                           key={section.id}
@@ -689,7 +696,7 @@ export default function Component() {
                   </div>
                 ) : (
                   <ScrollArea className="flex-1 min-h-0 h-full scrollbar-hide" style={{ minHeight: "320px" }} data-name="lyrics-scrollarea">
-                    <div className="space-y-6 h-full">
+                    <div className="space-y-6 h-full" data-name="lyrics-scrollarea-list">
                       {sections.map((section) => (
                         <div
                           key={section.id}
@@ -786,14 +793,14 @@ export default function Component() {
           </div>
 
           {/* Full Song Lyrics Preview */}
-          <div className="lg:col-span-1 flex flex-col min-h-0">
-            <Card className="flex-1 flex flex-col min-h-0">
-              <CardHeader className="pb-3 flex-shrink-0">
-                <CardTitle className="text-sm">Full Song Preview</CardTitle>
+          <div className="lg:col-span-1 flex flex-col min-h-0" data-name="lyrics-preview-col">
+            <Card className="flex-1 flex flex-col min-h-0" data-name="lyrics-preview-card">
+              <CardHeader className="pb-3 flex-shrink-0" data-name="lyrics-preview-card-header">
+                <CardTitle className="text-sm" data-name="lyrics-preview-card-title">Full Song Preview</CardTitle>
               </CardHeader>
-              <CardContent className="flex-1 min-h-0">
-                <ScrollArea className="h-full scrollbar-hide">
-                  <div className="space-y-4">
+              <CardContent className="flex-1 min-h-0" data-name="lyrics-preview-card-content">
+                <ScrollArea className="h-full scrollbar-hide" data-name="lyrics-preview-scrollarea">
+                  <div className="space-y-4" data-name="lyrics-preview-scrollarea-list">
                     {sections.map((section) => (
                       <div
                         key={section.id}

@@ -91,65 +91,25 @@ export const SongMetadata = ({ metadata, onMetadataUpdate, selectedLanguage = 'e
   };
 
   return (
-    <Card className="p-4 mb-6">
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div>
-          <Label htmlFor="song-title" className="text-sm font-medium">
-            {t(selectedLanguage, 'songTitle')}
-          </Label>
-          <Input
-            id="song-title"
-            value={metadata.title}
-            onChange={(e) => handleUpdate('title', e.target.value)}
-            placeholder={t(selectedLanguage, 'enterSongTitle')}
-            className="mt-1"
-          />
+    <Card className="p-4 mb-6 bg-card text-foreground border" data-name="song-metadata-root">
+      <form className="space-y-4" data-name="song-metadata-form">
+        <div className="flex flex-col gap-2" data-name="song-metadata-field-title">
+          <Label htmlFor="title">Title</Label>
+          <Input id="title" value={metadata.title} onChange={e => onMetadataUpdate({ ...metadata, title: e.target.value })} />
         </div>
-        
-        <div>
-          <Label htmlFor="artist" className="text-sm font-medium">
-            {t(selectedLanguage, 'artist')}
-          </Label>
-          <Input
-            id="artist"
-            value={metadata.artist}
-            onChange={(e) => handleUpdate('artist', e.target.value)}
-            placeholder={t(selectedLanguage, 'enterArtistName')}
-            className="mt-1"
-          />
+        <div className="flex flex-col gap-2" data-name="song-metadata-field-artist">
+          <Label htmlFor="artist">Artist</Label>
+          <Input id="artist" value={metadata.artist} onChange={e => onMetadataUpdate({ ...metadata, artist: e.target.value })} />
         </div>
-        
-        <div>
-          <Label htmlFor="composer" className="text-sm font-medium">
-            {t(selectedLanguage, 'composer')}
-          </Label>
-          <Input
-            id="composer"
-            value={metadata.composer}
-            onChange={(e) => handleUpdate('composer', e.target.value)}
-            placeholder={t(selectedLanguage, 'enterComposerName')}
-            className="mt-1"
-          />
+        <div className="flex flex-col gap-2" data-name="song-metadata-field-composer">
+          <Label htmlFor="composer">Composer</Label>
+          <Input id="composer" value={metadata.composer} onChange={e => onMetadataUpdate({ ...metadata, composer: e.target.value })} />
         </div>
-        
-        <div>
-          <Label htmlFor="key" className="text-sm font-medium">
-            {t(selectedLanguage, 'key')}
-          </Label>
-          <Select value={metadata.key} onValueChange={(value) => handleUpdate('key', value)}>
-            <SelectTrigger className="mt-1">
-              <SelectValue placeholder={t(selectedLanguage, 'selectKey')} />
-            </SelectTrigger>
-            <SelectContent>
-              {musicalKeys.map(key => (
-                <SelectItem key={key} value={key}>
-                  {key}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+        <div className="flex flex-col gap-2" data-name="song-metadata-field-key">
+          <Label htmlFor="key">Key</Label>
+          <Input id="key" value={metadata.key} onChange={e => onMetadataUpdate({ ...metadata, key: e.target.value })} />
         </div>
-      </div>
+      </form>
     </Card>
   );
 };
