@@ -460,101 +460,67 @@ export const SongwriterTool = () => {
         </div>
 
         {/* Step 3: Timeline */}
-        <div className={`space-y-4 transition-opacity duration-300 ${!audioFile ? 'opacity-50 pointer-events-none' : ''}`}>
-          <div className="flex items-center gap-3">
-            <div className={`w-8 h-8 rounded-full flex items-center justify-center font-semibold text-sm ${
-              audioFile ? 'bg-music-primary text-white' : 'bg-muted text-muted-foreground'
-            }`}>
-              3
-            </div>
-            <div className="flex items-center gap-2">
-              <Clock className={`w-5 h-5 ${audioFile ? 'text-music-primary' : 'text-muted-foreground'}`} />
-              <h2 className="text-xl font-semibold text-foreground">{t(selectedLanguage, 'songTimeline')}</h2>
-            </div>
-          </div>
-          
-          <Card className="bg-card/80 backdrop-blur-xl border-0 shadow-card">
-            <div className="p-2">
-              {audioFile ? (
-                <UnifiedTimeline
-                  sections={sections}
-                  currentTime={currentTime}
-                  duration={duration}
-                  currentSection={currentSection}
-                  onSectionClick={jumpToSection}
-                  onSectionsUpdate={handleSectionUpdate}
-                  setCurrentSection={handleCurrentSectionChange}
-                  audioRef={audioRef}
-                  audioUrl={audioUrl}
-                  isPlaying={isPlaying}
-                  setIsPlaying={setIsPlaying}
-                  setCurrentTime={setCurrentTime}
-                  setDuration={setDuration}
-                  audioFile={audioFile}
-                  selectedLanguage={selectedLanguage}
-                />
-              ) : (
-                <div className="text-center py-8">
-                  <p className="text-muted-foreground">{t(selectedLanguage, 'uploadToCreateTimeline')}</p>
-                </div>
-              )}
-            </div>
-          </Card>
-        </div>
-
         {/* Step 4: Lyrics Editor & Preview */}
-        <div className={`space-y-4 transition-opacity duration-300 ${!audioFile ? 'opacity-50 pointer-events-none' : ''}`}>
-          <div className="flex items-center gap-3">
-            <div className={`w-8 h-8 rounded-full flex items-center justify-center font-semibold text-sm ${
-              audioFile ? 'bg-music-primary text-white' : 'bg-muted text-muted-foreground'
-            }`}>
-              4
+        {/* --- v0.dev Apple Music UI will be inserted here --- */}
+        <div className="w-full min-h-[600px] bg-white rounded-2xl shadow-sm border border-gray-100 p-6 flex flex-col">
+          {/* Header */}
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
+                <div className="w-3 h-3 bg-white rounded-sm"></div>
+              </div>
+              <div>
+                <h3 className="font-semibold text-gray-900 text-sm">Song Production</h3>
+                <p className="text-xs text-gray-500">
+                  {duration ? `${Math.floor(duration / 60)}:${(duration % 60).toString().padStart(2, '0')}` : '0:00'} • {sections.length} sections
+                </p>
+              </div>
             </div>
-            <div className="flex items-center gap-2">
-              <Edit3 className={`w-5 h-5 ${audioFile ? 'text-music-primary' : 'text-muted-foreground'}`} />
-              <h2 className="text-xl font-semibold text-foreground">{t(selectedLanguage, 'writeLyrics')}</h2>
+            <div className="flex items-center gap-4">
+              <div className="text-right">
+                <div className="font-mono text-lg font-medium text-gray-900">
+                  {currentTime ? `${Math.floor(currentTime / 60)}:${(Math.floor(currentTime) % 60).toString().padStart(2, '0')}` : '0:00'}
+                </div>
+              </div>
+              <div className="flex items-center gap-1">
+                <button onClick={() => { if (audioRef.current) audioRef.current.currentTime = 0; setCurrentTime(0); }} className="h-8 w-8 hover:bg-gray-100 rounded-full flex items-center justify-center">
+                  <svg className="h-4 w-4 text-gray-600" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M19 20l-7-8 7-8" /></svg>
+                </button>
+                <button onClick={() => { if (audioRef.current) { isPlaying ? audioRef.current.pause() : audioRef.current.play(); setIsPlaying(!isPlaying); } }} className={`h-9 w-9 rounded-full flex items-center justify-center ${isPlaying ? 'bg-gray-900 hover:bg-gray-800' : 'bg-blue-500 hover:bg-blue-600'}`}> {isPlaying ? (<svg className="h-4 w-4 text-white" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><rect x="6" y="4" width="4" height="16" /><rect x="14" y="4" width="4" height="16" /></svg>) : (<svg className="h-4 w-4 text-white ml-0.5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><polygon points="5,3 19,12 5,21 5,3" /></svg>)} </button>
+                <button onClick={() => { if (audioRef.current) audioRef.current.currentTime = duration; setCurrentTime(duration); }} className="h-8 w-8 hover:bg-gray-100 rounded-full flex items-center justify-center">
+                  <svg className="h-4 w-4 text-gray-600" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M5 4l7 8-7 8" /></svg>
+                </button>
+              </div>
             </div>
           </div>
-          
-          {audioFile ? (
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              {/* Left Column - LyricsEditor */}
-              <Card className="bg-card/80 backdrop-blur-xl border-0 shadow-card">
-                <div className="p-6">
-                  <div className="flex items-center gap-2 mb-4">
-                    <Edit3 className="w-4 h-4 text-music-primary" />
-                    <h3 className="font-semibold text-foreground">{t(selectedLanguage, 'editLyrics')}</h3>
-                  </div>
-                  <LyricsEditor
-                    section={currentSectionData}
-                    onLyricsUpdate={handleLyricsUpdate}
-                    selectedLanguage={selectedLanguage}
-                    rhymeGroups={rhymeGroups}
-                    setRhymeGroups={setRhymeGroups}
-                    onLyricsChange={(lines, rhymeGroups) => setLyricsPreview({ lines, rhymeGroups })}
-                  />
-                </div>
-              </Card>
-
-              {/* Right Column - Lyrics Preview */}
-              <Card className="bg-card/80 backdrop-blur-xl border-0 shadow-card">
-                <div className="p-6">
-                  <div className="flex items-center gap-2 mb-4">
-                    <Eye className="w-4 h-4 text-music-primary" />
-                    <h3 className="font-semibold text-foreground">{t(selectedLanguage, 'preview')}</h3>
-                  </div>
-                  <LyricsPreview lines={lyricsPreview.lines} rhymeGroups={lyricsPreview.rhymeGroups} />
-                </div>
-              </Card>
+          {/* Timeline/Sections */}
+          <div className="mb-6">
+            <div className="flex items-center justify-between mb-4">
+              <h4 className="text-sm font-medium text-gray-700">Song Sections</h4>
+              <button onClick={() => handleSectionUpdate([...sections, { id: Date.now().toString(), name: 'New Section', startTime: duration, endTime: duration + 30, lyrics: '' }])} className="h-7 text-xs bg-transparent border border-gray-300 rounded px-3 py-1 flex items-center gap-1 hover:bg-gray-100">
+                <svg className="h-3 w-3 mr-1" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" /></svg>
+                Add Section
+              </button>
             </div>
-          ) : (
-            <Card className="bg-card/80 backdrop-blur-xl border-0 shadow-card">
-              <div className="text-center py-12">
-                <Edit3 className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-                <p className="text-muted-foreground">{t(selectedLanguage, 'uploadToWriteLyrics')}</p>
-              </div>
-            </Card>
-          )}
+            <div className="flex gap-2 overflow-x-auto pb-2 px-1 scrollbar-hide h-20">
+              {sections.map((section, index) => {
+                const durationSec = section.endTime - section.startTime;
+                const minWidth = 140;
+                const maxWidth = 220;
+                const proportionalWidth = Math.max(minWidth, Math.min(maxWidth, (durationSec / 30) * 140));
+                return (
+                  <div key={section.id} className="flex items-center flex-shrink-0">
+                    <div className={`relative rounded-xl border-2 transition-all duration-200 cursor-pointer ${currentSection === section.id ? 'bg-blue-50 border-blue-400 text-blue-700 shadow-lg' : 'bg-gray-50 border-gray-200 hover:border-gray-300 hover:shadow-sm'}`} style={{ width: `${proportionalWidth}px` }} onClick={() => jumpToSection(section.id)}>
+                      <div className="p-3 pl-8 pr-10 h-16 flex items-center">
+                        <div className="font-medium text-sm mb-1 truncate" title={section.name}>{section.name}</div>
+                        <div className="text-xs text-gray-500">{`${Math.floor(section.startTime / 60)}:${(section.startTime % 60).toString().padStart(2, '0')} - ${Math.floor(section.endTime / 60)}:${(section.endTime % 60).toString().padStart(2, '0')}`}</div>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
         </div>
       </div>
     </div>
