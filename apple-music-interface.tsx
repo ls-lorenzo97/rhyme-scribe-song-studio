@@ -647,11 +647,16 @@ export default function Component() {
                   )}
                 </div>
               </CardHeader>
-              <CardContent className="flex-1 min-h-0 p-4" style={{ height: "60vh" }}>
+              <CardContent
+                className="flex-1 flex flex-col min-h-0 h-full p-4"
+                style={{ height: undefined }}
+                data-name="lyrics-card-content"
+              >
                 {lyricsPreviewMode ? (
                   <div
                     className="overflow-y-auto scrollbar-hide bg-gray-50 rounded-lg p-4"
                     style={{ minHeight: "320px" }}
+                    data-name="lyrics-preview-mode-container"
                   >
                     <div className="space-y-6">
                       {sections.map((section) => (
@@ -683,7 +688,7 @@ export default function Component() {
                     </div>
                   </div>
                 ) : (
-                  <ScrollArea className="scrollbar-hide" style={{ minHeight: "320px" }}>
+                  <ScrollArea className="flex-1 min-h-0 h-full scrollbar-hide" style={{ minHeight: "320px" }} data-name="lyrics-scrollarea">
                     <div className="space-y-6 h-full">
                       {sections.map((section) => (
                         <div
