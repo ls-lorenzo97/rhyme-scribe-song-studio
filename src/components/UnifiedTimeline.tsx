@@ -343,14 +343,12 @@ export const UnifiedTimeline = ({
 
   const getSectionColors = (index: number) => {
     const colors = [
-      'bg-blue-500/20 border-blue-500/30 text-blue-700',
-      'bg-green-500/20 border-green-500/30 text-green-700',
-      'bg-yellow-500/20 border-yellow-500/30 text-yellow-700',
-      'bg-red-500/20 border-red-500/30 text-red-700',
-      'bg-purple-500/20 border-purple-500/30 text-purple-700',
-      'bg-pink-500/20 border-pink-500/30 text-pink-700',
-      'bg-indigo-500/20 border-indigo-500/30 text-indigo-700',
-      'bg-orange-500/20 border-orange-500/30 text-orange-700'
+      'border-blue-400 text-blue-700',
+      'border-green-400 text-green-700',
+      'border-orange-400 text-orange-700',
+      'border-purple-400 text-purple-700',
+      'border-pink-400 text-pink-700',
+      'border-indigo-400 text-indigo-700',
     ];
     return colors[index % colors.length];
   };
@@ -488,273 +486,83 @@ export const UnifiedTimeline = ({
     setDragOverSectionId(null);
   };
 
-  // Show empty state if no sections
-  if (sections.length === 0) {
-    return (
-      <div className="space-y-6">
-        <audio ref={audioRef} src={audioUrl} />
-        
-        {/* Header */}
-        <div className="flex items-center justify-between">
-          <div>
-            <h3 className="text-xl font-semibold text-foreground mb-2">{t(selectedLanguage, 'songSections')}</h3>
-            <p className="text-sm text-muted-foreground">Create sections to organize your song structure</p>
-          </div>
-          <Button onClick={handleAddSection} variant="primary">
-            <Plus className="w-4 h-4 mr-2" />
-            {t(selectedLanguage, 'addSection')}
-          </Button>
-        </div>
-
-        {/* Empty state */}
-        <div className="text-center py-16 bg-card/50 rounded-xl border border-border">
-          <Music className="w-16 h-16 mx-auto mb-4 text-muted-foreground/50" />
-          <h4 className="text-lg font-medium text-foreground mb-2">No sections defined</h4>
-          <p className="text-muted-foreground mb-6">Add sections to see your song timeline</p>
-          <Button onClick={handleAddSection} variant="outline">
-            <Plus className="w-4 h-4 mr-2" />
-            Create First Section
-          </Button>
-        </div>
-      </div>
-    );
-  }
-
   return (
-    <div className="space-y-6">
-      <audio ref={audioRef} src={audioUrl} />
-      
-      {/* Header with controls */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h3 className="text-xl font-semibold text-foreground mb-2">{t(selectedLanguage, 'songSections')}</h3>
-          <p className="text-sm text-muted-foreground">
-            Navigate through your song • {formatTime(currentTime)} / {formatTime(duration)}
-          </p>
-        </div>
-        
-        <div className="flex items-center gap-3">
-          {/* Navigation controls */}
-          <div className="flex items-center gap-1">
-            <Button 
-              variant="outline" 
-              size="sm"
-              onClick={() => navigateToSection('prev')}
-              disabled={!currentSection || sortedSections.findIndex(s => s.id === currentSection) === 0}
-            >
-              <SkipBack className="w-4 h-4" />
-            </Button>
-            
-            <Button 
-              variant={isPlaying ? "secondary" : "primary"}
-              size="sm"
-              onClick={handlePlay}
-            >
-              {isPlaying ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
-            </Button>
-            
-            <Button 
-              variant="outline" 
-              size="sm"
-              onClick={() => navigateToSection('next')}
-              disabled={!currentSection || sortedSections.findIndex(s => s.id === currentSection) === sortedSections.length - 1}
-            >
-              <SkipForward className="w-4 h-4" />
+    <div className="w-full">
+      <div className="flex items-center justify-between mb-2">
+        <h4 className="text-base font-semibold text-foreground">Song Sections</h4>
+        <Button onClick={handleAddSection} size="sm" variant="outline" className="h-8 text-xs">
+          <Plus className="h-4 w-4 mr-1" />
+          Add Section
+        </Button>
+      </div>
+      <div className="flex gap-3 overflow-x-auto pb-2 px-1">
+        {sortedSections.length === 0 ? (
+          <div className="flex flex-col items-center justify-center min-w-[170px] max-w-[220px] rounded-xl border-2 border-dashed bg-white shadow-sm px-4 py-8 text-muted-foreground">
+            <Music className="w-10 h-10 mb-2 opacity-40" />
+            <div className="font-semibold text-sm mb-1">No sections defined</div>
+            <div className="text-xs mb-2">Add sections to see your song timeline</div>
+            <Button onClick={handleAddSection} size="sm" variant="outline">
+              <Plus className="h-4 w-4 mr-1" />
+              Create First Section
             </Button>
           </div>
-
-          <Button onClick={handleAddSection} variant="primary">
-            <Plus className="w-4 h-4 mr-2" />
-            {t(selectedLanguage, 'addSection')}
-          </Button>
-        </div>
-      </div>
-
-      {/* Overall Progress Bar */}
-      <div className="relative bg-card/50 rounded-xl p-4 border border-border">
-        <div className="h-3 bg-muted/30 rounded-full relative overflow-hidden mb-2">
-          <div
-            className="absolute top-0 left-0 h-full bg-gradient-to-r from-primary/60 to-primary rounded-full transition-all duration-500 ease-out"
-            style={{ width: `${progressPercentage}%` }}
-          />
-          <div
-            className="absolute top-0 w-1 h-full bg-primary shadow-lg transition-all duration-200"
-            style={{ left: `${progressPercentage}%` }}
-          />
-        </div>
-        <div className="flex justify-between text-xs text-muted-foreground">
-          <span>0:00</span>
-          <span>{formatTime(duration)}</span>
-        </div>
-      </div>
-
-      {/* Sections List */}
-      <div className="grid gap-3">
-        {sortedSections.map((section, index) => {
-          const isActive = currentSection === section.id;
-          const sectionProgress = duration > 0 ? 
-            Math.max(0, Math.min(100, ((currentTime - section.startTime) / (section.endTime - section.startTime)) * 100)) : 0;
-          const isPlaying = currentTime >= section.startTime && currentTime <= section.endTime;
-          const colorClass = getSectionColors(index);
-
-          return (
-            <Card 
-              key={section.id}
-              className={cn(
-                "relative overflow-hidden cursor-pointer transition-all duration-300 hover:shadow-lg group border-2",
-                isActive ? "ring-2 ring-primary shadow-lg scale-[1.02] border-primary" : "hover:scale-[1.01] border-border"
-              )}
-              onClick={() => { setCurrentSection(section.id); onSectionClick(section.id); }}
-            >
-              {/* Section Progress Background */}
-              {isPlaying && (
-                <div
-                  className="absolute inset-0 bg-primary/10 transition-all duration-200"
-                  style={{ width: `${sectionProgress}%` }}
-                />
-              )}
-
-              <div className="p-4 relative">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-4 flex-1">
-                    {/* Color indicator */}
-                    <div className={cn("w-4 h-4 rounded-full flex-shrink-0", colorClass)} />
-                    
-                    {/* Section Info */}
-                    <div className="flex-1 min-w-0">
-                      <h4 className={cn(
-                        "font-semibold text-lg truncate mb-1",
-                        isActive ? "text-primary" : "text-foreground"
-                      )}>
-                        {section.name}
-                      </h4>
-                      <div className="flex items-center space-x-3 text-sm text-muted-foreground">
-                        <span>{formatTime(section.startTime)} - {formatTime(section.endTime)}</span>
-                        <span>•</span>
-                        <span>{formatTime(section.endTime - section.startTime)} duration</span>
-                        {section.lyrics && (
-                          <>
-                            <span>•</span>
-                            <span className="truncate max-w-[200px]">
-                              {section.lyrics.split('\n')[0] || 'No lyrics'}
-                            </span>
-                          </>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* Actions */}
-                    <div className="flex items-center space-x-2" onClick={(e) => e.stopPropagation()}>
-                      <Button
-                        variant={isActive ? "primary" : "outline"}
-                        size="sm"
-                        className="opacity-0 group-hover:opacity-100 transition-opacity duration-200"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setCurrentSection(section.id);
-                          onSectionClick(section.id);
-                        }}
-                      >
-                        <Play className="w-4 h-4 mr-1" />
-                        {t(selectedLanguage, 'play')}
+        ) : (
+          sortedSections.map((section, idx) => {
+            const isActive = currentSection === section.id;
+            const colorClass = getSectionColors(idx);
+            const linesCount = section.lyrics ? section.lyrics.split('\n').filter(l => l.trim()).length : 0;
+            return (
+              <div
+                key={section.id}
+                className={`relative flex flex-col min-w-[170px] max-w-[220px] rounded-xl border-2 bg-white shadow-sm px-4 py-3 transition-all duration-200
+                  ${colorClass} ${isActive ? 'ring-2 ring-primary/60 border-primary bg-primary/10' : 'hover:border-gray-300'}
+                `}
+                draggable
+                onDragStart={e => handleDragStart(e, section.id)}
+                onDragEnd={handleDragEnd}
+                onDragOver={e => handleDragOver(e, idx)}
+                onDrop={e => handleDrop(e, idx)}
+              >
+                {/* Drag handle + menu */}
+                <div className="flex items-center justify-between mb-1">
+                  <span className="flex items-center gap-1 text-xs text-gray-400">
+                    <GripVertical className="h-4 w-4" />
+                  </span>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" size="icon" className="h-6 w-6 text-gray-400 hover:text-gray-700">
+                        <MoreHorizontal className="h-4 w-4" />
                       </Button>
-
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="sm" className="opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-                            <MoreHorizontal className="w-4 h-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="w-40 bg-card border-border">
-                          <DropdownMenuItem onClick={() => handleEditSection(section)} className="cursor-pointer">
-                            <Edit3 className="h-4 w-4 mr-2" />
-                            {t(selectedLanguage, 'editSection')}
-                          </DropdownMenuItem>
-                          <DropdownMenuItem
-                            onClick={() => handleDeleteSection(section.id)}
-                            className="cursor-pointer text-destructive focus:text-destructive"
-                          >
-                            <Trash2 className="h-4 w-4 mr-2" />
-                            {t(selectedLanguage, 'deleteSection')}
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </div>
-                  </div>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" className="w-36">
+                      <DropdownMenuItem onClick={() => handleEditSection(section)}>
+                        <Edit3 className="h-4 w-4 mr-2" /> Edit
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => handleDeleteSection(section.id)} className="text-red-600">
+                        <Trash2 className="h-4 w-4 mr-2" /> Delete
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
                 </div>
-
-                {/* Section Progress Bar (when playing) */}
-                {isPlaying && (
-                  <div className="mt-3">
-                    <div className="h-1 bg-muted/50 rounded-full overflow-hidden">
-                      <div
-                        className="h-full bg-primary rounded-full transition-all duration-200"
-                        style={{ width: `${sectionProgress}%` }}
-                      />
-                    </div>
-                  </div>
-                )}
+                {/* Section name */}
+                <div className="font-semibold text-sm truncate mb-1">{section.name}</div>
+                {/* Time */}
+                <div className="text-xs text-gray-500 mb-1">
+                  {formatTime(section.startTime)} - {formatTime(section.endTime)}
+                </div>
+                {/* Lines */}
+                <div className="text-xs text-gray-400">{linesCount} lines</div>
+                {/* Color bar */}
+                <div className={`absolute bottom-0 left-0 right-0 h-1 rounded-b-xl ${colorClass} opacity-60`} />
               </div>
-            </Card>
-          );
-        })}
+            );
+          })
+        )}
       </div>
-      {/* Dialog per edit/add section (come prima) */}
-      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="bg-card/95 backdrop-blur-xl border-border/20">
-          <DialogHeader>
-            <DialogTitle className="text-xl">
-              {editingSection ? t(selectedLanguage, 'editSectionTitle') : t(selectedLanguage, 'addNewSectionTitle')}
-            </DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4">
-            <div>
-              <Label htmlFor="section-name" className="text-foreground">{t(selectedLanguage, 'sectionName')}</Label>
-              <Input
-                id="section-name"
-                value={formData.name}
-                onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
-                placeholder={t(selectedLanguage, 'sectionNamePlaceholder')}
-                className="bg-background/50 border-border/50"
-              />
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="start-time" className="text-foreground">{t(selectedLanguage, 'startTime')}</Label>
-                <Input
-                  id="start-time"
-                  type="number"
-                  value={formData.startTime === 0 ? '' : formData.startTime}
-                  onChange={(e) => setFormData(prev => ({ ...prev, startTime: e.target.value === '' ? 0 : Number(e.target.value) }))}
-                  onFocus={(e) => e.target.select()}
-                  className="bg-background/50 border-border/50"
-                  placeholder="0"
-                />
-              </div>
-              <div>
-                <Label htmlFor="end-time" className="text-foreground">{t(selectedLanguage, 'endTime')}</Label>
-                <Input
-                  id="end-time"
-                  type="number"
-                  value={formData.endTime === 0 ? '' : formData.endTime}
-                  onChange={(e) => setFormData(prev => ({ ...prev, endTime: e.target.value === '' ? 0 : Number(e.target.value) }))}
-                  onFocus={(e) => e.target.select()}
-                  className="bg-background/50 border-border/50"
-                  placeholder="0"
-                />
-              </div>
-            </div>
-            <div className="flex justify-end space-x-2 pt-4">
-              <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
-                {t(selectedLanguage, 'cancel')}
-              </Button>
-              <Button onClick={handleSaveSection} className="bg-[color:var(--accent)] text-white">
-                {editingSection ? t(selectedLanguage, 'update') : t(selectedLanguage, 'add')} {t(selectedLanguage, 'sectionName').toLowerCase()}
-              </Button>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
+      <div className="flex justify-between text-xs text-muted-foreground">
+        <span>0:00</span>
+        <span>{formatTime(duration)}</span>
+      </div>
     </div>
   );
 };
