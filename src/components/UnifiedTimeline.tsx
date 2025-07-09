@@ -7,7 +7,9 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { SongSection } from './SongwriterTool';
-import { Play, Pause, Plus, Edit3, Trash2, Clock, Music, SkipBack, SkipForward } from 'lucide-react';
+import { Play, Pause, Plus, Edit3, Trash2, SkipBack, SkipForward, GripVertical, MoreHorizontal } from 'lucide-react';
+import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 
 interface UnifiedTimelineProps {
   sections: SongSection[];
@@ -47,7 +49,8 @@ const translations: Record<string, Record<string, string>> = {
     cancel: 'Cancel',
     update: 'Update',
     add: 'Add',
-    startTimeBeforeEndTime: 'Start time must be before end time'
+    startTimeBeforeEndTime: 'Start time must be before end time',
+    songSections: 'Song Sections'
   },
   it: {
     previousSection: 'Sezione precedente',
@@ -67,7 +70,8 @@ const translations: Record<string, Record<string, string>> = {
     cancel: 'Annulla',
     update: 'Aggiorna',
     add: 'Aggiungi',
-    startTimeBeforeEndTime: 'Il tempo di inizio deve essere prima del tempo di fine'
+    startTimeBeforeEndTime: 'Il tempo di inizio deve essere prima del tempo di fine',
+    songSections: 'Sezioni della canzone'
   },
   es: {
     previousSection: 'Sección anterior',
@@ -87,7 +91,8 @@ const translations: Record<string, Record<string, string>> = {
     cancel: 'Cancelar',
     update: 'Actualizar',
     add: 'Agregar',
-    startTimeBeforeEndTime: 'El tiempo de inicio debe ser antes del tiempo de fin'
+    startTimeBeforeEndTime: 'El tiempo de inicio debe ser antes del tiempo de fin',
+    songSections: 'Secciones de la canción'
   },
   fr: {
     previousSection: 'Section précédente',
@@ -107,7 +112,8 @@ const translations: Record<string, Record<string, string>> = {
     cancel: 'Annuler',
     update: 'Mettre à jour',
     add: 'Ajouter',
-    startTimeBeforeEndTime: 'Le temps de début doit être avant le temps de fin'
+    startTimeBeforeEndTime: 'Le temps de début doit être avant le temps de fin',
+    songSections: 'Sections de la chanson'
   },
   de: {
     previousSection: 'Vorheriger Abschnitt',
@@ -127,7 +133,8 @@ const translations: Record<string, Record<string, string>> = {
     cancel: 'Abbrechen',
     update: 'Aktualisieren',
     add: 'Hinzufügen',
-    startTimeBeforeEndTime: 'Startzeit muss vor Endzeit liegen'
+    startTimeBeforeEndTime: 'Startzeit muss vor Endzeit liegen',
+    songSections: 'Liedabschnitte'
   }
 };
 
@@ -422,10 +429,68 @@ export const UnifiedTimeline = ({
     return [...sections].sort((a, b) => a.startTime - b.startTime);
   }, [sections]);
 
-  // New vertical timeline design
-  if (sections.length === 0) {
-    return (
-      <div className="space-y-6">
+  // Modern Pill-Style Timeline Section
+  const [draggedSectionId, setDraggedSectionId] = useState<string | null>(null);
+  const [dragOverSectionId, setDragOverSectionId] = useState<string | null>(null);
+
+  const handleDragStart = (e: React.DragEvent, sectionId: string) => {
+    setDraggedSectionId(sectionId);
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/plain', sectionId);
+  };
+
+  const handleDragEnd = () => {
+    setDraggedSectionId(null);
+    setDragOverSectionId(null);
+  };
+
+  // Fix for dataset typing
+  type DivWithDataset = HTMLDivElement & { dataset: DOMStringMap };
+
+  const handleDragOver = (e: React.DragEvent, index: number) => {
+    e.preventDefault();
+    setDragOverSectionId(null);
+    const targetElement = e.currentTarget as DivWithDataset;
+    if (targetElement && targetElement.dataset && targetElement.dataset.sectionId) {
+      setDragOverSectionId(targetElement.dataset.sectionId);
+    }
+  };
+
+  const handleDrop = (e: React.DragEvent, index: number) => {
+    e.preventDefault();
+    const draggedId = draggedSectionId;
+    const overId = dragOverSectionId;
+
+    if (!draggedId || !overId) return;
+
+    const draggedSection = sections.find(s => s.id === draggedId);
+    const overSection = sections.find(s => s.id === overId);
+
+    if (!draggedSection || !overSection) return;
+
+    const draggedIndex = sections.findIndex(s => s.id === draggedId);
+    const overIndex = sections.findIndex(s => s.id === overId);
+
+    if (draggedIndex === -1 || overIndex === -1) return;
+
+    const newSections = [...sections];
+    const [movedSection] = newSections.splice(draggedIndex, 1);
+    newSections.splice(overIndex, 0, movedSection);
+
+    onSectionsUpdate(newSections);
+
+    setDraggedSectionId(null);
+    setDragOverSectionId(null);
+  };
+
+  const handleDragLeave = () => {
+    setDragOverSectionId(null);
+  };
+
+  return (
+    <div className="w-full flex items-center gap-2 bg-background rounded-xl p-2 shadow-sm border border-border/40 overflow-x-auto">
+      {/* Player left-aligned, compact, centered */}
+      <div className="flex flex-col items-center justify-center mr-2 min-w-[80px]">
         <audio ref={audioRef} src={audioUrl} />
         
         {/* Header with Add Section */}
@@ -451,190 +516,90 @@ export const UnifiedTimeline = ({
           </Button>
         </div>
       </div>
-    );
-  }
-
-  return (
-    <div className="space-y-6">
-      <audio ref={audioRef} src={audioUrl} />
-      
-      {/* Header with Controls */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h3 className="text-2xl font-bold text-foreground">Song Timeline</h3>
-          <p className="text-muted-foreground">
-            Navigate through your song structure • Current: {formatTime(currentTime)} / {formatTime(duration)}
-          </p>
-        </div>
-        <div className="flex items-center gap-3">
-          {/* Audio Controls */}
-          <div className="flex items-center gap-2 bg-card/50 rounded-lg p-2">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => navigateToSection('prev')}
-              className="h-8 w-8 p-0"
-            >
-              <SkipBack className="w-4 h-4" />
-            </Button>
-            <Button
-              variant={isPlaying ? "secondary" : "primary"}
-              size="sm"
-              onClick={handlePlay}
-              className="h-8 w-8 p-0"
-            >
-              {isPlaying ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
-            </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => navigateToSection('next')}
-              className="h-8 w-8 p-0"
-            >
-              <SkipForward className="w-4 h-4" />
-            </Button>
-          </div>
-          <Button onClick={handleAddSection} className="bg-primary text-primary-foreground hover:bg-primary/90">
-            <Plus className="w-4 h-4 mr-2" />
+      {/* Modern Pill-Style Timeline Section */}
+      <div className="mb-4">
+        <div className="flex items-center justify-between mb-3">
+          <h4 className="text-sm font-medium text-gray-700">{t(selectedLanguage, 'songSections') || 'Song Sections'}</h4>
+          <Button onClick={handleAddSection} size="sm" variant="outline" className="h-7 text-xs bg-transparent">
+            <Plus className="h-3 w-3 mr-1" />
             {t(selectedLanguage, 'addSection')}
           </Button>
         </div>
-      </div>
 
-      {/* Progress Bar */}
-      <div className="bg-card/30 rounded-lg p-4 border border-border/30">
-        <div className="h-2 bg-muted/30 rounded-full relative overflow-hidden mb-2">
-          <div
-            className="absolute top-0 left-0 h-full bg-gradient-to-r from-primary/60 to-primary rounded-full transition-all duration-300"
-            style={{ width: `${progressPercentage}%` }}
-          />
-          <div
-            className="absolute top-0 w-1 h-full bg-primary shadow-lg transition-all duration-100"
-            style={{ left: `${progressPercentage}%` }}
-          />
-        </div>
-        <div className="flex justify-between text-xs text-muted-foreground">
-          <span>0:00</span>
-          <span>{formatTime(duration)}</span>
-        </div>
-      </div>
+        <div className="flex gap-2 overflow-x-auto pb-2 px-1" onDragLeave={handleDragLeave}>
+          {sortedSections.map((section, index) => {
+            const duration = section.endTime - section.startTime;
+            const minWidth = 140;
+            const maxWidth = 220;
+            const proportionalWidth = Math.max(minWidth, Math.min(maxWidth, (duration / 30) * 140));
+            const isActive = currentSection === section.id;
+            const colorClass = getSectionColors(index); // your color function
 
-      {/* Vertical Section Timeline */}
-      <div className="space-y-3">
-        {sortedSections.map((section, index) => {
-          const isActive = currentSection === section.id;
-          const sectionProgress = duration > 0 ? 
-            Math.max(0, Math.min(100, ((currentTime - section.startTime) / (section.endTime - section.startTime)) * 100)) : 0;
-          const isPlaying = currentTime >= section.startTime && currentTime <= section.endTime;
-
-          return (
-            <Card 
-              key={section.id}
-              className={cn(
-                "relative overflow-hidden cursor-pointer transition-all duration-200 hover:shadow-md group border-l-4",
-                isActive ? "ring-1 ring-primary/30 shadow-lg border-l-primary" : "border-l-muted hover:border-l-primary/50"
-              )}
-              onClick={() => onSectionClick(section.id)}
-            >
-              {/* Progress overlay */}
-              {isPlaying && (
+            return (
+              <div key={section.id} className="flex items-center flex-shrink-0">
                 <div
-                  className="absolute inset-0 bg-primary/5 transition-all duration-200"
-                  style={{ width: `${sectionProgress}%` }}
-                />
-              )}
+                  draggable
+                  onDragStart={e => handleDragStart(e, section.id)}
+                  onDragEnd={handleDragEnd}
+                  onDragOver={e => handleDragOver(e, index)}
+                  onDrop={e => handleDrop(e, index)}
+                  className={`relative rounded-xl border-2 transition-all duration-200 cursor-pointer
+                    ${isActive ? `${colorClass} text-white border-white/30 shadow-lg` : `bg-gray-50 text-gray-700 border-gray-200 hover:border-gray-300 hover:shadow-sm`}
+                  `}
+                  style={{ width: `${proportionalWidth}px` }}
+                >
+                  {/* Drag handle */}
+                  <div className={`absolute left-2 top-1/2 transform -translate-y-1/2 opacity-60 hover:opacity-100 transition-opacity ${isActive ? "text-white/70" : "text-gray-400"}`}>
+                    <GripVertical className="h-4 w-4" />
+                  </div>
 
-              <div className="p-4 relative">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-4 flex-1">
-                    {/* Section indicator */}
-                    <div className={cn(
-                      "w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold",
-                      isActive ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"
-                    )}>
-                      {index + 1}
-                    </div>
-                    
-                    {/* Section info */}
-                    <div className="flex-1 min-w-0">
-                      <h4 className={cn(
-                        "font-semibold text-lg truncate",
-                        isActive ? "text-primary" : "text-foreground"
-                      )}>
+                  {/* Actions menu */}
+                  <div className="absolute top-2 right-2 z-10">
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button
+                          variant="outline"
+                          size="icon"
+                          className={`h-6 w-6 ${isActive ? "text-white/70 hover:text-white hover:bg-white/20" : "text-gray-400 hover:text-gray-600 hover:bg-gray-200"}`}
+                        >
+                          <MoreHorizontal className="h-3 w-3" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end" className="w-40">
+                        <DropdownMenuItem onClick={() => handleEditSection(section)} className="cursor-pointer">
+                          <Edit3 className="h-4 w-4 mr-2" />
+                          {t(selectedLanguage, 'editSection')}
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          onClick={() => handleDeleteSection(section.id)}
+                          className="cursor-pointer text-red-600 focus:text-red-600"
+                        >
+                          <Trash2 className="h-4 w-4 mr-2" />
+                          {t(selectedLanguage, 'deleteSection')}
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </div>
+
+                  {/* Section content */}
+                  <div className="p-3 pl-8 pr-10">
+                    <button onClick={() => { setCurrentSection(section.id); onSectionClick(section.id); }} className="w-full text-left">
+                      <div className="font-medium text-sm mb-1 truncate" title={section.name}>
                         {section.name}
-                      </h4>
-                      <div className="flex items-center space-x-3 text-sm text-muted-foreground">
-                        <div className="flex items-center space-x-1">
-                          <Clock className="w-3 h-3" />
-                          <span>{formatTime(section.startTime)} - {formatTime(section.endTime)}</span>
-                        </div>
-                        <span>•</span>
-                        <span>{formatTime(section.endTime - section.startTime)} duration</span>
-                        {section.lyrics && (
-                          <>
-                            <span>•</span>
-                            <span className="truncate max-w-[200px]">
-                              {section.lyrics.split('\n')[0] || 'No lyrics'}
-                            </span>
-                          </>
-                        )}
                       </div>
-                    </div>
-
-                    {/* Action buttons */}
-                    <div className="flex items-center space-x-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          onSectionClick(section.id);
-                        }}
-                        className="h-8 w-8 p-0"
-                      >
-                        <Play className="w-4 h-4" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleEditSection(section);
-                        }}
-                        className="h-8 w-8 p-0"
-                      >
-                        <Edit3 className="w-4 h-4" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleDeleteSection(section.id);
-                        }}
-                        className="h-8 w-8 p-0 text-destructive hover:text-destructive"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
-                    </div>
+                      <div className={`text-xs ${isActive ? "text-white/80" : "text-gray-500"}`}>
+                        {formatTime(section.startTime)} - {formatTime(section.endTime)}
+                      </div>
+                    </button>
                   </div>
+
+                  {/* Color indicator strip */}
+                  <div className={`absolute bottom-0 left-0 right-0 h-1 ${colorClass} rounded-b-xl`} />
                 </div>
-
-                {/* Section progress bar */}
-                {isPlaying && (
-                  <div className="mt-3">
-                    <div className="h-1 bg-muted/50 rounded-full overflow-hidden">
-                      <div
-                        className="h-full bg-primary rounded-full transition-all duration-200"
-                        style={{ width: `${sectionProgress}%` }}
-                      />
-                    </div>
-                  </div>
-                )}
               </div>
-            </Card>
-          );
-        })}
+            );
+          })}
+        </div>
       </div>
       {/* Dialog per edit/add section (come prima) */}
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
