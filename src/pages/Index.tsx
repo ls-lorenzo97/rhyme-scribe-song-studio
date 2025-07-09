@@ -1,2 +1,2 @@
-import NewSongwriterUI from './NewSongwriterUI';
-export default NewSongwriterUI;
+import Component from '../../apple-music-interface';
+export default Component;
