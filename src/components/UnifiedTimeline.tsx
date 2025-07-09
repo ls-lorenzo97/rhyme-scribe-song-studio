@@ -7,7 +7,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { SongSection } from './SongwriterTool';
-import { Play, Pause, Plus, Edit3, Trash2, SkipBack, SkipForward, GripVertical, MoreHorizontal } from 'lucide-react';
+import { Play, Pause, Plus, Edit3, Trash2, SkipBack, SkipForward, GripVertical, MoreHorizontal, Music } from 'lucide-react';
 import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 
@@ -165,6 +165,7 @@ export const UnifiedTimeline = ({
   audioFile,
   selectedLanguage = 'en'
 }: UnifiedTimelineProps) => {
+  console.log('MUSIC ICON:', Music);
   const [editingSection, setEditingSection] = useState<SongSection | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [formData, setFormData] = useState({
