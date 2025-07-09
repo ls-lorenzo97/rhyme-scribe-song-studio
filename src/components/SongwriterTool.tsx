@@ -354,12 +354,12 @@ export const SongwriterTool = () => {
   }, [currentTime, sections, currentSection, setSongData]);
 
   return (
-    <div className="min-h-screen bg-gradient-primary">
+    <div className="min-h-screen bg-gradient-primary" data-name="songwriter-root">
       {/* Apple Music-style Header */}
-      <div className="bg-card/80 backdrop-blur-xl border-b border-border/20 sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-6 py-4">
-          <div className="flex items-center justify-between">
-            <div>
+      <div className="bg-card/80 backdrop-blur-xl border-b border-border/20 sticky top-0 z-50" data-name="main-header">
+        <div className="max-w-7xl mx-auto px-6 py-4" data-name="main-header-inner">
+          <div className="flex items-center justify-between" data-name="main-header-row">
+            <div data-name="main-header-title-group">
               <h1 className="text-3xl font-semibold text-foreground">
                 {t(selectedLanguage, 'music')}
               </h1>
@@ -367,7 +367,7 @@ export const SongwriterTool = () => {
                 {t(selectedLanguage, 'songwriterStudio')}
               </p>
             </div>
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-4" data-name="main-header-actions">
               <LanguageSelector 
                 selectedLanguage={selectedLanguage}
                 onLanguageChange={handleLanguageChange}
@@ -378,6 +378,7 @@ export const SongwriterTool = () => {
                 onClick={handleRestoreLastSession}
                 className="flex items-center gap-2 px-4 py-2 rounded-lg border border-border bg-background hover:bg-muted transition-colors text-foreground text-sm font-medium shadow-sm"
                 title={t(selectedLanguage, 'openLastSession')}
+                data-name="open-last-session-btn"
               >
                 <History className="w-4 h-4" />
                 {t(selectedLanguage, 'openLastSession')}
@@ -387,27 +388,25 @@ export const SongwriterTool = () => {
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-6 py-8 space-y-8">
+      <div className="max-w-7xl mx-auto px-6 py-8 space-y-8" data-name="songwriter-content">
         {/* Step 1: Audio Upload - Always Visible */}
-        <div className="space-y-4">
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 bg-music-primary rounded-full flex items-center justify-center text-white font-semibold text-sm">
-              1
-            </div>
-            <div className="flex items-center gap-2">
+        <div className="space-y-4" data-name="audio-upload-section">
+          <div className="flex items-center gap-3" data-name="audio-upload-header">
+            <div className="w-8 h-8 bg-music-primary rounded-full flex items-center justify-center text-white font-semibold text-sm" data-name="audio-upload-step">1</div>
+            <div className="flex items-center gap-2" data-name="audio-upload-title">
               <Upload className="w-5 h-5 text-music-primary" />
               <h2 className="text-xl font-semibold text-foreground">{t(selectedLanguage, 'uploadYourSong')}</h2>
             </div>
           </div>
           
-          <Card className="bg-card/80 backdrop-blur-xl border-0 shadow-card">
-            <div className="p-6">
+          <Card className="bg-card/80 backdrop-blur-xl border-0 shadow-card" data-name="audio-upload-card">
+            <div className="p-6" data-name="audio-upload-card-inner">
               {!audioFile ? (
                 <AudioUpload onFileUpload={handleFileUpload} selectedLanguage={selectedLanguage} />
               ) : (
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 bg-music-primary/20 rounded-xl flex items-center justify-center">
+                <div className="flex items-center justify-between" data-name="audio-upload-file-row">
+                  <div className="flex items-center gap-4" data-name="audio-upload-file-info">
+                    <div className="w-12 h-12 bg-music-primary/20 rounded-xl flex items-center justify-center" data-name="audio-upload-file-icon">
                       <Music className="w-6 h-6 text-music-primary" />
                     </div>
                     <div>
@@ -420,6 +419,7 @@ export const SongwriterTool = () => {
                   <button
                     onClick={handleFileChange}
                     className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+                    data-name="audio-upload-change-btn"
                   >
                     {t(selectedLanguage, 'changeFile')}
                   </button>
@@ -430,21 +430,19 @@ export const SongwriterTool = () => {
         </div>
 
         {/* Step 2: Song Metadata */}
-        <div className={`space-y-4 transition-opacity duration-300 ${!audioFile ? 'opacity-50 pointer-events-none' : ''}`}>
-          <div className="flex items-center gap-3">
+        <div className={`space-y-4 transition-opacity duration-300 ${!audioFile ? 'opacity-50 pointer-events-none' : ''}`} data-name="song-metadata-section">
+          <div className="flex items-center gap-3" data-name="song-metadata-header">
             <div className={`w-8 h-8 rounded-full flex items-center justify-center font-semibold text-sm ${
               audioFile ? 'bg-music-primary text-white' : 'bg-muted text-muted-foreground'
-            }`}>
-              2
-            </div>
-            <div className="flex items-center gap-2">
+            }`} data-name="song-metadata-step">2</div>
+            <div className="flex items-center gap-2" data-name="song-metadata-title">
               <Music className={`w-5 h-5 ${audioFile ? 'text-music-primary' : 'text-muted-foreground'}`} />
               <h2 className="text-xl font-semibold text-foreground">{t(selectedLanguage, 'songInformation')}</h2>
             </div>
           </div>
           
-          <Card className="bg-card/80 backdrop-blur-xl border-0 shadow-card">
-            <div className="p-6">
+          <Card className="bg-card/80 backdrop-blur-xl border-0 shadow-card" data-name="song-metadata-card">
+            <div className="p-6" data-name="song-metadata-card-inner">
               {audioFile ? (
                 <SongMetadata
                   metadata={metadata}
@@ -452,7 +450,7 @@ export const SongwriterTool = () => {
                   selectedLanguage={selectedLanguage}
                 />
               ) : (
-                <div className="text-center py-8">
+                <div className="text-center py-8" data-name="song-metadata-locked">
                   <p className="text-muted-foreground">{t(selectedLanguage, 'uploadToUnlockInfo')}</p>
                 </div>
               )}
@@ -461,15 +459,15 @@ export const SongwriterTool = () => {
         </div>
 
         {/* Main Flex Layout for Editor + Sidebar */}
-        <div className="flex flex-row gap-6 relative">
+        <div className="flex flex-row gap-6 relative" data-name="editor-layout-row">
           {/* Main Editor Area */}
-          <div className="flex-1 min-w-0">
+          <div className="flex-1 min-w-0" data-name="editor-main-area">
             {/* --- v0.dev Apple Music UI will be inserted here --- */}
-            <div className="w-full min-h-[600px] bg-white rounded-2xl shadow-sm border border-gray-100 p-6 flex flex-col">
+            <div className="w-full min-h-[600px] bg-white rounded-2xl shadow-sm border border-gray-100 p-6 flex flex-col" data-name="editor-main-card">
               {/* Header */}
-              <div className="flex items-center justify-between mb-6">
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
+              <div className="flex items-center justify-between mb-6" data-name="editor-main-header">
+                <div className="flex items-center gap-3" data-name="editor-main-header-left">
+                  <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center" data-name="editor-main-header-icon">
                     <div className="w-3 h-3 bg-white rounded-sm"></div>
                   </div>
                   <div>

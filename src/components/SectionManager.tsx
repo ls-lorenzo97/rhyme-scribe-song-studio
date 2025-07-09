@@ -130,8 +130,8 @@ export const SectionManager = ({
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
+    <div className="space-y-6" data-name="section-manager-root">
+      <div className="flex items-center justify-between" data-name="section-manager-header">
         <div>
           <h3 className="text-lg font-semibold text-foreground">Song Sections</h3>
           <p className="text-sm text-muted-foreground">
@@ -141,7 +141,7 @@ export const SectionManager = ({
         
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogTrigger asChild>
-            <Button onClick={handleAddSection} className="bg-gradient-primary shadow-glow">
+            <Button onClick={handleAddSection} className="bg-gradient-primary shadow-glow" data-name="section-manager-add-btn">
               <ArrowUp className="w-4 h-4 mr-2" />
               Add Section
             </Button>
@@ -203,7 +203,7 @@ export const SectionManager = ({
         </Dialog>
       </div>
 
-      <div className="grid gap-3">
+      <div className="grid gap-3" data-name="section-manager-list">
         {sections.map((section, index) => (
           <Card
             key={section.id}
@@ -214,6 +214,7 @@ export const SectionManager = ({
                 : getSectionColor(index)
             )}
             onClick={() => setCurrentSection(section.id)}
+            data-name={`section-card-${section.id}`}
           >
             <div className="flex items-center justify-between">
               <div className="flex-1">
@@ -256,7 +257,7 @@ export const SectionManager = ({
       </div>
 
       {sections.length === 0 && (
-        <div className="text-center p-8 text-muted-foreground">
+        <div className="text-center p-8 text-muted-foreground" data-name="section-manager-empty">
           <div className="w-12 h-12 mx-auto mb-4 opacity-50 text-2xl">⏱</div>
           <p>No sections yet. Add your first section to get started!</p>
         </div>

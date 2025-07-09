@@ -487,21 +487,21 @@ export const UnifiedTimeline = ({
   };
 
   return (
-    <div className="w-full">
-      <div className="flex items-center justify-between mb-2">
+    <div className="w-full" data-name="timeline-root">
+      <div className="flex items-center justify-between mb-2" data-name="timeline-header">
         <h4 className="text-base font-semibold text-foreground">Song Sections</h4>
-        <Button onClick={handleAddSection} size="sm" variant="outline" className="h-8 text-xs">
+        <Button onClick={handleAddSection} size="sm" variant="outline" className="h-8 text-xs" data-name="timeline-add-section-btn">
           <Plus className="h-4 w-4 mr-1" />
           Add Section
         </Button>
       </div>
-      <div className="flex gap-3 overflow-x-auto pb-2 px-1">
+      <div className="flex gap-3 overflow-x-auto pb-2 px-1" data-name="timeline-section-list">
         {sortedSections.length === 0 ? (
-          <div className="flex flex-col items-center justify-center min-w-[170px] max-w-[220px] rounded-xl border-2 border-dashed bg-white shadow-sm px-4 py-8 text-muted-foreground">
+          <div className="flex flex-col items-center justify-center min-w-[170px] max-w-[220px] rounded-xl border-2 border-dashed bg-white shadow-sm px-4 py-8 text-muted-foreground" data-name="timeline-empty-pill">
             <Music className="w-10 h-10 mb-2 opacity-40" />
             <div className="font-semibold text-sm mb-1">No sections defined</div>
             <div className="text-xs mb-2">Add sections to see your song timeline</div>
-            <Button onClick={handleAddSection} size="sm" variant="outline">
+            <Button onClick={handleAddSection} size="sm" variant="outline" data-name="timeline-create-first-section-btn">
               <Plus className="h-4 w-4 mr-1" />
               Create First Section
             </Button>
@@ -540,6 +540,7 @@ export const UnifiedTimeline = ({
                   onSectionClick(section.id);
                 }}
                 style={{ cursor: 'pointer' }}
+                data-name={`timeline-section-pill-${section.id}`}
               >
                 {/* Section progress bar (background fill) */}
                 {sectionProgress > 0 && sectionProgress < 100 && (
