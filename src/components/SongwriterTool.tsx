@@ -23,7 +23,7 @@ const countryToLanguage: Record<string, string> = {
   // Add more mappings as needed
 };
 
-// Simple translation dictionary
+// Comprehensive translation dictionary for all 5 languages
 const translations: Record<string, Record<string, string>> = {
   en: {
     music: 'Music',
@@ -44,7 +44,9 @@ const translations: Record<string, Record<string, string>> = {
     noSessionFound: 'No Session Found',
     noSessionFoundDesc: 'No previous session was found in your browser.',
     error: 'Error',
-    errorRestore: 'Could not restore the last session.'
+    errorRestore: 'Could not restore the last session.',
+    sessionRestoredAudioMissing: 'Session restored, but audio file needs to be re-uploaded.',
+    sessionRestoredAudioMissingDesc: 'Please upload the same audio file to continue working.'
   },
   it: {
     music: 'Musica',
@@ -65,9 +67,79 @@ const translations: Record<string, Record<string, string>> = {
     noSessionFound: 'Nessuna Sessione',
     noSessionFoundDesc: 'Nessuna sessione precedente trovata nel browser.',
     error: 'Errore',
-    errorRestore: 'Impossibile ripristinare la sessione.'
+    errorRestore: 'Impossibile ripristinare la sessione.',
+    sessionRestoredAudioMissing: 'Sessione ripristinata, ma il file audio deve essere ricaricato.',
+    sessionRestoredAudioMissingDesc: 'Carica lo stesso file audio per continuare a lavorare.'
+  },
+  es: {
+    music: 'Música',
+    songwriterStudio: 'Estudio de Composición',
+    uploadYourSong: 'Sube tu Canción',
+    changeFile: 'Cambiar Archivo',
+    songInformation: 'Información de la Canción',
+    uploadToUnlockInfo: 'Sube una canción para desbloquear la información',
+    songTimeline: 'Línea de Tiempo',
+    uploadToCreateTimeline: 'Sube una canción para crear secciones',
+    writeLyrics: 'Escribir Letra',
+    editLyrics: 'Editar Letra',
+    preview: 'Vista Previa',
+    uploadToWriteLyrics: 'Sube una canción para empezar a escribir la letra',
+    openLastSession: 'Abrir Última Sesión',
+    sessionRestored: 'Sesión Restaurada',
+    sessionRestoredDesc: 'Tu última sesión ha sido cargada.',
+    noSessionFound: 'No se Encontró Sesión',
+    noSessionFoundDesc: 'No se encontró ninguna sesión anterior en tu navegador.',
+    error: 'Error',
+    errorRestore: 'No se pudo restaurar la sesión.',
+    sessionRestoredAudioMissing: 'Sesión restaurada, pero el archivo de audio debe ser subido de nuevo.',
+    sessionRestoredAudioMissingDesc: 'Sube el mismo archivo de audio para continuar trabajando.'
+  },
+  fr: {
+    music: 'Musique',
+    songwriterStudio: 'Studio de Composition',
+    uploadYourSong: 'Télécharger votre Chanson',
+    changeFile: 'Changer de Fichier',
+    songInformation: 'Informations de la Chanson',
+    uploadToUnlockInfo: 'Téléchargez une chanson pour débloquer les informations',
+    songTimeline: 'Chronologie de la Chanson',
+    uploadToCreateTimeline: 'Téléchargez une chanson pour créer des sections',
+    writeLyrics: 'Écrire les Paroles',
+    editLyrics: 'Modifier les Paroles',
+    preview: 'Aperçu',
+    uploadToWriteLyrics: 'Téléchargez une chanson pour commencer à écrire les paroles',
+    openLastSession: 'Ouvrir la Dernière Session',
+    sessionRestored: 'Session Restaurée',
+    sessionRestoredDesc: 'Votre dernière session a été chargée.',
+    noSessionFound: 'Aucune Session Trouvée',
+    noSessionFoundDesc: 'Aucune session précédente trouvée dans votre navigateur.',
+    error: 'Erreur',
+    errorRestore: 'Impossible de restaurer la session.',
+    sessionRestoredAudioMissing: 'Session restaurée, mais le fichier audio doit être retéléchargé.',
+    sessionRestoredAudioMissingDesc: 'Téléchargez le même fichier audio pour continuer à travailler.'
+  },
+  de: {
+    music: 'Musik',
+    songwriterStudio: 'Songwriter Studio',
+    uploadYourSong: 'Lied hochladen',
+    changeFile: 'Datei ändern',
+    songInformation: 'Liedinformationen',
+    uploadToUnlockInfo: 'Laden Sie ein Lied hoch, um Informationen freizuschalten',
+    songTimeline: 'Lied-Timeline',
+    uploadToCreateTimeline: 'Laden Sie ein Lied hoch, um Abschnitte zu erstellen',
+    writeLyrics: 'Text schreiben',
+    editLyrics: 'Text bearbeiten',
+    preview: 'Vorschau',
+    uploadToWriteLyrics: 'Laden Sie ein Lied hoch, um mit dem Schreiben des Textes zu beginnen',
+    openLastSession: 'Letzte Sitzung öffnen',
+    sessionRestored: 'Sitzung wiederhergestellt',
+    sessionRestoredDesc: 'Ihre letzte Sitzung wurde geladen.',
+    noSessionFound: 'Keine Sitzung gefunden',
+    noSessionFoundDesc: 'Keine vorherige Sitzung in Ihrem Browser gefunden.',
+    error: 'Fehler',
+    errorRestore: 'Sitzung konnte nicht wiederhergestellt werden.',
+    sessionRestoredAudioMissing: 'Sitzung wiederhergestellt, aber Audiodatei muss erneut hochgeladen werden.',
+    sessionRestoredAudioMissingDesc: 'Laden Sie dieselbe Audiodatei hoch, um weiterzuarbeiten.'
   }
-  // Add more languages as needed
 };
 
 function t(lang: string, key: string): string {
@@ -92,6 +164,7 @@ interface SongData {
   sections: SongSection[];
   selectedLanguage: string;
   currentSection: string | null;
+  audioFileName?: string; // Store filename for session restore
 }
 
 export const SongwriterTool = () => {
@@ -155,6 +228,9 @@ export const SongwriterTool = () => {
     setAudioUrl(url);
     console.log('Audio URL created:', url);
     
+    // Save filename to session data
+    setSongData(prev => ({ ...prev, audioFileName: file.name }));
+    
     // Create default sections only if none exist
     if (sections.length === 0) {
       const defaultSections: SongSection[] = [
@@ -211,11 +287,21 @@ export const SongwriterTool = () => {
     try {
       const lastSession = localStorage.getItem('songwriter-data');
       if (lastSession) {
-        setSongData(JSON.parse(lastSession));
-        toast({
-          title: t(selectedLanguage, 'sessionRestored'),
-          description: t(selectedLanguage, 'sessionRestoredDesc'),
-        });
+        const sessionData = JSON.parse(lastSession);
+        setSongData(sessionData);
+        
+        // Check if we have audio filename but no audio file
+        if (sessionData.audioFileName && !audioFile) {
+          toast({
+            title: t(selectedLanguage, 'sessionRestoredAudioMissing'),
+            description: t(selectedLanguage, 'sessionRestoredAudioMissingDesc'),
+          });
+        } else {
+          toast({
+            title: t(selectedLanguage, 'sessionRestored'),
+            description: t(selectedLanguage, 'sessionRestoredDesc'),
+          });
+        }
       } else {
         toast({
           title: t(selectedLanguage, 'noSessionFound'),
@@ -249,7 +335,7 @@ export const SongwriterTool = () => {
                 selectedLanguage={selectedLanguage}
                 onLanguageChange={handleLanguageChange}
               />
-              <ExportDialog sections={sections} audioFile={audioFile} />
+              <ExportDialog sections={sections} audioFile={audioFile} selectedLanguage={selectedLanguage} />
               {/* Open Last Session Button */}
               <button
                 onClick={handleRestoreLastSession}
@@ -280,7 +366,7 @@ export const SongwriterTool = () => {
           <Card className="bg-card/80 backdrop-blur-xl border-0 shadow-card">
             <div className="p-6">
               {!audioFile ? (
-                <AudioUpload onFileUpload={handleFileUpload} />
+                <AudioUpload onFileUpload={handleFileUpload} selectedLanguage={selectedLanguage} />
               ) : (
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-4">
@@ -330,6 +416,7 @@ export const SongwriterTool = () => {
                 <SongMetadata
                   metadata={metadata}
                   onMetadataUpdate={handleMetadataUpdate}
+                  selectedLanguage={selectedLanguage}
                 />
               ) : (
                 <div className="text-center py-8">

@@ -1,13 +1,57 @@
-import { useState, useCallback } from 'react';
+import React, { useState, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
-import { ArrowUp, Music } from 'lucide-react';
+import { Music, ArrowUp } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface AudioUploadProps {
   onFileUpload: (file: File) => void;
+  selectedLanguage?: string;
 }
 
-export const AudioUpload = ({ onFileUpload }: AudioUploadProps) => {
+// Translation dictionary for AudioUpload
+const translations: Record<string, Record<string, string>> = {
+  en: {
+    chooseYourSong: 'Choose Your Song',
+    dragDropBrowse: 'Drag and drop or click to browse your music files',
+    dropAudioFile: 'Drop your audio file here',
+    supportedFormats: 'MP3, AAC, WAV, FLAC, OGG',
+    browseFiles: 'Browse Files'
+  },
+  it: {
+    chooseYourSong: 'Scegli la tua Canzone',
+    dragDropBrowse: 'Trascina e rilascia o clicca per sfogliare i file musicali',
+    dropAudioFile: 'Rilascia qui il tuo file audio',
+    supportedFormats: 'MP3, AAC, WAV, FLAC, OGG',
+    browseFiles: 'Sfoglia File'
+  },
+  es: {
+    chooseYourSong: 'Elige tu Canción',
+    dragDropBrowse: 'Arrastra y suelta o haz clic para explorar tus archivos de música',
+    dropAudioFile: 'Suelta tu archivo de audio aquí',
+    supportedFormats: 'MP3, AAC, WAV, FLAC, OGG',
+    browseFiles: 'Explorar Archivos'
+  },
+  fr: {
+    chooseYourSong: 'Choisissez votre Chanson',
+    dragDropBrowse: 'Glissez-déposez ou cliquez pour parcourir vos fichiers musicaux',
+    dropAudioFile: 'Déposez votre fichier audio ici',
+    supportedFormats: 'MP3, AAC, WAV, FLAC, OGG',
+    browseFiles: 'Parcourir les Fichiers'
+  },
+  de: {
+    chooseYourSong: 'Wählen Sie Ihr Lied',
+    dragDropBrowse: 'Ziehen und ablegen oder klicken Sie, um Ihre Musikdateien zu durchsuchen',
+    dropAudioFile: 'Legen Sie hier Ihre Audiodatei ab',
+    supportedFormats: 'MP3, AAC, WAV, FLAC, OGG',
+    browseFiles: 'Dateien Durchsuchen'
+  }
+};
+
+function t(lang: string, key: string): string {
+  return translations[lang]?.[key] || translations['en'][key] || key;
+}
+
+export const AudioUpload = ({ onFileUpload, selectedLanguage = 'en' }: AudioUploadProps) => {
   const [isDragOver, setIsDragOver] = useState(false);
 
   const handleDragOver = useCallback((e: React.DragEvent) => {
@@ -25,8 +69,10 @@ export const AudioUpload = ({ onFileUpload }: AudioUploadProps) => {
     setIsDragOver(false);
     
     const files = Array.from(e.dataTransfer.files);
-    const allowedFormats = ['audio/mp3', 'audio/mpeg', 'audio/aac', 'audio/wav', 'audio/flac', 'audio/ogg'];
-    const audioFile = files.find(file => allowedFormats.includes(file.type));
+    const audioFile = files.find(file => 
+      file.type.startsWith('audio/') || 
+      /\.(mp3|aac|wav|flac|ogg)$/i.test(file.name)
+    );
     
     if (audioFile) {
       onFileUpload(audioFile);
@@ -50,10 +96,10 @@ export const AudioUpload = ({ onFileUpload }: AudioUploadProps) => {
       
       <div>
         <h3 className="text-lg font-semibold text-foreground mb-2">
-          Choose Your Song
+          {t(selectedLanguage, 'chooseYourSong')}
         </h3>
         <p className="text-muted-foreground text-sm">
-          Drag and drop or click to browse your music files
+          {t(selectedLanguage, 'dragDropBrowse')}
         </p>
       </div>
 
@@ -72,10 +118,10 @@ export const AudioUpload = ({ onFileUpload }: AudioUploadProps) => {
           <ArrowUp className="w-10 h-10 text-muted-foreground mx-auto" />
           <div>
             <p className="text-base font-medium text-foreground mb-1">
-              Drop your audio file here
+              {t(selectedLanguage, 'dropAudioFile')}
             </p>
             <p className="text-xs text-muted-foreground">
-              MP3, AAC, WAV, FLAC, OGG
+              {t(selectedLanguage, 'supportedFormats')}
             </p>
           </div>
           <Button 
@@ -83,7 +129,7 @@ export const AudioUpload = ({ onFileUpload }: AudioUploadProps) => {
             size="sm" 
             className="bg-music-primary hover:bg-music-primary/90 text-white rounded-lg px-6 py-2 font-medium"
           >
-            Browse Files
+            {t(selectedLanguage, 'browseFiles')}
           </Button>
         </div>
       </div>

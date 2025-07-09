@@ -18,6 +18,54 @@ interface LyricsEditorProps {
   onLyricsChange?: (lines: string[], rhymeGroups: RhymeGroup[]) => void;
 }
 
+// Translation dictionary for LyricsEditor
+const translations: Record<string, Record<string, string>> = {
+  en: {
+    lyrics: 'Lyrics',
+    writeOnePhrasePerLine: 'Write one phrase per line. The last word of each line will be colored if it rhymes.',
+    phrase: 'Phrase',
+    suggestRhymes: 'Suggest rhymes for the last word',
+    addLine: 'Add Line',
+    removeLine: 'Remove Line'
+  },
+  it: {
+    lyrics: 'Testo',
+    writeOnePhrasePerLine: 'Scrivi una frase per riga. L\'ultima parola di ogni riga sarà colorata se fa rima.',
+    phrase: 'Frase',
+    suggestRhymes: 'Suggerisci rime per l\'ultima parola',
+    addLine: 'Aggiungi Riga',
+    removeLine: 'Rimuovi Riga'
+  },
+  es: {
+    lyrics: 'Letra',
+    writeOnePhrasePerLine: 'Escribe una frase por línea. La última palabra de cada línea se coloreará si rima.',
+    phrase: 'Frase',
+    suggestRhymes: 'Sugerir rimas para la última palabra',
+    addLine: 'Agregar Línea',
+    removeLine: 'Quitar Línea'
+  },
+  fr: {
+    lyrics: 'Paroles',
+    writeOnePhrasePerLine: 'Écrivez une phrase par ligne. Le dernier mot de chaque ligne sera coloré s\'il rime.',
+    phrase: 'Phrase',
+    suggestRhymes: 'Suggérer des rimes pour le dernier mot',
+    addLine: 'Ajouter une Ligne',
+    removeLine: 'Supprimer la Ligne'
+  },
+  de: {
+    lyrics: 'Text',
+    writeOnePhrasePerLine: 'Schreiben Sie einen Satz pro Zeile. Das letzte Wort jeder Zeile wird eingefärbt, wenn es reimt.',
+    phrase: 'Satz',
+    suggestRhymes: 'Reime für das letzte Wort vorschlagen',
+    addLine: 'Zeile Hinzufügen',
+    removeLine: 'Zeile Entfernen'
+  }
+};
+
+function t(lang: string, key: string): string {
+  return translations[lang]?.[key] || translations['en'][key] || key;
+}
+
 export const LyricsEditor = ({ section, onLyricsUpdate, selectedLanguage = 'en', rhymeGroups, setRhymeGroups, onLyricsChange }: LyricsEditorProps) => {
   const [lines, setLines] = useState<string[]>([]);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
@@ -65,44 +113,50 @@ export const LyricsEditor = ({ section, onLyricsUpdate, selectedLanguage = 'en',
     setLines([...lines, '']);
   };
 
+  const removeLine = (idx: number) => {
+    if (lines.length > 1) {
+      const newLines = lines.filter((_, i) => i !== idx);
+      setLines(newLines);
+      if (section) {
+        onLyricsUpdate(section.id, newLines.join('\n'));
+      }
+    }
+  };
+
   const handleOpenSuggestions = (idx: number) => {
     const words = lines[idx].trim().split(/\s+/);
     const lastWord = words[words.length-1] || '';
     setSuggestIdx(idx);
     setSuggestWord(lastWord);
   };
-  const handleSuggestionSelect = (word: string) => {
-    if (suggestIdx === null) return;
-    const newLines = [...lines];
-    newLines[suggestIdx] = newLines[suggestIdx] + (newLines[suggestIdx].endsWith(' ') ? '' : ' ') + word;
-    setLines(newLines);
-    setSuggestIdx(null);
-    setSuggestWord('');
-    // Optionally trigger rhyme analysis
-    handleLineChange(suggestIdx, newLines[suggestIdx]);
+
+  const getRhymeColor = (idx: number) => {
+    const rhymeColors = ['#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6', '#06B6D4'];
+    return rhymeColors[idx % rhymeColors.length];
   };
 
-  // Get rhyme letter for each line
-  const getRhymeLetter = (lineIdx: number) => {
-    const group = rhymeGroups.find(g => g.positions.some(pos => pos.line === lineIdx));
-    if (!group) return '';
-    // Assign a letter based on group index
-    const idx = rhymeGroups.indexOf(group);
-    return String.fromCharCode(65 + idx); // A, B, C...
+  const getRhymeLetter = (idx: number) => {
+    const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+    return letters[idx % letters.length];
   };
-  const getRhymeColor = (lineIdx: number) => {
-    const group = rhymeGroups.find(g => g.positions.some(pos => pos.line === lineIdx));
-    return group ? group.color : 'hsl(var(--muted))';
-  };
+
+  if (!section) {
+    return (
+      <div className="text-center p-8 text-muted-foreground">
+        <h3 className="text-lg font-medium mb-2">{t(selectedLanguage, 'lyrics')}</h3>
+        <p>Select a section to start writing lyrics</p>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-3">
       <div>
         <h3 className="text-base font-semibold text-foreground mb-1">
-          {section?.name} Lyrics
+          {section?.name} {t(selectedLanguage, 'lyrics')}
         </h3>
         <p className="text-xs text-muted-foreground mb-2">
-          Scrivi una frase per riga. L'ultima parola di ogni riga sarà colorata se fa rima.
+          {t(selectedLanguage, 'writeOnePhrasePerLine')}
         </p>
       </div>
       <div className="space-y-1">
@@ -123,7 +177,7 @@ export const LyricsEditor = ({ section, onLyricsUpdate, selectedLanguage = 'en',
                 type="text"
                 value={line}
                 onChange={e => handleLineChange(idx, e.target.value)}
-                placeholder={`Frase ${idx + 1}`}
+                placeholder={`${t(selectedLanguage, 'phrase')} ${idx + 1}`}
                 className="flex-1 h-8 px-2 py-1 rounded border bg-background text-sm focus:ring-2 focus:ring-music-primary outline-none"
                 autoComplete="off"
                 spellCheck={false}
@@ -132,21 +186,35 @@ export const LyricsEditor = ({ section, onLyricsUpdate, selectedLanguage = 'en',
                 type="button"
                 className="ml-1 px-1 py-0.5 rounded bg-muted/40 border text-xs text-muted-foreground hover:bg-music-primary/10"
                 onClick={() => handleOpenSuggestions(idx)}
-                title="Suggerisci rime per l'ultima parola"
+                title={t(selectedLanguage, 'suggestRhymes')}
               >
                 💡
               </button>
+              {lines.length > 1 && (
+                <button
+                  type="button"
+                  className="ml-1 px-1 py-0.5 rounded bg-destructive/10 border border-destructive/20 text-xs text-destructive hover:bg-destructive/20"
+                  onClick={() => removeLine(idx)}
+                  title={t(selectedLanguage, 'removeLine')}
+                >
+                  ×
+                </button>
+              )}
             </div>
           );
         })}
-        <button
-          type="button"
-          onClick={addLine}
-          className="mt-1 px-3 py-1 rounded bg-music-primary text-white text-sm font-semibold hover:bg-music-primary/80 transition"
-        >
-          + Aggiungi Frase
-        </button>
       </div>
+      
+      <Button
+        type="button"
+        variant="outline"
+        size="sm"
+        onClick={addLine}
+        className="w-full"
+      >
+        + {t(selectedLanguage, 'addLine')}
+      </Button>
+
       {suggestIdx !== null && (
         <div className="fixed inset-0 bg-black/30 flex items-center justify-center z-50">
           <div className="bg-background rounded-lg shadow-lg p-6 w-full max-w-md relative">
@@ -159,16 +227,20 @@ export const LyricsEditor = ({ section, onLyricsUpdate, selectedLanguage = 'en',
             <RhymeSuggestions
               selectedWord={suggestWord}
               language={selectedLanguage}
-              onSuggestionSelect={handleSuggestionSelect}
+              onSuggestionSelect={(word: string) => {
+                if (suggestIdx === null) return;
+                const newLines = [...lines];
+                newLines[suggestIdx] = newLines[suggestIdx] + (newLines[suggestIdx].endsWith(' ') ? '' : ' ') + word;
+                setLines(newLines);
+                setSuggestIdx(null);
+                setSuggestWord('');
+                // Optionally trigger rhyme analysis
+                handleLineChange(suggestIdx, newLines[suggestIdx]);
+              }}
             />
           </div>
         </div>
       )}
-      {isAnalyzing && (
-        <div className="text-music-primary text-xs flex items-center gap-2 mt-1">
-          <span className="w-4 h-4">✨</span> Analisi delle rime in corso...
-        </div>
-      )}
     </div>
   );
-}
+};

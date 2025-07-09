@@ -14,6 +14,65 @@ export interface SongMetadata {
 interface SongMetadataProps {
   metadata: SongMetadata;
   onMetadataUpdate: (metadata: SongMetadata) => void;
+  selectedLanguage?: string;
+}
+
+// Translation dictionary for SongMetadata
+const translations: Record<string, Record<string, string>> = {
+  en: {
+    songTitle: 'Song Title',
+    enterSongTitle: 'Enter song title...',
+    artist: 'Artist',
+    enterArtistName: 'Enter artist name...',
+    composer: 'Composer',
+    enterComposerName: 'Enter composer name...',
+    key: 'Key',
+    selectKey: 'Select key...'
+  },
+  it: {
+    songTitle: 'Titolo Canzone',
+    enterSongTitle: 'Inserisci il titolo della canzone...',
+    artist: 'Artista',
+    enterArtistName: 'Inserisci il nome dell\'artista...',
+    composer: 'Compositore',
+    enterComposerName: 'Inserisci il nome del compositore...',
+    key: 'Tonalità',
+    selectKey: 'Seleziona tonalità...'
+  },
+  es: {
+    songTitle: 'Título de la Canción',
+    enterSongTitle: 'Ingresa el título de la canción...',
+    artist: 'Artista',
+    enterArtistName: 'Ingresa el nombre del artista...',
+    composer: 'Compositor',
+    enterComposerName: 'Ingresa el nombre del compositor...',
+    key: 'Tonalidad',
+    selectKey: 'Selecciona tonalidad...'
+  },
+  fr: {
+    songTitle: 'Titre de la Chanson',
+    enterSongTitle: 'Entrez le titre de la chanson...',
+    artist: 'Artiste',
+    enterArtistName: 'Entrez le nom de l\'artiste...',
+    composer: 'Compositeur',
+    enterComposerName: 'Entrez le nom du compositeur...',
+    key: 'Tonalité',
+    selectKey: 'Sélectionnez la tonalité...'
+  },
+  de: {
+    songTitle: 'Liedtitel',
+    enterSongTitle: 'Liedtitel eingeben...',
+    artist: 'Künstler',
+    enterArtistName: 'Künstlername eingeben...',
+    composer: 'Komponist',
+    enterComposerName: 'Komponistennamen eingeben...',
+    key: 'Tonart',
+    selectKey: 'Tonart auswählen...'
+  }
+};
+
+function t(lang: string, key: string): string {
+  return translations[lang]?.[key] || translations['en'][key] || key;
 }
 
 const musicalKeys = [
@@ -23,7 +82,7 @@ const musicalKeys = [
   'F# minor', 'G minor', 'G# minor', 'A minor', 'A# minor', 'B minor'
 ];
 
-export const SongMetadata = ({ metadata, onMetadataUpdate }: SongMetadataProps) => {
+export const SongMetadata = ({ metadata, onMetadataUpdate, selectedLanguage = 'en' }: SongMetadataProps) => {
   const handleUpdate = (field: keyof SongMetadata, value: string) => {
     onMetadataUpdate({
       ...metadata,
@@ -36,50 +95,50 @@ export const SongMetadata = ({ metadata, onMetadataUpdate }: SongMetadataProps) 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <div>
           <Label htmlFor="song-title" className="text-sm font-medium">
-            Song Title
+            {t(selectedLanguage, 'songTitle')}
           </Label>
           <Input
             id="song-title"
             value={metadata.title}
             onChange={(e) => handleUpdate('title', e.target.value)}
-            placeholder="Enter song title..."
+            placeholder={t(selectedLanguage, 'enterSongTitle')}
             className="mt-1"
           />
         </div>
         
         <div>
           <Label htmlFor="artist" className="text-sm font-medium">
-            Artist
+            {t(selectedLanguage, 'artist')}
           </Label>
           <Input
             id="artist"
             value={metadata.artist}
             onChange={(e) => handleUpdate('artist', e.target.value)}
-            placeholder="Enter artist name..."
+            placeholder={t(selectedLanguage, 'enterArtistName')}
             className="mt-1"
           />
         </div>
         
         <div>
           <Label htmlFor="composer" className="text-sm font-medium">
-            Composer
+            {t(selectedLanguage, 'composer')}
           </Label>
           <Input
             id="composer"
             value={metadata.composer}
             onChange={(e) => handleUpdate('composer', e.target.value)}
-            placeholder="Enter composer name..."
+            placeholder={t(selectedLanguage, 'enterComposerName')}
             className="mt-1"
           />
         </div>
         
         <div>
           <Label htmlFor="key" className="text-sm font-medium">
-            Key
+            {t(selectedLanguage, 'key')}
           </Label>
           <Select value={metadata.key} onValueChange={(value) => handleUpdate('key', value)}>
             <SelectTrigger className="mt-1">
-              <SelectValue placeholder="Select key..." />
+              <SelectValue placeholder={t(selectedLanguage, 'selectKey')} />
             </SelectTrigger>
             <SelectContent>
               {musicalKeys.map(key => (

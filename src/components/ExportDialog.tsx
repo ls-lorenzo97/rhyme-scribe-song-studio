@@ -1,25 +1,108 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
+import { Download } from 'lucide-react';
 import { SongSection } from './SongwriterTool';
-import { ArrowDown } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
+import { toast } from '@/hooks/use-toast';
 
 interface ExportDialogProps {
   sections: SongSection[];
   audioFile: File | null;
+  selectedLanguage?: string;
 }
 
-export const ExportDialog = ({ sections, audioFile }: ExportDialogProps) => {
+// Translation dictionary for ExportDialog
+const translations: Record<string, Record<string, string>> = {
+  en: {
+    exportLyrics: 'Export Lyrics',
+    exportOptions: 'Export Options',
+    includeTimestamps: 'Include timestamps',
+    includeRhymes: 'Include rhyme analysis',
+    separateFiles: 'Export each section as separate file',
+    export: 'Export',
+    noContentToExport: 'No content to export',
+    noContentToExportDesc: 'Add some sections and lyrics first.',
+    exportSuccessful: 'Export successful!',
+    exportSuccessfulDesc: 'Your lyrics have been downloaded as a text file.',
+    untitledSong: 'Untitled Song',
+    noLyrics: '[No lyrics]',
+    rhymeWords: 'Rhyme words:'
+  },
+  it: {
+    exportLyrics: 'Esporta Testo',
+    exportOptions: 'Opzioni di Esportazione',
+    includeTimestamps: 'Includi timestamp',
+    includeRhymes: 'Includi analisi delle rime',
+    separateFiles: 'Esporta ogni sezione come file separato',
+    export: 'Esporta',
+    noContentToExport: 'Nessun contenuto da esportare',
+    noContentToExportDesc: 'Aggiungi prima alcune sezioni e testo.',
+    exportSuccessful: 'Esportazione riuscita!',
+    exportSuccessfulDesc: 'Il tuo testo è stato scaricato come file di testo.',
+    untitledSong: 'Canzone Senza Titolo',
+    noLyrics: '[Nessun testo]',
+    rhymeWords: 'Parole che fanno rima:'
+  },
+  es: {
+    exportLyrics: 'Exportar Letra',
+    exportOptions: 'Opciones de Exportación',
+    includeTimestamps: 'Incluir marcas de tiempo',
+    includeRhymes: 'Incluir análisis de rimas',
+    separateFiles: 'Exportar cada sección como archivo separado',
+    export: 'Exportar',
+    noContentToExport: 'No hay contenido para exportar',
+    noContentToExportDesc: 'Agrega algunas secciones y letras primero.',
+    exportSuccessful: '¡Exportación exitosa!',
+    exportSuccessfulDesc: 'Tu letra ha sido descargada como archivo de texto.',
+    untitledSong: 'Canción Sin Título',
+    noLyrics: '[Sin letra]',
+    rhymeWords: 'Palabras que riman:'
+  },
+  fr: {
+    exportLyrics: 'Exporter les Paroles',
+    exportOptions: 'Options d\'Exportation',
+    includeTimestamps: 'Inclure les horodatages',
+    includeRhymes: 'Inclure l\'analyse des rimes',
+    separateFiles: 'Exporter chaque section comme fichier séparé',
+    export: 'Exporter',
+    noContentToExport: 'Aucun contenu à exporter',
+    noContentToExportDesc: 'Ajoutez d\'abord quelques sections et paroles.',
+    exportSuccessful: 'Exportation réussie !',
+    exportSuccessfulDesc: 'Vos paroles ont été téléchargées comme fichier texte.',
+    untitledSong: 'Chanson Sans Titre',
+    noLyrics: '[Pas de paroles]',
+    rhymeWords: 'Mots qui riment :'
+  },
+  de: {
+    exportLyrics: 'Text Exportieren',
+    exportOptions: 'Exportoptionen',
+    includeTimestamps: 'Zeitstempel einschließen',
+    includeRhymes: 'Reimanalyse einschließen',
+    separateFiles: 'Jeden Abschnitt als separate Datei exportieren',
+    export: 'Exportieren',
+    noContentToExport: 'Kein Inhalt zum Exportieren',
+    noContentToExportDesc: 'Fügen Sie zuerst einige Abschnitte und Texte hinzu.',
+    exportSuccessful: 'Export erfolgreich!',
+    exportSuccessfulDesc: 'Ihr Text wurde als Textdatei heruntergeladen.',
+    untitledSong: 'Unbenanntes Lied',
+    noLyrics: '[Kein Text]',
+    rhymeWords: 'Reimwörter:'
+  }
+};
+
+function t(lang: string, key: string): string {
+  return translations[lang]?.[key] || translations['en'][key] || key;
+}
+
+export const ExportDialog = ({ sections, audioFile, selectedLanguage = 'en' }: ExportDialogProps) => {
   const [isOpen, setIsOpen] = useState(false);
   const [exportOptions, setExportOptions] = useState({
     includeTimestamps: true,
     includeRhymes: true,
     separateFiles: false
   });
-  const { toast } = useToast();
 
   const formatTime = (time: number) => {
     const minutes = Math.floor(time / 60);
@@ -27,25 +110,31 @@ export const ExportDialog = ({ sections, audioFile }: ExportDialogProps) => {
     return `${minutes}:${seconds.toString().padStart(2, '0')}`;
   };
 
-  const detectRhymes = (text: string): string[] => {
+  const detectRhymes = (text: string) => {
+    // Simple rhyme detection - extract last words of each line
     const lines = text.split('\n').filter(line => line.trim());
-    const rhymeWords: string[] = [];
-    
-    lines.forEach(line => {
-      const words = line.trim().split(/\s+/).filter(word => word.length > 2);
-      words.forEach(word => {
-        const cleanWord = word.toLowerCase().replace(/[^a-z]/g, '');
-        if (cleanWord.length > 2) {
-          rhymeWords.push(cleanWord);
-        }
-      });
+    const lastWords = lines.map(line => {
+      const words = line.trim().split(/\s+/);
+      return words[words.length - 1]?.toLowerCase().replace(/[^a-z]/g, '') || '';
     });
-
-    return rhymeWords;
+    
+    // Find rhyming words (simple implementation)
+    const rhymes: string[] = [];
+    for (let i = 0; i < lastWords.length; i++) {
+      for (let j = i + 1; j < lastWords.length; j++) {
+        if (lastWords[i] && lastWords[j] && lastWords[i] === lastWords[j]) {
+          if (!rhymes.includes(lastWords[i])) {
+            rhymes.push(lastWords[i]);
+          }
+        }
+      }
+    }
+    
+    return rhymes;
   };
 
   const generateTextContent = () => {
-    const songTitle = audioFile ? audioFile.name.replace(/\.[^/.]+$/, '') : 'Untitled Song';
+    const songTitle = audioFile ? audioFile.name.replace(/\.[^/.]+$/, '') : t(selectedLanguage, 'untitledSong');
     let content = `${songTitle}\n${'='.repeat(songTitle.length)}\n\n`;
 
     if (exportOptions.separateFiles) {
@@ -63,11 +152,11 @@ export const ExportDialog = ({ sections, audioFile }: ExportDialogProps) => {
           if (exportOptions.includeRhymes) {
             const rhymes = detectRhymes(section.lyrics);
             if (rhymes.length > 0) {
-              sectionContent += `Rhyme words: ${rhymes.join(', ')}\n\n`;
+              sectionContent += `${t(selectedLanguage, 'rhymeWords')} ${rhymes.join(', ')}\n\n`;
             }
           }
         } else {
-          sectionContent += '[No lyrics]\n\n';
+          sectionContent += `${t(selectedLanguage, 'noLyrics')}\n\n`;
         }
 
         // Download individual section file
@@ -94,11 +183,11 @@ export const ExportDialog = ({ sections, audioFile }: ExportDialogProps) => {
           if (exportOptions.includeRhymes) {
             const rhymes = detectRhymes(section.lyrics);
             if (rhymes.length > 0) {
-              content += `Rhyme words: ${rhymes.join(', ')}\n\n`;
+              content += `${t(selectedLanguage, 'rhymeWords')} ${rhymes.join(', ')}\n\n`;
             }
           }
         } else {
-          content += '[No lyrics]\n\n';
+          content += `${t(selectedLanguage, 'noLyrics')}\n\n`;
         }
 
         if (index < sections.length - 1) {
@@ -119,8 +208,8 @@ export const ExportDialog = ({ sections, audioFile }: ExportDialogProps) => {
   const handleExport = () => {
     if (sections.length === 0) {
       toast({
-        title: "No content to export",
-        description: "Add some sections and lyrics first.",
+        title: t(selectedLanguage, 'noContentToExport'),
+        description: t(selectedLanguage, 'noContentToExportDesc'),
         variant: "destructive"
       });
       return;
@@ -130,121 +219,57 @@ export const ExportDialog = ({ sections, audioFile }: ExportDialogProps) => {
     setIsOpen(false);
     
     toast({
-      title: "Export successful!",
-      description: "Your lyrics have been downloaded as a text file."
-    });
-  };
-
-  const copyToClipboard = () => {
-    const songTitle = audioFile ? audioFile.name.replace(/\.[^/.]+$/, '') : 'Untitled Song';
-    let content = `${songTitle}\n${'='.repeat(songTitle.length)}\n\n`;
-
-    sections.forEach((section, index) => {
-      content += `${section.name}\n${'-'.repeat(section.name.length)}\n\n`;
-      
-      if (exportOptions.includeTimestamps) {
-        content += `Time: ${formatTime(section.startTime)} - ${formatTime(section.endTime)}\n\n`;
-      }
-
-      if (section.lyrics) {
-        content += `${section.lyrics}\n\n`;
-      } else {
-        content += '[No lyrics]\n\n';
-      }
-
-      if (index < sections.length - 1) {
-        content += '\n';
-      }
-    });
-
-    navigator.clipboard.writeText(content);
-    toast({
-      title: "Copied to clipboard!",
-      description: "Your lyrics have been copied to the clipboard."
+      title: t(selectedLanguage, 'exportSuccessful'),
+      description: t(selectedLanguage, 'exportSuccessfulDesc')
     });
   };
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
-        <Button variant="outline" className="space-x-2">
-          <ArrowDown className="w-4 h-4" />
-          <span>Export</span>
+        <Button variant="outline" className="flex items-center gap-2">
+          <Download className="w-4 h-4" />
+          {t(selectedLanguage, 'exportLyrics')}
         </Button>
       </DialogTrigger>
-
-      <DialogContent className="bg-card border-border max-w-md">
+      <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle className="flex items-center space-x-2">
-            <div className="w-5 h-5 bg-current rounded opacity-80" />
-            <span>Export Lyrics</span>
-          </DialogTitle>
+          <DialogTitle>{t(selectedLanguage, 'exportOptions')}</DialogTitle>
         </DialogHeader>
-
-        <div className="space-y-6">
-          <div className="space-y-4">
-            <h4 className="font-medium text-foreground">Export Options</h4>
-            
-            <div className="space-y-3">
-              <div className="flex items-center space-x-2">
-                <Checkbox
-                  id="timestamps"
-                  checked={exportOptions.includeTimestamps}
-                  onCheckedChange={(checked) =>
-                    setExportOptions(prev => ({ ...prev, includeTimestamps: !!checked }))
-                  }
-                />
-                <Label htmlFor="timestamps" className="text-sm">
-                  Include timestamps
-                </Label>
-              </div>
-
-              <div className="flex items-center space-x-2">
-                <Checkbox
-                  id="rhymes"
-                  checked={exportOptions.includeRhymes}
-                  onCheckedChange={(checked) =>
-                    setExportOptions(prev => ({ ...prev, includeRhymes: !!checked }))
-                  }
-                />
-                <Label htmlFor="rhymes" className="text-sm">
-                  Include detected rhymes
-                </Label>
-              </div>
-
-              <div className="flex items-center space-x-2">
-                <Checkbox
-                  id="separate"
-                  checked={exportOptions.separateFiles}
-                  onCheckedChange={(checked) =>
-                    setExportOptions(prev => ({ ...prev, separateFiles: !!checked }))
-                  }
-                />
-                <Label htmlFor="separate" className="text-sm">
-                  Export sections separately
-                </Label>
-              </div>
-            </div>
+        <div className="space-y-4">
+          <div className="flex items-center space-x-2">
+            <Checkbox
+              id="timestamps"
+              checked={exportOptions.includeTimestamps}
+              onCheckedChange={(checked) =>
+                setExportOptions(prev => ({ ...prev, includeTimestamps: checked as boolean }))
+              }
+            />
+            <Label htmlFor="timestamps">{t(selectedLanguage, 'includeTimestamps')}</Label>
           </div>
-
-          <div className="flex space-x-2">
-            <Button
-              variant="outline"
-              className="flex-1"
-              onClick={copyToClipboard}
-            >
-              <div className="w-4 h-4 mr-2 bg-current rounded-sm opacity-80" />
-              Copy
-            </Button>
-            
-            <Button
-              onClick={handleExport}
-              className="flex-1 bg-gradient-primary shadow-glow"
-            >
-              <ArrowDown className="w-4 h-4 mr-2" />
-              Download
-            </Button>
+          <div className="flex items-center space-x-2">
+            <Checkbox
+              id="rhymes"
+              checked={exportOptions.includeRhymes}
+              onCheckedChange={(checked) =>
+                setExportOptions(prev => ({ ...prev, includeRhymes: checked as boolean }))
+              }
+            />
+            <Label htmlFor="rhymes">{t(selectedLanguage, 'includeRhymes')}</Label>
           </div>
+          <div className="flex items-center space-x-2">
+            <Checkbox
+              id="separate"
+              checked={exportOptions.separateFiles}
+              onCheckedChange={(checked) =>
+                setExportOptions(prev => ({ ...prev, separateFiles: checked as boolean }))
+              }
+            />
+            <Label htmlFor="separate">{t(selectedLanguage, 'separateFiles')}</Label>
+          </div>
+          <Button onClick={handleExport} className="w-full">
+            {t(selectedLanguage, 'export')}
+          </Button>
         </div>
       </DialogContent>
     </Dialog>
