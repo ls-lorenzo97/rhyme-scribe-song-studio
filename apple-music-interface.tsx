@@ -620,10 +620,10 @@ export default function Component() {
         </div>
 
         {/* Lyrics Section */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4" style={{ height: "30vh" }} data-name="lyrics-section-grid">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 h-[320px]" data-name="lyrics-section-grid">
           {/* Lyrics Editor */}
-          <div className="lg:col-span-2 flex flex-col min-h-0" data-name="lyrics-editor-col">
-            <Card className="flex-1 flex flex-col min-h-0" data-name="lyrics-editor-card">
+          <div className="lg:col-span-2 flex flex-col min-h-0 h-full" data-name="lyrics-editor-col">
+            <Card className="flex-1 flex flex-col min-h-0 h-full" data-name="lyrics-editor-card">
               <CardHeader className="pb-3 flex-shrink-0" data-name="lyrics-editor-card-header">
                 <div className="flex items-center justify-between" data-name="lyrics-editor-card-header-row">
                   <CardTitle className="text-sm" data-name="lyrics-editor-card-title">
@@ -793,14 +793,14 @@ export default function Component() {
           </div>
 
           {/* Full Song Lyrics Preview */}
-          <div className="lg:col-span-1 flex flex-col min-h-0" data-name="lyrics-preview-col">
-            <Card className="flex-1 flex flex-col min-h-0" data-name="lyrics-preview-card">
+          <div className="lg:col-span-1 flex flex-col min-h-0 h-full" data-name="lyrics-preview-col">
+            <Card className="flex-1 flex flex-col min-h-0 h-full" data-name="lyrics-preview-card">
               <CardHeader className="pb-3 flex-shrink-0" data-name="lyrics-preview-card-header">
                 <CardTitle className="text-sm" data-name="lyrics-preview-card-title">Full Song Preview</CardTitle>
               </CardHeader>
-              <CardContent className="flex-1 min-h-0" data-name="lyrics-preview-card-content">
+              <CardContent className="flex-1 min-h-0 h-full" data-name="lyrics-preview-card-content">
                 <ScrollArea className="h-full scrollbar-hide" data-name="lyrics-preview-scrollarea">
-                  <div className="space-y-4" data-name="lyrics-preview-scrollarea-list">
+                  <div className="space-y-4 h-full" data-name="lyrics-preview-scrollarea-list">
                     {sections.map((section) => (
                       <div
                         key={section.id}
